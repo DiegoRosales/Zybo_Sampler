@@ -86,6 +86,8 @@ wire clk_in2_audio_clk_mmcm;
     .I (clk_in1));
 
 
+
+
   // Clocking PRIMITIVE
   //------------------------------------
 
@@ -191,6 +193,9 @@ wire clk_in2_audio_clk_mmcm;
   BUFG clkf_buf
    (.O (clkfbout_buf_audio_clk_mmcm),
     .I (clkfbout_audio_clk_mmcm));
+
+
+
 
 
 
