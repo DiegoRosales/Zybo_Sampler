@@ -3,10 +3,10 @@ module sampler_top (
   input wire clk_125,
   input wire reset,
 
+  input wire sw0,
   input wire sw1,
   input wire sw2,
   input wire sw3,
-  input wire sw0,
 
   output wire led0,
   output wire led1,
@@ -26,20 +26,92 @@ module sampler_top (
   output wire ac_pblrc,
   output wire ac_recdat,
   output wire ac_reclrc,
-  
+
   // CODEC I2C Control Signals
-  output wire i2c_scl,
-  inout  wire i2c_sda
+  inout wire i2c_scl,
+  inout wire i2c_sda
 );
 
+wire       output_en;
+wire [4:0] frequency;
+wire       apply_config;
+
+wire       codec_rd_en;
+wire       codec_wr_en;
+wire       codec_reg_addr;
+wire [7:0] codec_data_wr;
+wire [7:0] codec_data_rd;
+wire       controller_busy;
+
+wire       i2c_ctrl_rd;
+wire [2:0] i2c_ctrl_addr;
+wire [7:0] i2c_ctrl_data;
+
+wire [47:0] data_in;
+wire        data_wr;
+
+wire pll_locked;
+
 codec_unit_top codec_unit(
-  .clk(clk),
-  .reset(reset),
+  //********************************************//
+  //              Board Signals                 //
+  //********************************************//
+  // Board Clock and Reset
+  .clk(clk_125), // 125MHz
+  .reset(sw0),
+
+  ///////////////////////////////////////////////
+  ///////////////// I2S SIGNALS ///////////////// 
   .i2s_bclk,
   .i2s_wclk,
   .i2s_data,
+
+  ///////////////////////////////////////////////
+  ///////////////// I2C SIGNALS ///////////////// 
   .i2c_scl,
-  .i2c_sda
+  .i2c_sda,
+
+  //********************************************//
+
+  //********************************************//
+  //            AXI Clock Domain                //
+  //********************************************//
+
+  // AXI Clock
+  .axi_clk(clk_125),
+
+  ///////////////////////////////////////////////
+  //////////// CODEC CONTROL SIGNALS ////////////
+  .output_en,    // CODEC Output Enable
+
+  .frequency,    // Sample Frequency Select
+  .apply_config, // Apply Configuration
+
+  ///////////////////////////////////////////////
+  /////////// CODEC REGISTER SIGNALS ////////////
+  .codec_rd_en,
+  .codec_wr_en,
+  .codec_reg_addr,
+  .codec_data_wr,
+  .codec_data_rd,
+  .controller_busy,
+
+  ///////////////////////////////////////////////
+  /////////// I2C CONTROLLER SIGNALS ////////////
+  .i2c_ctrl_rd,
+  .i2c_ctrl_addr,
+  .i2c_ctrl_data,
+  
+  ///////////////////////////////////////////////
+  ///////////// CODEC DATA SIGNALS //////////////    
+  .data_in, // Audio Data
+  .data_wr, // Data Write to the data FIFO
+
+  ///////////////////////////////////////////////
+  ////////// CODEC UNIT STATUS SIGNALS ////////// 
+  .pll_locked
+
+  //********************************************//
   );
 
 
