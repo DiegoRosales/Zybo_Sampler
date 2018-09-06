@@ -39,8 +39,8 @@ wire       apply_config = 0;
 wire       codec_rd_en     = 0;
 wire       codec_wr_en     = 0;
 wire       codec_reg_addr  = 0;
-wire [7:0] codec_data_wr   = 0;
-wire [7:0] codec_data_rd;
+wire [7:0] codec_data_in   = 0;
+wire [7:0] codec_data_out;
 wire       controller_busy;
 
 wire       i2c_ctrl_rd   = 0;
@@ -92,8 +92,8 @@ codec_unit_top codec_unit(
   .codec_rd_en,
   .codec_wr_en,
   .codec_reg_addr,
-  .codec_data_wr,
-  .codec_data_rd,
+  .codec_data_in,
+  .codec_data_out,
 
   ///////////////////////////////////////////////
   /////////// I2C CONTROLLER SIGNALS ////////////

@@ -18,9 +18,9 @@ module controller_unit_top (
   input  wire       codec_rd_en,
   input  wire       codec_wr_en,
   input  wire [7:0] codec_reg_addr,
-  input  wire [7:0] codec_data_wr,
-  output wire [7:0] codec_data_rd,
-  output wire       codec_data_rd_valid,
+  input  wire [7:0] codec_data_in,
+  output wire [7:0] codec_data_out,
+  output wire       codec_data_out_valid,
   output wire       controller_busy,
 
   // CODEC Status bit
@@ -37,22 +37,55 @@ module controller_unit_top (
   );
 
 // WB Interface
- wire [2:0] wbs_adr_o;   // ADR_I() address
- wire [7:0] wbs_dat_o;   // DAT_I() data out
- wire [7:0] wbs_dat_i;   // DAT_O() data in
- wire       wbs_we_o;    // WE_I write enable output
- wire       wbs_stb_o;   // STB_I strobe output
- wire       wbs_ack_i;   // ACK_O acknowledge input
- wire       wbs_cyc_o;   // CYC_I cycle output
+wire [2:0] wbs_adr_o;   // ADR_I() address
+wire [7:0] wbs_dat_o;   // DAT_I() data out
+wire [7:0] wbs_dat_i;   // DAT_O() data in
+wire       wbs_we_o ;   // WE_I write enable output
+wire       wbs_stb_o;   // STB_I strobe output
+wire       wbs_ack_i;   // ACK_O acknowledge input
+wire       wbs_cyc_o;   // CYC_I cycle output
 
 // Control signals between the WB interface and the I2C SM
-wire       wb_read;
-wire       wb_write;
-wire [7:0] wb_data_out;
-wire [3:0] wb_address;
-wire [7:0] wb_data_in;
-wire       wb_done;
+wire       wb_read         ;
+wire       wb_write        ;
+wire [7:0] wb_data_out     ;
+wire [3:0] wb_address      ;
+wire [7:0] wb_data_in      ;
+wire       wb_done         ;
 wire       wb_data_in_valid;
+
+// Initialization Controller
+wire       INIT_codec_rd_en          ;
+wire       INIT_codec_wr_en          ;
+wire [7:0] INIT_codec_data_out       ;
+wire [7:0] INIT_codec_reg_addr       ;
+wire [7:0] INIT_codec_data_in        ;
+wire       INIT_codec_data_in_valid  ;
+wire       codec_is_alive            ;
+wire       init_done                 ;
+
+// I2C State Machine
+wire       CONTROLLER_codec_rd_en         ;
+wire       CONTROLLER_codec_wr_en         ;
+wire [7:0] CONTROLLER_codec_data_in       ;
+wire [7:0] CONTROLLER_codec_reg_addr      ;
+wire [7:0] CONTROLLER_codec_data_out      ;
+wire       CONTROLLER_codec_data_out_valid;
+wire       CONTROLLER_controller_busy     ;
+
+// Don't allow external Rd/Wr until the initialization is done
+// Inputs
+assign CONTROLLER_codec_rd_en    = (init_done == 1'b0) ? INIT_codec_rd_en    : codec_rd_en;
+assign CONTROLLER_codec_wr_en    = (init_done == 1'b0) ? INIT_codec_wr_en    : codec_wr_en;
+assign CONTROLLER_codec_reg_addr = (init_done == 1'b0) ? INIT_codec_reg_addr : codec_reg_addr;
+assign CONTROLLER_codec_data_in  = (init_done == 1'b0) ? INIT_codec_data_out : codec_data_in;
+// Outputs
+assign codec_data_out            = (init_done == 1'b0) ? 8'h00               : CONTROLLER_codec_data_out;
+assign codec_data_out_valid      = (init_done == 1'b0) ? 1'b0                : CONTROLLER_codec_data_out_valid;
+assign controller_busy           = (init_done == 1'b0) ? 1'b1                : CONTROLLER_controller_busy;
+// Internal
+assign INIT_codec_data_in        = (init_done == 1'b1) ? 8'h00               : CONTROLLER_codec_data_out;
+assign INIT_codec_data_in_valid  = (init_done == 1'b1) ? 1'b0                : CONTROLLER_codec_data_out_valid;
 
 wb_master_controller wb_master_controller_inst (
   .clk,
@@ -68,28 +101,49 @@ wb_master_controller wb_master_controller_inst (
   .wbs_cyc_o,    // CYC_I cycle output
 
   // Control Signals
-  .read(wb_read),
-  .write(wb_write),
+  .read  (wb_read),
+  .write (wb_write),
 
   // Data Signals
-  .data_in(wb_data_out),
-  .address(wb_addr),
-  .data_out(wb_data_in),
+  .data_in  (wb_data_out),
+  .address  (wb_address),
+  .data_out (wb_data_in),
 
   // Status Signals
-  .data_out_valid(wb_data_in_valid),
-  .done(wb_done)
+  .data_out_valid (wb_data_in_valid),
+  .done           (wb_done)
 );
 
+codec_init_unit codec_init_unit_inst (
+  .clk,
+  .reset,
+
+  // Signals to the i2c_seq_sm
+  .codec_rd_en         (INIT_codec_rd_en          ),
+  .codec_wr_en         (INIT_codec_wr_en          ),
+  .codec_reg_addr      (INIT_codec_reg_addr       ),
+  .codec_data_out      (INIT_codec_data_out       ),
+  .codec_data_in       (INIT_codec_data_in        ),
+  .codec_data_in_valid (INIT_codec_data_in_valid  ),
+  .controller_busy     (CONTROLLER_controller_busy),
+
+  // Signals to the top registers
+  .codec_is_alive,
+  .init_done  
+
+);
 i2c_seq_sm i2c_seq_sm_inst (
+  .clk,
+  .reset,
+
   // Control signals from the top
-  .codec_rd_en,
-  .codec_wr_en,
-  .codec_reg_addr,
-  .codec_data_wr,
-  .codec_data_rd,
-  .codec_data_rd_valid,
-  .controller_busy,
+  .codec_rd_en          (CONTROLLER_codec_rd_en         ),
+  .codec_wr_en          (CONTROLLER_codec_wr_en         ),
+  .codec_reg_addr       (CONTROLLER_codec_reg_addr      ),
+  .codec_data_in        (CONTROLLER_codec_data_in       ),
+  .codec_data_out       (CONTROLLER_codec_data_out      ),
+  .codec_data_out_valid (CONTROLLER_codec_data_out_valid),
+  .controller_busy      (CONTROLLER_controller_busy)     ,
 
   // Control signals to the WB Controller
   .wb_read,

@@ -9,22 +9,22 @@
 module i2c_seq_sm (
   input wire clk,
   input wire reset,
-  
+
   // CODEC Register RD/WR Signals
   input  wire       codec_rd_en,
   input  wire       codec_wr_en,
   input  wire [7:0] codec_reg_addr,
-  input  wire [7:0] codec_data_wr,
-  output wire [7:0] codec_data_rd,
-  output wire       codec_data_rd_valid,
+  input  wire [7:0] codec_data_in,
+  output wire [7:0] codec_data_out,
+  output wire       codec_data_out_valid,
   output wire       controller_busy,
 
   // Control signals to the WB Controller
-  input wire        wb_read,
-  input wire        wb_write,
-  input wire  [7:0] wb_data_in,
+  output wire       wb_read,
+  output wire       wb_write,
   output wire [3:0] wb_address,
   output wire [7:0] wb_data_out,
+  input wire  [7:0] wb_data_in,
   input wire        wb_data_in_valid,
   input wire        wb_done
 );
@@ -47,27 +47,18 @@ localparam I2C_WRITE_4      = 3'h5;
 localparam I2C_WRITE_5      = 3'h6;
 localparam I2C_WRITE_6      = 3'h7;
 
-
-
-assign i2c_ctrl_data = i2c_ctrl_data_reg;
-
-assign controller_busy     = controller_busy_reg | !wb_done;
-assign codec_data_rd       = codec_data_rd_reg;
-assign codec_data_rd_valid = codec_data_rd_valid_reg;
-
-
 reg  [2:0] i2c_state_next;
 wire [2:0] i2c_state_curr;
 
 reg  [2:0] i2c_state_after_ack;
 
 // WB State Machine Registers
-reg        wb_read;
-reg        wb_write;
-reg  [7:0] wb_data_out;
-reg  [3:0] wb_addr;
-wire [7:0] wb_data_in;
-wire       wb_done;
+reg        wb_read_reg     ;
+reg        wb_write_reg    ;
+reg  [7:0] wb_data_out_reg ;
+reg  [3:0] wb_address_reg  ;
+wire [7:0] wb_data_in      ;
+wire       wb_done         ;
 wire       wb_data_in_valid;
 
 reg [7:0] i2c_ctrl_data_reg;
@@ -75,8 +66,8 @@ reg [2:0] i2c_ctrl_addr_reg;
 
 // CODEC Register signals
 reg       controller_busy_reg;
-reg [7:0] codec_data_rd_reg;
-reg       codec_data_rd_valid_reg;
+reg [7:0] codec_data_out_reg;
+reg       codec_data_out_valid_reg;
 
 // I2C Registers
 reg [7:0] i2c_data;
@@ -85,6 +76,20 @@ reg [7:0] i2c_int_addr;
 reg [7:0] i2c_command;
 reg       i2c_read_done;
 
+
+
+assign i2c_ctrl_data = i2c_ctrl_data_reg;
+
+assign controller_busy      = controller_busy_reg | !wb_done;
+assign codec_data_out       = codec_data_out_reg;
+assign codec_data_out_valid = codec_data_out_valid_reg;
+
+// Outputs to the WB Controller
+
+assign wb_read     = wb_read_reg    ;
+assign wb_write    = wb_write_reg   ;
+assign wb_address  = wb_address_reg ;
+assign wb_data_out = wb_data_out_reg;
 
 
 /////////////////////////////////////////////////
@@ -160,46 +165,46 @@ end // always @ ( posedge clk or negedge reset )
 
 always @(posedge clk or negedge reset ) begin 
   if (reset) begin
-    wb_read     <= 'h0;
-    wb_write    <= 'h0;
-    wb_data_out <= 'h0;
-    wb_addr     <= 'h0;
+    wb_read_reg     <= 'h0;
+    wb_write_reg    <= 'h0;
+    wb_data_out_reg <= 'h0;
+    wb_address_reg  <= 'h0;
   end // if (reset)
   else begin
-    wb_read     <= 1'b0;
-    wb_write    <= 1'b0;
-    wb_data_out <= wb_data_out;
-    wb_addr     <= wb_addr;
+    wb_read_reg     <= 1'b0;
+    wb_write_reg    <= 1'b0;
+    wb_data_out_reg <= wb_data_out_reg;
+    wb_address_reg  <= wb_address_reg;
     case (i2c_state_curr)
       I2C_IDLE: begin
-        wb_read     <= 'h0;
-        wb_write    <= 'h0;
-        wb_data_out <= 'h0;
-        wb_addr     <= 'h0;
+        wb_read_reg     <= 'h0;
+        wb_write_reg    <= 'h0;
+        wb_data_out_reg <= 'h0;
+        wb_address_reg  <= 'h0;
       end // I2C_IDLE:
 
       I2C_WAIT_FOR_ACK: begin // Wait for the completion
-        wb_data_out <= 'h0;
-        wb_addr     <= 'h0;
-        wb_write    <= 1'b0;
+        wb_data_out_reg <= 'h0;
+        wb_address_reg  <= 'h0;
+        wb_write_reg    <= 1'b0;
       end // I2C_WRITE_2:
 
       I2C_WRITE_1: begin // Step 1 - Write the I2C CODEC address to the WB I2C Controller
-        wb_data_out <= i2c_addr;
-        wb_addr     <= I2C_CTRL_ADDR_ADDR;
-        wb_write    <= 1'b1;
+        wb_data_out_reg <= i2c_addr;
+        wb_address_reg  <= I2C_CTRL_ADDR_ADDR;
+        wb_write_reg    <= 1'b1;
       end // I2C_WRITE_1:
 
       I2C_WRITE_2: begin // Step 2 - Write the Internal Address to the WB I2C Controller as Data
-        wb_data_out <= i2c_int_addr;
-        wb_addr     <= I2C_CTRL_DATA_ADDR;
-        wb_write    <= 1'b1;
+        wb_data_out_reg <= i2c_int_addr;
+        wb_address_reg  <= I2C_CTRL_DATA_ADDR;
+        wb_write_reg    <= 1'b1;
       end // I2C_WRITE_1:
 
       I2C_WRITE_3: begin // Step 3 - Write the I2C Command to the I2C Controller Interface
-        wb_data_out <= 8'b00000011; // RD && Start
-        wb_addr     <= I2C_CTRL_CMD_ADDR;
-        wb_write    <= 1'b1;
+        wb_data_out_reg <= 8'b00000011; // RD && Start
+        wb_address_reg  <= I2C_CTRL_CMD_ADDR;
+        wb_write_reg    <= 1'b1;
       end // I2C_WRITE_1:
 
     endcase // i2c_state_curr

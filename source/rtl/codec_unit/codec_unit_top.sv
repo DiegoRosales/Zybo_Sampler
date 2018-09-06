@@ -54,9 +54,9 @@ module codec_unit_top (
   input  wire       codec_rd_en,
   input  wire       codec_wr_en,
   input  wire [7:0] codec_reg_addr,
-  input  wire [7:0] codec_data_wr,
-  output wire [7:0] codec_data_rd,
-  output wire       codec_data_rd_valid,
+  input  wire [7:0] codec_data_in,
+  output wire [7:0] codec_data_out,
+  output wire       codec_data_out_valid,
 
   ///////////////////////////////////////////////
   /////////// I2C CONTROLLER SIGNALS ////////////
@@ -99,16 +99,16 @@ wire        i2c_sda_t;
 wire scl_pin, sda_pin;
 
 // Synchronizer
-wire       codec_rd_en_SYNC;
-wire       codec_wr_en_SYNC;
-wire [7:0] codec_reg_addr_SYNC;
-wire [7:0] codec_data_wr_SYNC;
-wire       controller_busy_SYNC; 
-wire       codec_data_rd_valid_SYNC;
-wire [7:0] codec_data_rd_SYNC; 
-wire [2:0] i2c_ctrl_addr_SYNC;
-wire       i2c_ctrl_rd_SYNC;
-wire [7:0] i2c_ctrl_data_SYNC;
+wire       codec_rd_en_SYNC         ;
+wire       codec_wr_en_SYNC         ;
+wire [7:0] codec_reg_addr_SYNC      ;
+wire [7:0] codec_data_in_SYNC       ;
+wire       controller_busy_SYNC     ; 
+wire       codec_data_out_valid_SYNC;
+wire [7:0] codec_data_out_SYNC      ; 
+wire [2:0] i2c_ctrl_addr_SYNC       ;
+wire       i2c_ctrl_rd_SYNC         ;
+wire [7:0] i2c_ctrl_data_SYNC       ;
 
 assign pll_locked = mmcm_locked;
 
@@ -116,59 +116,62 @@ assign i2c_scl = scl_pin;
 assign scl_pin = i2c_scl_o;
 
 IOBUF sda_iobuf (
-    .I  (i2c_scl_i), 
-    .IO (i2c_sda), 
-    .O  (i2c_scl_o), 
-    .T  (i2c_scl_t));   
+  .I  (i2c_scl_i), 
+  .IO (i2c_sda  ), 
+  .O  (i2c_scl_o), 
+  .T  (i2c_scl_t)
+  );   
 
 IOBUF scl_iobuf (
   .I  (i2c_scl_i), 
-  .IO (i2c_sda), 
+  .IO (i2c_sda  ), 
   .O  (i2c_scl_o), 
-  .T  (i2c_scl_t));   
+  .T  (i2c_scl_t)
+  );   
 
 controller_unit_top controller_unit(
-  .clk(clk_125mhz),
-  .reset(reset),
+  .clk  (clk_125mhz),
+  .reset(reset     ),
 
   // CODEC RW signals
-  .codec_rd_en(codec_rd_en_SYNC),                  // Input
-  .codec_wr_en(codec_wr_en_SYNC),                  // Input
-  .codec_reg_addr(codec_reg_addr_SYNC),            // Input
-  .codec_data_wr(codec_data_wr_SYNC),              // Input
-  .codec_data_rd(codec_data_rd_SYNC),             // Output
-  .codec_data_rd_valid(codec_data_rd_valid_SYNC), // Output
-  .controller_busy(controller_busy_SYNC),         // Output
+  .codec_rd_en          (codec_rd_en_SYNC         ), // Input
+  .codec_wr_en          (codec_wr_en_SYNC         ), // Input
+  .codec_reg_addr       (codec_reg_addr_SYNC      ), // Input
+  .codec_data_in        (codec_data_in_SYNC       ), // Input
+  .codec_data_out       (codec_data_out_SYNC      ), // Output
+  .codec_data_out_valid (codec_data_out_valid_SYNC), // Output
+  .controller_busy      (controller_busy_SYNC     ), // Output
 
   // I2C Signals
-  .i2c_scl_i(i2c_scl_i),
-  .i2c_scl_o(i2c_scl_o),
-  .i2c_scl_t(i2c_scl_t),
-  .i2c_sda_i(i2c_sda_i),
-  .i2c_sda_o(i2c_sda_o),
-  .i2c_sda_t(i2c_sda_t)
+  .i2c_scl_i (i2c_scl_i),
+  .i2c_scl_o (i2c_scl_o),
+  .i2c_scl_t (i2c_scl_t),
+  .i2c_sda_i (i2c_sda_i),
+  .i2c_sda_o (i2c_sda_o),
+  .i2c_sda_t (i2c_sda_t)
   );
 
 
 i2s_controller i2s_controller(
-  .clk(clk_24mhz),
-  .reset(reset),
-  .data(fifo_data),
-  .data_rd(fifo_rd),
-  .i2s_bclk(i2s_bclk),
-  .i2s_wclk(i2s_wclk),
-  .i2s_data(i2s_data));
+  .clk      (clk_24mhz),
+  .reset    (reset    ),
+  .data     (fifo_data),
+  .data_rd  (fifo_rd  ),
+  .i2s_bclk (i2s_bclk ),
+  .i2s_wclk (i2s_wclk ),
+  .i2s_data (i2s_data )
+  );
 
 i2s_fifo_48x64 fifo (
-  .clk(clk_125mhz),       // input wire clk
-  .srst(reset),           // input wire srst
-  .din(data_in),          // input wire [47 : 0] din
-  .wr_en(data_wr),        // input wire wr_en
-  .rd_en(fifo_rd),        // input wire rd_en
-  .dout(fifo_data),       // output wire [47 : 0] dout
-  .full(),                // output wire full
-  .almost_full(),         // output wire almost_full
-  .empty(fifo_empty)      // output wire empty
+  .clk         (clk_125mhz), // input wire clk
+  .srst        (reset     ), // input wire srst
+  .din         (data_in   ), // input wire [47 : 0] din
+  .wr_en       (data_wr   ), // input wire wr_en
+  .rd_en       (fifo_rd   ), // input wire rd_en
+  .dout        (fifo_data ), // output wire [47 : 0] dout
+  .full        (),           // output wire full
+  .almost_full (),           // output wire almost_full
+  .empty       (fifo_empty)  // output wire empty
 );
 
   audio_clk_mmcm audio_clk_mmcm(
@@ -188,59 +191,62 @@ i2s_fifo_48x64 fifo (
 
 //---- Synchronizers --------//
 
-    // CODEC to AXI
+  // CODEC to AXI
   clk_sync controller_busy_sync_inst(
-    .clk1(clk_125mhz),
-    .clk2(axi_clk),
-    .data_in(controller_busy_SYNC),
-    .data_out(controller_busy)
+    .clk1     (clk_125mhz          ),
+    .clk2     (axi_clk             ),
+    .data_in  (controller_busy_SYNC),
+    .data_out (controller_busy     )
   );
 
-  clk_sync codec_data_rd_valid_sync_inst(
-    .clk1(clk_125mhz),
-    .clk2(axi_clk),
-    .data_in(codec_data_rd_SYNC),
-    .data_out(codec_data_rd)
+  clk_sync codec_data_out_valid_sync_inst(
+    .clk1     (clk_125mhz               ),
+    .clk2     (axi_clk                  ),
+    .data_in  (codec_data_out_valid_SYNC),
+    .data_out (codec_data_out_valid     )
   );
 
   clk_sync
   #(.DATA_W(8))
-  codec_data_rd_sync_inst(
-    .clk1(clk_125mhz),
-    .clk2(axi_clk),
-    .data_in(codec_data_rd_SYNC),
-    .data_out(codec_data_rd)
+  codec_data_out_sync_inst(
+    .clk1     (clk_125mhz         ),
+    .clk2     (axi_clk            ),
+    .data_in  (codec_data_out_SYNC),
+    .data_out (codec_data_out     )
   );
 
   
   // AXI to CODEC
   clk_sync codec_rd_en_sync_inst(
-    .clk1(axi_clk),
-    .clk2(clk_125mhz),
-    .data_in(codec_rd_en),
-    .data_out(codec_rd_en_SYNC)
+    .clk1     (axi_clk         ),
+    .clk2     (clk_125mhz      ),
+    .data_in  (codec_rd_en     ),
+    .data_out (codec_rd_en_SYNC)
   );
+  
   clk_sync codec_wr_en_sync_inst(
-    .clk1(axi_clk),
-    .clk2(clk_125),
-    .data_in(codec_wr_en),
-    .data_out(codec_wr_en_SYNC)
+    .clk1     (axi_clk         ),
+    .clk2     (clk_125         ),
+    .data_in  (codec_wr_en     ),
+    .data_out (codec_wr_en_SYNC)
   );
+
   clk_sync  
   #(.DATA_W(8))
   codec_reg_addr_sync_inst(
-    .clk1(axi_clk),
-    .clk2(clk_125mhz),
-    .data_in(codec_reg_addr),
-    .data_out(codec_reg_addr_SYNC)
+    .clk1     (axi_clk            ),
+    .clk2     (clk_125mhz         ),
+    .data_in  (codec_reg_addr     ),
+    .data_out (codec_reg_addr_SYNC)
   );
+
   clk_sync 
   #(.DATA_W(8))
-  codec_data_wr_sync_inst(
-    .clk1(axi_clk),
-    .clk2(clk_125mhz),
-    .data_in(codec_data_wr),
-    .data_out(codec_data_wr_SYNC)
+  codec_data_in_sync_inst(
+    .clk1     (axi_clk           ),
+    .clk2     (clk_125mhz        ),
+    .data_in  (codec_data_in     ),
+    .data_out (codec_data_in_SYNC)
   );
 
   // I2C to AXI
