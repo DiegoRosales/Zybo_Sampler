@@ -32,23 +32,23 @@ module sampler_top (
   inout wire i2c_sda
 );
 
-wire       output_en;
-wire [4:0] frequency;
-wire       apply_config;
+wire       output_en    = 0;
+wire [4:0] frequency    = 0;
+wire       apply_config = 0;
 
-wire       codec_rd_en;
-wire       codec_wr_en;
-wire       codec_reg_addr;
-wire [7:0] codec_data_wr;
+wire       codec_rd_en     = 0;
+wire       codec_wr_en     = 0;
+wire       codec_reg_addr  = 0;
+wire [7:0] codec_data_wr   = 0;
 wire [7:0] codec_data_rd;
 wire       controller_busy;
 
-wire       i2c_ctrl_rd;
-wire [2:0] i2c_ctrl_addr;
+wire       i2c_ctrl_rd   = 0;
+wire [2:0] i2c_ctrl_addr = 0;
 wire [7:0] i2c_ctrl_data;
 
-wire [47:0] data_in;
-wire        data_wr;
+wire [47:0] data_in      = 0;
+wire        data_wr      = 0;
 
 wire pll_locked;
 
@@ -94,13 +94,13 @@ codec_unit_top codec_unit(
   .codec_reg_addr,
   .codec_data_wr,
   .codec_data_rd,
-  .controller_busy,
 
   ///////////////////////////////////////////////
   /////////// I2C CONTROLLER SIGNALS ////////////
   .i2c_ctrl_rd,
   .i2c_ctrl_addr,
   .i2c_ctrl_data,
+  .controller_busy,
   
   ///////////////////////////////////////////////
   ///////////// CODEC DATA SIGNALS //////////////    

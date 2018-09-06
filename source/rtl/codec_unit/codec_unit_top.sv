@@ -1,23 +1,39 @@
+///////////////////////////////////////////////////////////
+// Codec Unit Top                                        //
+// Author: Diego Rosales                                 //
+///////////////////////////////////////////////////////////
+// Description                                           //
+//////////////                                           //
+// This module controls the CODEC in the Digilent Zybo   //
+// The CODEC Part Number is:                             //
+// This module translates instructions into rd/wr        //
+// sequences for the CODEC for easy interfacing          //
+// This module is also responsible for transmitting the  //
+// audio stream to the CODEC                             //
+///////////////////////////////////////////////////////////
+// Rev 0.1 - Init                                        //
+///////////////////////////////////////////////////////////
+
 module codec_unit_top (
   //********************************************//
   //              Board Signals                 //
   //********************************************//
-  // Board Clock and Reset
+  ///////////////////////////////////////////////
+  /////////////// CLOCK AND RESET /////////////// 
   input wire clk, // 125MHz
   input wire reset,
 
   ///////////////////////////////////////////////
-  ///////////////// I2S SIGNALS ///////////////// 
+  ///////////// I2S SIGNALS (Audio) ///////////// 
   output wire i2s_bclk,
   output wire i2s_wclk,
   output wire i2s_data,
 
   ///////////////////////////////////////////////
-  ///////////////// I2C SIGNALS ///////////////// 
+  //////////// I2C SIGNALS (Control) //////////// 
   output wire i2c_scl,
   inout  wire i2c_sda,
 
-  //********************************************//
 
   //********************************************//
   //            AXI Clock Domain                //
@@ -40,13 +56,14 @@ module codec_unit_top (
   input  wire [7:0] codec_reg_addr,
   input  wire [7:0] codec_data_wr,
   output wire [7:0] codec_data_rd,
-  output wire       controller_busy,
+  output wire       codec_data_rd_valid,
 
   ///////////////////////////////////////////////
   /////////// I2C CONTROLLER SIGNALS ////////////
   input  wire       i2c_ctrl_rd,
   input  wire [2:0] i2c_ctrl_addr,
   output wire [7:0] i2c_ctrl_data,
+  output wire       controller_busy,
   
   ///////////////////////////////////////////////
   ///////////// CODEC DATA SIGNALS //////////////    
@@ -71,12 +88,7 @@ wire clk_48_16b;
 wire clk_48_24b;
 wire fifo_empty;
 wire i2s_busy;
-// I2C
-wire i2c_data_out;
-wire i2c_rw_select;
-wire i2c_data_wr;
-wire i2c_data_in;
-wire i2c_data_rd;
+
 // I2C
 wire        i2c_scl_i;
 wire        i2c_scl_o;
@@ -85,35 +97,23 @@ wire        i2c_sda_i;
 wire        i2c_sda_o;
 wire        i2c_sda_t;
 wire scl_pin, sda_pin;
-// wishbone
-wire  [2:0] wbs_adr;   // ADR_I() address
-wire  [7:0] wbs_dat_i;   // DAT_I() data in
-wire  [7:0] wbs_dat_o;   // DAT_O() data out
-wire        wbs_we;   // WE_I write enable input
-wire        wbs_stb;   // STB_I strobe input
-wire        wbs_ack;   // ACK_O acknowledge output
-wire        wbs_cyc;   // CYC_I cycle input
 
 // Synchronizer
-wire       codec_rd_en_sync;
-wire       codec_wr_en_sync;
-wire [7:0] codec_reg_addr_sync;
-wire [7:0] codec_data_wr_sync;
-wire       controller_busy_sync1; 
-wire       controller_busy_sync2;
-wire [7:0] codec_data_rd_sync1; 
-wire [7:0] codec_data_rd_sync2;
-wire [2:0] i2c_ctrl_addr_sync;
-wire       i2c_ctrl_rd_sync;
-wire [7:0] i2c_ctrl_data_sync;
+wire       codec_rd_en_SYNC;
+wire       codec_wr_en_SYNC;
+wire [7:0] codec_reg_addr_SYNC;
+wire [7:0] codec_data_wr_SYNC;
+wire       controller_busy_SYNC; 
+wire       codec_data_rd_valid_SYNC;
+wire [7:0] codec_data_rd_SYNC; 
+wire [2:0] i2c_ctrl_addr_SYNC;
+wire       i2c_ctrl_rd_SYNC;
+wire [7:0] i2c_ctrl_data_SYNC;
 
 assign pll_locked = mmcm_locked;
 
 assign i2c_scl = scl_pin;
 assign scl_pin = i2c_scl_o;
-
-assign codec_data_rd = codec_data_rd_sync2;
-assign controller_busy = controller_busy_sync2;
 
 IOBUF sda_iobuf (
     .I  (i2c_scl_i), 
@@ -130,53 +130,20 @@ IOBUF scl_iobuf (
 controller_unit_top controller_unit(
   .clk(clk_125mhz),
   .reset(reset),
-  // Wishbone
-  .wbs_adr_o(wbs_adr),
-  .wbs_dat_o(wbs_dat_o),
-  .wbs_dat_i(wbs_dat_i),
-  .wbs_we_o(wbs_we),
-  .wbs_stb_o(wbs_stb),
-  .wbs_ack_i(wbs_ack),
-  .wbs_cyc_o(wbs_cyc),
-
-  .fifo_empty(fifo_empty),
-  .i2s_busy(i2s_busy),
 
   // CODEC RW signals
-  .codec_rd_en(codec_rd_en_sync),
-  .codec_wr_en(codec_wr_en_sync),
-  .codec_reg_addr(codec_reg_addr_sync),
-  .codec_data_wr(codec_data_wr_sync),
-  .codec_data_rd(codec_data_rd_sync1),
-  .controller_busy(controller_busy_sync1),
-  .i2c_ctrl_rd(i2c_ctrl_rd_sync),
-  .i2c_ctrl_addr(i2c_ctrl_addr_sync),
-  .i2c_ctrl_data(i2c_ctrl_data)
-  //.i2c_data_out(i2c_data_out),
-  //.i2c_rw_select(i2c_rw_select),
-  //.i2c_data_wr(i2c_data_wr),
-  //.i2c_data_in(i2c_data_in),
-  //.i2c_data_rd(i2c_data_rd)
-  );
+  .codec_rd_en(codec_rd_en_SYNC),                  // Input
+  .codec_wr_en(codec_wr_en_SYNC),                  // Input
+  .codec_reg_addr(codec_reg_addr_SYNC),            // Input
+  .codec_data_wr(codec_data_wr_SYNC),              // Input
+  .codec_data_rd(codec_data_rd_SYNC),             // Output
+  .codec_data_rd_valid(codec_data_rd_valid_SYNC), // Output
+  .controller_busy(controller_busy_SYNC),         // Output
 
-i2c_master_wbs_8
-#()
-i2c_master_inst(
-  .clk(clk_125mhz),
-  .rst(reset),
-  // Wishbone
-  .wbs_adr_i(wbs_adr),
-  .wbs_dat_i(wbs_dat_o),
-  .wbs_dat_o(wbs_dat_i),
-  .wbs_we_i(wbs_we),
-  .wbs_stb_i(wbs_stb),
-  .wbs_ack_o(wbs_ack),
-  .wbs_cyc_i(wbs_cyc),
-
+  // I2C Signals
   .i2c_scl_i(i2c_scl_i),
   .i2c_scl_o(i2c_scl_o),
   .i2c_scl_t(i2c_scl_t),
-
   .i2c_sda_i(i2c_sda_i),
   .i2c_sda_o(i2c_sda_o),
   .i2c_sda_t(i2c_sda_t)
@@ -225,16 +192,24 @@ i2s_fifo_48x64 fifo (
   clk_sync controller_busy_sync_inst(
     .clk1(clk_125mhz),
     .clk2(axi_clk),
-    .data_in(controller_busy_sync1),
-    .data_out(controller_busy_sync2)
+    .data_in(controller_busy_SYNC),
+    .data_out(controller_busy)
   );
+
+  clk_sync codec_data_rd_valid_sync_inst(
+    .clk1(clk_125mhz),
+    .clk2(axi_clk),
+    .data_in(codec_data_rd_SYNC),
+    .data_out(codec_data_rd)
+  );
+
   clk_sync
   #(.DATA_W(8))
   codec_data_rd_sync_inst(
     .clk1(clk_125mhz),
     .clk2(axi_clk),
-    .data_in(codec_data_rd_sync1),
-    .data_out(codec_data_rd_sync2)
+    .data_in(codec_data_rd_SYNC),
+    .data_out(codec_data_rd)
   );
 
   
@@ -243,13 +218,13 @@ i2s_fifo_48x64 fifo (
     .clk1(axi_clk),
     .clk2(clk_125mhz),
     .data_in(codec_rd_en),
-    .data_out(codec_rd_en_sync)
+    .data_out(codec_rd_en_SYNC)
   );
   clk_sync codec_wr_en_sync_inst(
     .clk1(axi_clk),
     .clk2(clk_125),
     .data_in(codec_wr_en),
-    .data_out(codec_wr_en_sync)
+    .data_out(codec_wr_en_SYNC)
   );
   clk_sync  
   #(.DATA_W(8))
@@ -257,7 +232,7 @@ i2s_fifo_48x64 fifo (
     .clk1(axi_clk),
     .clk2(clk_125mhz),
     .data_in(codec_reg_addr),
-    .data_out(codec_reg_addr_sync)
+    .data_out(codec_reg_addr_SYNC)
   );
   clk_sync 
   #(.DATA_W(8))
@@ -265,7 +240,7 @@ i2s_fifo_48x64 fifo (
     .clk1(axi_clk),
     .clk2(clk_125mhz),
     .data_in(codec_data_wr),
-    .data_out(codec_data_wr_sync)
+    .data_out(codec_data_wr_SYNC)
   );
 
   // I2C to AXI
@@ -273,7 +248,7 @@ i2s_fifo_48x64 fifo (
     .clk1(axi_clk),
     .clk2(clk_125mhz),
     .data_in(i2c_ctrl_rd),
-    .data_out(i2c_ctrl_rd_sync)
+    .data_out(i2c_ctrl_rd_SYNC)
   );
   clk_sync 
   #(.DATA_W(3))
@@ -281,7 +256,7 @@ i2s_fifo_48x64 fifo (
     .clk1(axi_clk),
     .clk2(clk_125mhz),
     .data_in(i2c_ctrl_addr),
-    .data_out(i2c_ctrl_addr_sync)
+    .data_out(i2c_ctrl_addr_SYNC)
   );
 
   // AXI to I2C
@@ -291,6 +266,6 @@ i2s_fifo_48x64 fifo (
     .clk1(axi_clk),
     .clk2(clk_125mhz),
     .data_in(i2c_ctrl_data),
-    .data_out(i2c_ctrl_data_sync)
+    .data_out(i2c_ctrl_data_SYNC)
   );
 endmodule
