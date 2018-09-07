@@ -16,7 +16,7 @@ module codec_init_unit (
 
   output wire       codec_rd_en,
   output wire       codec_wr_en,
-  output wire [3:0] codec_reg_addr,
+  output wire [8:0] codec_reg_addr,
   output wire [7:0] codec_data_out,
   input  wire [7:0] codec_data_in,
   input  wire       codec_data_in_valid,
@@ -29,7 +29,7 @@ module codec_init_unit (
 
 reg       codec_rd_en_reg;
 reg       codec_wr_en_reg;
-reg [3:0] codec_reg_addr_reg;
+reg [7:0] codec_reg_addr_reg;
 reg [7:0] codec_data_out_reg;
 
 reg       codec_is_alive_reg;
@@ -44,12 +44,12 @@ assign codec_is_alive = codec_is_alive_reg;
 assign init_done      = init_done_reg;
 
 // Registers
-localparam ADC_LEFT_INPUT_VOLUME_REG   = 8'h0;
-localparam ADC_RIGHT_INPUT_VOLUME_REG  = 8'h1;
-localparam DAC_LEFT_OUTPUT_VOLUME_REG  = 8'h2;
-localparam DAC_RIGHT_OUTPUT_VOLUME_REG = 8'h3;
-localparam ANALOG_AUDIO_PATH           = 8'h4;
-localparam DIGITAL_AUDIO_PATH          = 8'h5;
+localparam ADC_LEFT_INPUT_VOLUME_REG   = 8'h00;
+localparam ADC_RIGHT_INPUT_VOLUME_REG  = 8'h01;
+localparam DAC_LEFT_OUTPUT_VOLUME_REG  = 8'h02;
+localparam DAC_RIGHT_OUTPUT_VOLUME_REG = 8'h03;
+localparam ANALOG_AUDIO_PATH           = 8'h04;
+localparam DIGITAL_AUDIO_PATH          = 8'h05;
 
 // States of the SM
 localparam START          = 3'h0;
@@ -88,8 +88,8 @@ always @(posedge clk or posedge reset) begin
     init_sm_cs         <= START;
     codec_rd_en_reg    <= 1'b0;
     codec_wr_en_reg    <= 1'b0;
-    codec_reg_addr_reg <= 4'h0;
-    codec_data_out_reg  <= 8'h00;
+    codec_reg_addr_reg <= 8'h0;
+    codec_data_out_reg <= 8'h00;
     codec_is_alive_reg <= 1'b0;
     init_done_reg      <= 1'b0;
   end // if (reset)
@@ -112,14 +112,14 @@ always @(posedge clk or posedge reset) begin
       INIT_DONE: begin
         codec_rd_en_reg    <= 1'b0;
         codec_wr_en_reg    <= 1'b0;
-        codec_reg_addr_reg <= 4'h0;
+        codec_reg_addr_reg <= 8'h00;
         codec_data_out_reg <= 8'h00;  
         init_done_reg      <= 1'b1;
       end    
       default: begin
         codec_rd_en_reg    <= 1'b0;
         codec_wr_en_reg    <= 1'b0;
-        codec_reg_addr_reg <= 4'h0;
+        codec_reg_addr_reg <= 8'h00;
         codec_data_out_reg <= 8'h00;
         init_done_reg      <= 1'b0;
       end

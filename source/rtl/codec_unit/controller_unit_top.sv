@@ -157,24 +157,24 @@ i2c_seq_sm i2c_seq_sm_inst (
 );
 
 i2c_master_wbs_8 i2c_master_inst(
-  .clk(clk_125mhz),
+  .clk,
   .rst(reset),
   // Wishbone
-  .wbs_adr_i(wbs_adr_o),
-  .wbs_dat_i(wbs_dat_o),
-  .wbs_dat_o(wbs_dat_i),
-  .wbs_we_i(wbs_we_o),
-  .wbs_stb_i(wbs_stb_o),
-  .wbs_ack_o(wbs_ack_i),
-  .wbs_cyc_i(wbs_cyc_o),
+  .wbs_adr_i (wbs_adr_o),
+  .wbs_dat_i (wbs_dat_o),
+  .wbs_dat_o (wbs_dat_i),
+  .wbs_we_i  (wbs_we_o ),
+  .wbs_stb_i (wbs_stb_o),
+  .wbs_ack_o (wbs_ack_i),
+  .wbs_cyc_i (wbs_cyc_o),
 
-  .i2c_scl_i(i2c_scl_i),
-  .i2c_scl_o(i2c_scl_o),
-  .i2c_scl_t(i2c_scl_t),
+  .i2c_scl_i (i2c_scl_i),
+  .i2c_scl_o (i2c_scl_o),
+  .i2c_scl_t (i2c_scl_t),
 
-  .i2c_sda_i(i2c_sda_i),
-  .i2c_sda_o(i2c_sda_o),
-  .i2c_sda_t(i2c_sda_t)
+  .i2c_sda_i (i2c_sda_i),
+  .i2c_sda_o (i2c_sda_o),
+  .i2c_sda_t (i2c_sda_t)
   );
 
 
