@@ -20,7 +20,7 @@ module codec_unit_top (
   //********************************************//
   ///////////////////////////////////////////////
   /////////////// CLOCK AND RESET /////////////// 
-  input wire clk, // 125MHz
+  input wire board_clk, // 50MHz
   input wire reset,
 
   ///////////////////////////////////////////////
@@ -31,8 +31,8 @@ module codec_unit_top (
 
   ///////////////////////////////////////////////
   //////////// I2C SIGNALS (Control) //////////// 
-  output wire i2c_scl,
-  inout  wire i2c_sda,
+  inout wire i2c_scl,
+  inout wire i2c_sda,
 
 
   //********************************************//
@@ -64,6 +64,8 @@ module codec_unit_top (
   input  wire [2:0] i2c_ctrl_addr,
   output wire [7:0] i2c_ctrl_data,
   output wire       controller_busy,
+  output wire       init_done,
+  output wire       init_error,
   
   ///////////////////////////////////////////////
   ///////////// CODEC DATA SIGNALS //////////////    
@@ -96,7 +98,6 @@ wire        i2c_scl_t;
 wire        i2c_sda_i;
 wire        i2c_sda_o;
 wire        i2c_sda_t;
-wire scl_pin, sda_pin;
 
 // Synchronizer
 wire       codec_rd_en_SYNC         ;
@@ -112,26 +113,23 @@ wire [7:0] i2c_ctrl_data_SYNC       ;
 
 assign pll_locked = mmcm_locked;
 
-assign i2c_scl = scl_pin;
-assign scl_pin = i2c_scl_o;
-
 IOBUF sda_iobuf (
-  .I  (i2c_scl_i), 
+  .I  (i2c_sda_o), 
   .IO (i2c_sda  ), 
-  .O  (i2c_scl_o), 
-  .T  (i2c_scl_t)
+  .O  (i2c_sda_i), 
+  .T  (i2c_sda_t)
   );   
 
 IOBUF scl_iobuf (
-  .I  (i2c_scl_i), 
-  .IO (i2c_sda  ), 
-  .O  (i2c_scl_o), 
+  .I  (i2c_scl_o), 
+  .IO (i2c_scl  ), 
+  .O  (i2c_scl_i), 
   .T  (i2c_scl_t)
   );   
 
 controller_unit_top controller_unit(
-  .clk  (clk_125mhz),
-  .reset(reset     ),
+  .clk  (board_clk),
+  .reset(reset    ),
 
   // CODEC RW signals
   .codec_rd_en          (codec_rd_en_SYNC         ), // Input
@@ -142,13 +140,16 @@ controller_unit_top controller_unit(
   .codec_data_out_valid (codec_data_out_valid_SYNC), // Output
   .controller_busy      (controller_busy_SYNC     ), // Output
 
+  .init_done,
+  .init_error,
+
   // I2C Signals
-  .i2c_scl_i (i2c_scl_i),
-  .i2c_scl_o (i2c_scl_o),
-  .i2c_scl_t (i2c_scl_t),
-  .i2c_sda_i (i2c_sda_i),
-  .i2c_sda_o (i2c_sda_o),
-  .i2c_sda_t (i2c_sda_t)
+  .i2c_scl_i,
+  .i2c_scl_o,
+  .i2c_scl_t,
+  .i2c_sda_i,
+  .i2c_sda_o,
+  .i2c_sda_t
   );
 
 
@@ -174,19 +175,19 @@ i2s_fifo_48x64 fifo (
   .empty       (fifo_empty)  // output wire empty
 );
 
-  audio_clk_mmcm audio_clk_mmcm(
-  // Clock out ports
-  //.clk_out1(clk_44_1_16b),
-  .clk_out1(clk_24mhz),
-  .clk_out2(clk_125mhz),
-  // .clk_out3(clk_48_16b),
-  // .clk_out4(clk_48_24b),
-  // Status and control signals
-  .reset(1'b0),
-  .locked(mmcm_locked),
- // Clock in ports
-  .clk_in1(clk)
-  );
+ // audio_clk_mmcm audio_clk_mmcm(
+ // // Clock out ports
+ // //.clk_out1(clk_44_1_16b),
+ // .clk_out1(clk_24mhz),
+ // .clk_out2(clk_125mhz),
+ // // .clk_out3(clk_48_16b),
+ // // .clk_out4(clk_48_24b),
+ // // Status and control signals
+ // .reset(1'b0),
+ // .locked(mmcm_locked),
+ //// Clock in ports
+ // .clk_in1(clk)
+ // );
 
 
 //---- Synchronizers --------//

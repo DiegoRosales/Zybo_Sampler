@@ -1,22 +1,30 @@
 //// Sampler Top
 module sampler_top (
-  input wire clk_125,
+  input wire board_clk,
   input wire reset,
 
+  // Switches
   input wire sw0,
   input wire sw1,
   input wire sw2,
   input wire sw3,
 
+  // Push Buttons
+  input wire btn0,
+  input wire btn1,
+  input wire btn2,
+  input wire btn3,
+
+  // LEDs
   output wire led0,
   output wire led1,
   output wire led2,
   output wire led3,
 
   // CODEC I2S Audio Data Signals
-  output wire i2s_bclk,
-  output wire i2s_wclk,
-  output wire i2s_data,
+  //output wire i2s_bclk,
+  //output wire i2s_wclk,
+  //output wire i2s_data,
 
   // CODEC Misc Signals
   output wire ac_bclk,
@@ -50,21 +58,28 @@ wire [7:0] i2c_ctrl_data;
 wire [47:0] data_in      = 0;
 wire        data_wr      = 0;
 
+wire        init_done;
+wire        init_error;
 wire pll_locked;
+
+
+assign led0 = init_done;
+assign led1 = init_error;
+assign led3 = pll_locked;
 
 codec_unit_top codec_unit(
   //********************************************//
   //              Board Signals                 //
   //********************************************//
   // Board Clock and Reset
-  .clk(clk_125), // 125MHz
-  .reset(sw0),
+  .board_clk, // 50MHz
+  .reset(btn3),
 
   ///////////////////////////////////////////////
   ///////////////// I2S SIGNALS ///////////////// 
-  .i2s_bclk,
-  .i2s_wclk,
-  .i2s_data,
+ // .i2s_bclk,
+ // .i2s_wclk,
+ // .i2s_data,
 
   ///////////////////////////////////////////////
   ///////////////// I2C SIGNALS ///////////////// 
@@ -101,6 +116,8 @@ codec_unit_top codec_unit(
   .i2c_ctrl_addr,
   .i2c_ctrl_data,
   .controller_busy,
+  .init_done,
+  .init_error,
   
   ///////////////////////////////////////////////
   ///////////// CODEC DATA SIGNALS //////////////    

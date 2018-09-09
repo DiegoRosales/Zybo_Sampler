@@ -11,6 +11,7 @@
 /////////////////////////////////////////////////////
 
 module controller_unit_top (
+  // 50MHz from the board
   input wire clk,
   input wire reset,
 
@@ -24,7 +25,8 @@ module controller_unit_top (
   output wire       controller_busy,
 
   // CODEC Status bit
-  output wire codec_is_alive,
+  output wire init_done,
+  output wire init_error,
 
   // I2C Interface
   input  wire        i2c_scl_i,
@@ -55,14 +57,12 @@ wire       wb_done         ;
 wire       wb_data_in_valid;
 
 // Initialization Controller
-wire       INIT_codec_rd_en          ;
-wire       INIT_codec_wr_en          ;
-wire [7:0] INIT_codec_data_out       ;
-wire [7:0] INIT_codec_reg_addr       ;
-wire [7:0] INIT_codec_data_in        ;
-wire       INIT_codec_data_in_valid  ;
-wire       codec_is_alive            ;
-wire       init_done                 ;
+wire       INIT_codec_rd_en        ;
+wire       INIT_codec_wr_en        ;
+wire [7:0] INIT_codec_data_out     ;
+wire [7:0] INIT_codec_reg_addr     ;
+wire [7:0] INIT_codec_data_in      ;
+wire       INIT_codec_data_in_valid;
 
 // I2C State Machine
 wire       CONTROLLER_codec_rd_en         ;
@@ -75,17 +75,17 @@ wire       CONTROLLER_controller_busy     ;
 
 // Don't allow external Rd/Wr until the initialization is done
 // Inputs
-assign CONTROLLER_codec_rd_en    = (init_done == 1'b0) ? INIT_codec_rd_en    : codec_rd_en;
-assign CONTROLLER_codec_wr_en    = (init_done == 1'b0) ? INIT_codec_wr_en    : codec_wr_en;
-assign CONTROLLER_codec_reg_addr = (init_done == 1'b0) ? INIT_codec_reg_addr : codec_reg_addr;
-assign CONTROLLER_codec_data_in  = (init_done == 1'b0) ? INIT_codec_data_out : codec_data_in;
+assign CONTROLLER_codec_rd_en    = ((init_done | init_error) == 1'b0) ? INIT_codec_rd_en    : codec_rd_en;
+assign CONTROLLER_codec_wr_en    = ((init_done | init_error) == 1'b0) ? INIT_codec_wr_en    : codec_wr_en;
+assign CONTROLLER_codec_reg_addr = ((init_done | init_error) == 1'b0) ? INIT_codec_reg_addr : codec_reg_addr;
+assign CONTROLLER_codec_data_in  = ((init_done | init_error) == 1'b0) ? INIT_codec_data_out : codec_data_in;
 // Outputs
-assign codec_data_out            = (init_done == 1'b0) ? 8'h00               : CONTROLLER_codec_data_out;
-assign codec_data_out_valid      = (init_done == 1'b0) ? 1'b0                : CONTROLLER_codec_data_out_valid;
-assign controller_busy           = (init_done == 1'b0) ? 1'b1                : CONTROLLER_controller_busy;
+assign codec_data_out            = ((init_done | init_error) == 1'b0) ? 8'h00               : CONTROLLER_codec_data_out;
+assign codec_data_out_valid      = ((init_done | init_error) == 1'b0) ? 1'b0                : CONTROLLER_codec_data_out_valid;
+assign controller_busy           = ((init_done | init_error) == 1'b0) ? 1'b1                : CONTROLLER_controller_busy;
 // Internal
-assign INIT_codec_data_in        = (init_done == 1'b1) ? 8'h00               : CONTROLLER_codec_data_out;
-assign INIT_codec_data_in_valid  = (init_done == 1'b1) ? 1'b0                : CONTROLLER_codec_data_out_valid;
+assign INIT_codec_data_in        = ((init_done | init_error) == 1'b1) ? 8'h00               : CONTROLLER_codec_data_out;
+assign INIT_codec_data_in_valid  = ((init_done | init_error) == 1'b1) ? 1'b0                : CONTROLLER_codec_data_out_valid;
 
 wb_master_controller wb_master_controller_inst (
   .clk,
@@ -128,8 +128,8 @@ codec_init_unit codec_init_unit_inst (
   .controller_busy     (CONTROLLER_controller_busy),
 
   // Signals to the top registers
-  .codec_is_alive,
-  .init_done  
+  .init_done,
+  .init_error
 
 );
 i2c_seq_sm i2c_seq_sm_inst (
@@ -168,13 +168,13 @@ i2c_master_wbs_8 i2c_master_inst(
   .wbs_ack_o (wbs_ack_i),
   .wbs_cyc_i (wbs_cyc_o),
 
-  .i2c_scl_i (i2c_scl_i),
-  .i2c_scl_o (i2c_scl_o),
-  .i2c_scl_t (i2c_scl_t),
-
-  .i2c_sda_i (i2c_sda_i),
-  .i2c_sda_o (i2c_sda_o),
-  .i2c_sda_t (i2c_sda_t)
+  // I2C
+  .i2c_scl_i,
+  .i2c_scl_o,
+  .i2c_scl_t,
+  .i2c_sda_i,
+  .i2c_sda_o,
+  .i2c_sda_t
   );
 
 

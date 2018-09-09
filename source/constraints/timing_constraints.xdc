@@ -3,4 +3,5 @@
 ## - uncomment the lines corresponding to used pins
 ## - rename the used signals according to the project
 
-create_clock -add -name sys_clk_pin -period 8.00 -waveform {0 4} [get_ports { clk }];
+## Board clock - 50MHz
+create_clock -add -name board_clk -period 20 -waveform {0 4} [get_ports { board_clk }];
