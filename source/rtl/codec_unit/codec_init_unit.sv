@@ -60,7 +60,7 @@ localparam WAIT_ON_REG_WR = 3'h4;
 localparam INIT_DONE      = 3'h5;
 localparam INIT_ERROR     = 3'h6;
 
-localparam DEFAULT_VALUE  = 8'h00;
+localparam DEFAULT_VALUE  = 8'b10010111;
 reg [2:0] init_sm_cs;
 reg [2:0] init_sm_ns;
 
