@@ -7,8 +7,8 @@
 // Generates a Flipflop Register
 `define GEN_REG(CLK, RST, REGISTER, DEF_VAL, WR, WR_DATA)\
     always_ff @(posedge CLK or negedge RST) \
-        if (RST) REGISTER <= DEF_VAL; \
-        else REGISTER <= (WR) ? WR_DATA : REGISTER; \
+        if (~RST) REGISTER <= DEF_VAL; \
+        else REGISTER      <= (WR) ? WR_DATA : REGISTER; \
 
 
 
@@ -38,5 +38,17 @@
 // WR      = AXI WR Signal
 // WR_DATA = AXI Data to be written
 // REG     = Register Signal
-`define GEN_REG_SW_RW(CLK, RST, SIZE, DEF_VAL, ADDR, ADDR_WR, WR, WR_DATA, REG) \
+`define GEN_REG_SW_RW(CLK, RST, DEF_VAL, ADDR, ADDR_WR, WR, WR_DATA, REG) \
     `GEN_REG(CLK, RST, REG, DEF_VAL, `DECODE_MEM_WR(ADDR, ADDR_WR, WR), WR_DATA)
+
+// Generate an AXI register that the hardware can WR and the Software can RD
+// CLK     = AXI Clock
+// RST     = AXI Reset
+// DEF_VAL = Value of the register after reset
+// ADDR    = Register Address
+// ADDR_WR = AXI Address Signal
+// WR      = AXI WR Signal
+// WR_DATA = AXI Data to be written
+// REG     = Register Signal
+`define GEN_REG_SW_RO_HW_WO(CLK, RST, DEF_VAL, WR, WR_DATA, REG) \
+    `GEN_REG(CLK, RST, REG, DEF_VAL, WR, WR_DATA)    
