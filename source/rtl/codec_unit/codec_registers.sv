@@ -14,8 +14,10 @@ module codec_registers (
     input  wire [3:0]  byte_enable,
 
     // Signals from the design
-    input wire clear_codec_i2c_data_wr,
-    input wire clear_codec_i2c_data_rd
+    input wire        clear_codec_i2c_data_wr,
+    input wire        clear_codec_i2c_data_rd,
+    input wire [31:0] codec_i2c_rd_data,
+    input wire        update_codec_i2c_rd_data
 
 );
 
@@ -38,17 +40,24 @@ reg codec_i2c_data_rd;
 // codec_i2c_addr
 // Address 1
 reg   [31:0] codec_i2c_addr_reg;
-`GEN_REG_SW_RW(axi_clk, axi_reset, 32, 0, 6'h01, reg_addr, data_wren, data_in[31:0], codec_i2c_addr_reg)
+`GEN_REG_SW_RW(axi_clk, axi_reset, 0, 6'h01, reg_addr, data_wren, data_in[31:0], codec_i2c_addr_reg)
 
 // codec_i2c_wr_data
 // Address 2
 reg   [31:0] codec_i2c_wr_data_reg;
-`GEN_REG_SW_RW(axi_clk, axi_reset, 32, 0, 6'h02, reg_addr, data_wren, data_in[31:0], codec_i2c_wr_data_reg)
+`GEN_REG_SW_RW(axi_clk, axi_reset, 0, 6'h02, reg_addr, data_wren, data_in[31:0], codec_i2c_wr_data_reg)
 
-assign codec_i2c_ctrl_reg[0] = codec_i2c_data_wr;
-assign codec_i2c_ctrl_reg[1] = codec_i2c_data_rd;
+// codec_i2c_wr_data
+// Address 3
+reg   [31:0] codec_i2c_rd_data_reg;
+`GEN_REG_SW_RO_HW_WO(axi_clk, axi_reset, 0, update_codec_i2c_rd_data, codec_i2c_rd_data, codec_i2c_rd_data_reg)
+
+
+assign codec_i2c_ctrl_reg[0]    = codec_i2c_data_wr;
+assign codec_i2c_ctrl_reg[1]    = codec_i2c_data_rd;
 assign codec_i2c_ctrl_reg[31:2] = {30{1'b1}};
-assign data_out = reg_data_out;
+
+assign data_out                 = reg_data_out;
 
 always @(*)
 	begin
@@ -57,7 +66,7 @@ always @(*)
 	        6'h00   : reg_data_out <= codec_i2c_ctrl_reg;
 	        6'h01   : reg_data_out <= codec_i2c_addr_reg;
 	        6'h02   : reg_data_out <= codec_i2c_wr_data_reg;
-	        //6'h03   : reg_data_out <= codec_i2c_data_rd_reg;
+	        6'h03   : reg_data_out <= codec_i2c_rd_data_reg;
 	        //6'h04   : reg_data_out <= slv_reg4;
 	        //6'h05   : reg_data_out <= slv_reg5;
 	        //6'h06   : reg_data_out <= slv_reg6;
