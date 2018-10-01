@@ -7,22 +7,25 @@ module sampler_top #(
   input wire reset,
 
   // Switches
-  input wire sw0,
-  input wire sw1,
-  input wire sw2,
-  input wire sw3,
+  input wire sw[3:0],
+  //input wire sw0,
+  //input wire sw1,
+  //input wire sw2,
+  //input wire sw3,
 
   // Push Buttons
-  input wire btn0,
-  input wire btn1,
-  input wire btn2,
-  input wire btn3,
+  input wire btn[3:0],
+  //input wire btn0,
+  //input wire btn1,
+  //input wire btn2,
+  //input wire btn3,
 
   // LEDs
-  output wire led0,
-  output wire led1,
-  output wire led2,
-  output wire led3,
+  output wire led[3:0],
+  //output wire led0,
+  //output wire led1,
+  //output wire led2,
+  //output wire led3,
 
   // CODEC I2S Audio Data Signals
   //output wire i2s_bclk,
@@ -87,12 +90,14 @@ wire        data_wr      = 0;
 
 wire        init_done;
 wire        init_error;
+wire        missed_ack;
 wire pll_locked;
 
 
-assign led0 = init_done;
-assign led1 = init_error;
-assign led3 = pll_locked;
+assign led[0] = init_done;
+assign led[1] = init_error;
+assign led[2] = missed_ack;
+assign led[3] = controller_busy;
 
 codec_unit_top #(
   .C_S00_AXI_DATA_WIDTH(C_S00_AXI_DATA_WIDTH),
@@ -103,7 +108,7 @@ codec_unit_top #(
   //********************************************//
   // Board Clock and Reset
   .board_clk, // 50MHz
-  .reset(btn3),
+  .reset(btn[3]),
 
   ///////////////////////////////////////////////
   ///////////////// I2S SIGNALS ///////////////// 
@@ -148,6 +153,7 @@ codec_unit_top #(
   .controller_busy,
   .init_done,
   .init_error,
+  .missed_ack,
   
   ///////////////////////////////////////////////
   ///////////// CODEC DATA SIGNALS //////////////    

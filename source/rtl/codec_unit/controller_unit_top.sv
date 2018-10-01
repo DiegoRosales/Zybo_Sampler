@@ -23,6 +23,7 @@ module controller_unit_top (
   output wire [7:0] codec_data_out,
   output wire       codec_data_out_valid,
   output wire       controller_busy,
+  output wire       missed_ack,
 
   // CODEC Status bit
   output wire init_done,
@@ -125,7 +126,6 @@ codec_init_unit codec_init_unit_inst (
   .codec_data_out      (INIT_codec_data_out       ),
   .codec_data_in       (INIT_codec_data_in        ),
   .codec_data_in_valid (INIT_codec_data_in_valid  ),
-  .controller_busy     (CONTROLLER_controller_busy),
 
   // Signals to the top registers
   .init_done,
@@ -152,7 +152,10 @@ i2c_seq_sm i2c_seq_sm_inst (
   .wb_address,
   .wb_data_in,
   .wb_data_in_valid,
-  .wb_done
+  .wb_done,
+
+  // Misc
+  .missed_ack
 
 );
 

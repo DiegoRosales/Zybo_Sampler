@@ -78,7 +78,21 @@
 		output wire  S_AXI_RVALID,
 		// Read ready. This signal indicates that the master can
     		// accept the read data and response information.
-		input wire  S_AXI_RREADY
+		input wire  S_AXI_RREADY,
+
+		///////////////////////////////////////////////////
+    // Signals from the design
+    input  wire        clear_codec_i2c_data_wr,
+    input  wire        clear_codec_i2c_data_rd,
+		output wire        codec_i2c_data_wr,
+		output wire        codec_i2c_data_rd,
+		input  wire        controller_busy,
+		input  wire        codec_init_done,
+		output wire [31:0] codec_i2c_addr,
+		output wire [31:0] codec_i2c_wr_data,
+    input  wire [31:0] codec_i2c_rd_data,
+    input  wire        update_codec_i2c_rd_data
+
 	);
 
 	// AXI4LITE signals
@@ -104,10 +118,6 @@
 	//-- Signals for user logic register space example
 	//------------------------------------------------
 	//-- Number of Slave Registers 40
-	reg [C_S_AXI_DATA_WIDTH-1:0]	slv_reg0;
-	reg [C_S_AXI_DATA_WIDTH-1:0]	slv_reg1;
-	reg [C_S_AXI_DATA_WIDTH-1:0]	slv_reg2;
-	reg [C_S_AXI_DATA_WIDTH-1:0]	slv_reg3;
 	reg [C_S_AXI_DATA_WIDTH-1:0]	slv_reg4;
 	reg [C_S_AXI_DATA_WIDTH-1:0]	slv_reg5;
 	reg [C_S_AXI_DATA_WIDTH-1:0]	slv_reg6;
@@ -144,9 +154,16 @@
 	reg [C_S_AXI_DATA_WIDTH-1:0]	slv_reg37;
 	reg [C_S_AXI_DATA_WIDTH-1:0]	slv_reg38;
 	reg [C_S_AXI_DATA_WIDTH-1:0]	slv_reg39;
+
+	//--Next Value of the registers
+	reg [C_S_AXI_DATA_WIDTH-1:0]	nxt_codec_i2c_ctrl_reg;
+	reg [C_S_AXI_DATA_WIDTH-1:0]	nxt_codec_i2c_addr_reg;
+	reg [C_S_AXI_DATA_WIDTH-1:0]	nxt_codec_i2c_data_wr_reg;
+	reg [C_S_AXI_DATA_WIDTH-1:0]	nxt_codec_i2c_data_rd_reg;
+
 	wire	 slv_reg_rden;
 	wire	 slv_reg_wren;
-	reg [C_S_AXI_DATA_WIDTH-1:0]	 reg_data_out;
+	wire [C_S_AXI_DATA_WIDTH-1:0]	 reg_data_out;
 	integer	 byte_index;
 	reg	 aw_en;
 
@@ -251,15 +268,15 @@
 	// Slave register write enable is asserted when valid address and data are available
 	// and the slave is ready to accept the write address and write data.
 	assign slv_reg_wren = axi_wready && S_AXI_WVALID && axi_awready && S_AXI_AWVALID;
-
+/*
 	always @( posedge S_AXI_ACLK )
 	begin
 	  if ( S_AXI_ARESETN == 1'b0 )
 	    begin
-	      slv_reg0 <= 0;
-	      slv_reg1 <= 0;
-	      slv_reg2 <= 0;
-	      slv_reg3 <= 0;
+	      codec_i2c_ctrl_reg <= 0;
+	      codec_i2c_addr_reg <= 0;
+	      codec_i2c_data_wr_reg <= 0;
+	      codec_i2c_data_rd_reg <= 0;
 	      slv_reg4 <= 0;
 	      slv_reg5 <= 0;
 	      slv_reg6 <= 0;
@@ -298,6 +315,10 @@
 	      slv_reg39 <= 0;
 	    end 
 	  else begin
+			codec_i2c_ctrl_reg    <= nxt_codec_i2c_ctrl_reg;
+			codec_i2c_addr_reg    <= nxt_codec_i2c_addr_reg;
+			codec_i2c_data_wr_reg <= nxt_codec_i2c_data_wr_reg;
+			codec_i2c_data_rd_reg <= nxt_codec_i2c_data_rd_reg;
 	    if (slv_reg_wren)
 	      begin
 	        case ( axi_awaddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] )
@@ -306,28 +327,28 @@
 	              if ( S_AXI_WSTRB[byte_index] == 1 ) begin
 	                // Respective byte enables are asserted as per write strobes 
 	                // Slave register 0
-	                slv_reg0[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
+	                codec_i2c_ctrl_reg[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
 	              end  
 	          6'h01:
 	            for ( byte_index = 0; byte_index <= (C_S_AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
 	              if ( S_AXI_WSTRB[byte_index] == 1 ) begin
 	                // Respective byte enables are asserted as per write strobes 
 	                // Slave register 1
-	                slv_reg1[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
+	                codec_i2c_addr_reg[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
 	              end  
 	          6'h02:
 	            for ( byte_index = 0; byte_index <= (C_S_AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
 	              if ( S_AXI_WSTRB[byte_index] == 1 ) begin
 	                // Respective byte enables are asserted as per write strobes 
 	                // Slave register 2
-	                slv_reg2[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
+	                codec_i2c_data_wr_reg[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
 	              end  
 	          6'h03:
 	            for ( byte_index = 0; byte_index <= (C_S_AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
 	              if ( S_AXI_WSTRB[byte_index] == 1 ) begin
 	                // Respective byte enables are asserted as per write strobes 
 	                // Slave register 3
-	                slv_reg3[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
+	                codec_i2c_data_rd_reg[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
 	              end  
 	          6'h04:
 	            for ( byte_index = 0; byte_index <= (C_S_AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
@@ -582,10 +603,10 @@
 	                slv_reg39[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
 	              end  
 	          default : begin
-	                      slv_reg0 <= slv_reg0;
-	                      slv_reg1 <= slv_reg1;
-	                      slv_reg2 <= slv_reg2;
-	                      slv_reg3 <= slv_reg3;
+	                      codec_i2c_ctrl_reg <= codec_i2c_ctrl_reg;
+	                      codec_i2c_addr_reg <= codec_i2c_addr_reg;
+	                      codec_i2c_data_wr_reg <= codec_i2c_data_wr_reg;
+	                      codec_i2c_data_rd_reg <= codec_i2c_data_rd_reg;
 	                      slv_reg4 <= slv_reg4;
 	                      slv_reg5 <= slv_reg5;
 	                      slv_reg6 <= slv_reg6;
@@ -627,7 +648,7 @@
 	      end
 	  end
 	end    
-
+*/
 	// Implement write response logic generation
 	// The write response and response valid signals are asserted by the slave 
 	// when axi_wready, S_AXI_WVALID, axi_wready and S_AXI_WVALID are asserted.  
@@ -725,15 +746,17 @@
 	// Implement memory mapped register select and read logic generation
 	// Slave register read enable is asserted when valid address is available
 	// and the slave is ready to accept the read address.
+	
 	assign slv_reg_rden = axi_arready & S_AXI_ARVALID & ~axi_rvalid;
+	/*
 	always @(*)
 	begin
 	      // Address decoding for reading registers
 	      case ( axi_araddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] )
-	        6'h00   : reg_data_out <= slv_reg0;
-	        6'h01   : reg_data_out <= slv_reg1;
-	        6'h02   : reg_data_out <= slv_reg2;
-	        6'h03   : reg_data_out <= slv_reg3;
+	        6'h00   : reg_data_out <= codec_i2c_ctrl_reg;
+	        6'h01   : reg_data_out <= codec_i2c_addr_reg;
+	        6'h02   : reg_data_out <= codec_i2c_data_wr_reg;
+	        6'h03   : reg_data_out <= codec_i2c_data_rd_reg;
 	        6'h04   : reg_data_out <= slv_reg4;
 	        6'h05   : reg_data_out <= slv_reg5;
 	        6'h06   : reg_data_out <= slv_reg6;
@@ -773,7 +796,7 @@
 	        default : reg_data_out <= 0;
 	      endcase
 	end
-
+*/
 	// Output register or memory read data
 	always @( posedge S_AXI_ACLK )
 	begin
@@ -794,6 +817,21 @@
 	end    
 
 	// Add user logic here
+
+	codec_registers
+	codec_registers (
+		.axi_clk(S_AXI_ACLK),
+		.axi_reset(S_AXI_ARESETN),
+
+		.data_in(S_AXI_WDATA),
+		.data_out(reg_data_out),
+		.reg_addr_wr(axi_awaddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB]),
+		.reg_addr_rd(axi_araddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB]),
+		.data_wren(slv_reg_wren),
+		.byte_enable(4'h0),
+
+		.*
+	);
 
 	// User logic ends
 

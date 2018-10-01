@@ -52,3 +52,13 @@
 // REG     = Register Signal
 `define GEN_REG_SW_RO_HW_WO(CLK, RST, DEF_VAL, WR, WR_DATA, REG) \
     `GEN_REG(CLK, RST, REG, DEF_VAL, WR, WR_DATA)    
+
+
+`define REG_SYNC(CLK1, CLK2, SIZE, IN, OUT, NAME) \
+    reg [SIZE - 1 : 0 ] ``NAME``_SYNC1; \
+    reg [SIZE - 1 : 0 ] ``NAME``_SYNC2; \
+    reg [SIZE - 1 : 0 ] ``NAME``_SYNC3; \
+    assign OUT = ``NAME``_SYNC3; \
+    always_ff @(posedge CLK1)  ``NAME``_SYNC1 <= IN; \
+    always_ff @(posedge CLK1)  ``NAME``_SYNC2 <= ``NAME``_SYNC1; \
+    always_ff @(posedge CLK2)  ``NAME``_SYNC3 <= ``NAME``_SYNC2;

@@ -69,6 +69,7 @@ module codec_unit_top #(
   output wire       controller_busy,
   output wire       init_done,
   output wire       init_error,
+  output wire       missed_ack,
   
   ///////////////////////////////////////////////
   ///////////// CODEC DATA SIGNALS //////////////    
@@ -140,6 +141,20 @@ wire [7:0] i2c_ctrl_data_SYNC       ;
 
 assign pll_locked = 1'b0;
 
+// Interface between the register unit and the design
+wire        clear_codec_i2c_data_wr;
+wire        clear_codec_i2c_data_rd;
+wire        codec_i2c_data_wr;
+wire        codec_i2c_data_rd;
+wire        controller_busy;
+wire        codec_init_done;
+wire [31:0] codec_i2c_addr;
+wire [31:0] codec_i2c_wr_data;
+wire [31:0] codec_i2c_rd_data;
+wire        update_codec_i2c_rd_data;
+
+assign codec_init_done = init_done;
+
 IOBUF sda_iobuf (
   .I  (i2c_sda_o), 
   .IO (i2c_sda  ), 
@@ -159,13 +174,13 @@ controller_unit_top controller_unit(
   .reset(reset    ),
 
   // CODEC RW signals
-  .codec_rd_en          (codec_rd_en_SYNC         ), // Input
-  .codec_wr_en          (codec_wr_en_SYNC         ), // Input
-  .codec_reg_addr       (codec_reg_addr_SYNC      ), // Input
-  .codec_data_in        (codec_data_in_SYNC       ), // Input
-  .codec_data_out       (codec_data_out_SYNC      ), // Output
-  .codec_data_out_valid (codec_data_out_valid_SYNC), // Output
-  .controller_busy      (controller_busy_SYNC     ), // Output
+  .codec_rd_en          (codec_i2c_data_rd       ), // Input
+  .codec_wr_en          (codec_i2c_data_wr       ), // Input
+  .codec_reg_addr       (codec_i2c_addr[7:0]     ), // Input
+  .codec_data_in        (codec_i2c_wr_data       ), // Input
+  .codec_data_out       (codec_i2c_rd_data       ), // Output
+  .codec_data_out_valid (update_codec_i2c_rd_data), // Output
+  .controller_busy, // Output
 
   .init_done,
   .init_error,
@@ -201,13 +216,16 @@ register_unit #(
 
 
   // Interface to the controller_unit
-  .codec_rd_en          (codec_rd_en         ),
-  .codec_wr_en          (codec_wr_en         ),
-  .codec_reg_addr       (codec_reg_addr      ),
-  .codec_data_out       (codec_data_in       ),
-  .codec_data_in        (codec_data_out      ),
-  .codec_data_in_valid  (codec_data_out_valid),
-  .controller_busy      (controller_busy     ),
+  .clear_codec_i2c_data_wr(controller_busy),
+  .clear_codec_i2c_data_rd(controller_busy),
+  .codec_i2c_data_wr,
+  .codec_i2c_data_rd,
+  .controller_busy,
+  .codec_init_done,
+  .codec_i2c_addr,
+  .codec_i2c_wr_data,
+  .codec_i2c_rd_data,
+  .update_codec_i2c_rd_data,
   
   //---- AXI Clock Domain ----//
   .s00_axi_aclk,
@@ -233,4 +251,5 @@ register_unit #(
   .s00_axi_rready
 
 );
+
 endmodule

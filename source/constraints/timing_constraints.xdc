@@ -4,4 +4,5 @@
 ## - rename the used signals according to the project
 
 ## Board clock - 50MHz
-create_clock -add -name board_clk -period 20 -waveform {0 4} [get_ports { board_clk }];
+create_clock -period 20.000 -name board_clk -waveform {0.000 4.000} -add [get_ports board_clk]
+

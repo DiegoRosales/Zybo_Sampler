@@ -15,13 +15,16 @@ module register_unit #(
     input wire reset,
 
     // Interface to the controller_unit //
-    output wire       codec_rd_en,
-    output wire       codec_wr_en,
-    output wire [7:0] codec_reg_addr,
-    output wire [7:0] codec_data_out,
-    input  wire [7:0] codec_data_in,
-    input  wire       codec_data_in_valid,
-    input  wire       controller_busy,
+    input  wire        clear_codec_i2c_data_wr,
+    input  wire        clear_codec_i2c_data_rd,
+	output wire        codec_i2c_data_wr,
+    output wire        codec_i2c_data_rd,
+	input  wire        controller_busy,
+	input  wire        codec_init_done,
+	output wire [31:0] codec_i2c_addr,
+	output wire [31:0] codec_i2c_wr_data,
+    input  wire [31:0] codec_i2c_rd_data,
+    input  wire        update_codec_i2c_rd_data,
 
     //---- AXI Clock Domain ----//
     // Ports of Axi Slave Bus Interface S00_AXI
@@ -48,9 +51,29 @@ module register_unit #(
 	input  wire                                  s00_axi_rready
 );
 
+`include "register_params.svh"
 
+wire        clear_codec_i2c_data_wr;
+wire        clear_codec_i2c_data_rd;
+wire        codec_i2c_data_wr;
+wire        codec_i2c_data_rd;
+wire        controller_busy;
+wire        codec_init_done;
+wire [31:0] codec_i2c_addr;
+wire [31:0] codec_i2c_wr_data;
+wire [31:0] codec_i2c_rd_data;
+wire        update_codec_i2c_rd_data;
 
-//`include "register_params.inc"
+wire        clear_codec_i2c_data_wr_sync;
+wire        clear_codec_i2c_data_rd_sync;
+wire        codec_i2c_data_wr_sync;
+wire        codec_i2c_data_rd_sync;
+wire        controller_busy_sync;
+wire        codec_init_done_sync;
+wire [31:0] codec_i2c_addr_sync;
+wire [31:0] codec_i2c_wr_data_sync;
+wire [31:0] codec_i2c_rd_data_sync;
+wire        update_codec_i2c_rd_data_sync;
 
 
 // Instantiation of Axi Bus Interface S00_AXI
@@ -78,7 +101,38 @@ module register_unit #(
 		.S_AXI_RDATA(s00_axi_rdata),
 		.S_AXI_RRESP(s00_axi_rresp),
 		.S_AXI_RVALID(s00_axi_rvalid),
-		.S_AXI_RREADY(s00_axi_rready)
+		.S_AXI_RREADY(s00_axi_rready),
+		
+		.clear_codec_i2c_data_wr(clear_codec_i2c_data_wr_sync),
+		.clear_codec_i2c_data_rd(clear_codec_i2c_data_rd_sync),
+		.codec_i2c_data_wr(codec_i2c_data_wr_sync),
+		.codec_i2c_data_rd(codec_i2c_data_rd_sync),
+		.controller_busy(controller_busy_sync),
+		.codec_init_done(codec_init_done_sync),
+		.codec_i2c_addr(codec_i2c_addr_sync),
+		.codec_i2c_wr_data(codec_i2c_wr_data_sync),
+		.codec_i2c_rd_data(codec_i2c_rd_data_sync),
+		.update_codec_i2c_rd_data(update_codec_i2c_rd_data_sync)
+
 	);
+
+
+///////////////////
+// Synchronizers //
+///////////////////
+// AXI -> Board Clock
+`REG_SYNC(s00_axi_aclk, board_clk, 1 , codec_i2c_data_wr_sync , codec_i2c_data_wr, codec_i2c_data_wr)
+`REG_SYNC(s00_axi_aclk, board_clk, 1 , codec_i2c_data_rd_sync , codec_i2c_data_rd, codec_i2c_data_rd)
+`REG_SYNC(s00_axi_aclk, board_clk, 32, codec_i2c_addr_sync    , codec_i2c_addr   , codec_i2c_addr)
+`REG_SYNC(s00_axi_aclk, board_clk, 32, codec_i2c_wr_data_sync , codec_i2c_wr_data, codec_i2c_wr_data)
+
+
+// Board Clock -> AXI
+`REG_SYNC(board_clk, s00_axi_aclk, 1 , clear_codec_i2c_data_wr , clear_codec_i2c_data_wr_sync , clear_codec_i2c_data_wr)
+`REG_SYNC(board_clk, s00_axi_aclk, 1 , clear_codec_i2c_data_rd , clear_codec_i2c_data_rd_sync , clear_codec_i2c_data_rd)
+`REG_SYNC(board_clk, s00_axi_aclk, 1 , codec_init_done_sync    , codec_init_done_sync_sync    , codec_init_done_sync)
+`REG_SYNC(board_clk, s00_axi_aclk, 1 , controller_busy         , controller_busy_sync         , controller_busy)
+`REG_SYNC(board_clk, s00_axi_aclk, 32, codec_i2c_rd_data       , codec_i2c_rd_data_sync       , codec_i2c_rd_data)
+`REG_SYNC(board_clk, s00_axi_aclk, 1 , update_codec_i2c_rd_data, update_codec_i2c_rd_data_sync, update_codec_i2c_rd_data)
 
 endmodule

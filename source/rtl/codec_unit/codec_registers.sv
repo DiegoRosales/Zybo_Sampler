@@ -9,101 +9,144 @@ module codec_registers (
     // Data signals
     input  wire [31:0] data_in,
     output wire [31:0] data_out,
-    input  wire [5:0]  reg_addr,
+    input  wire [5:0]  reg_addr_wr,
+	input  wire [5:0]  reg_addr_rd,
     input  wire        data_wren,
     input  wire [3:0]  byte_enable,
 
     // Signals from the design
-    input wire        clear_codec_i2c_data_wr,
-    input wire        clear_codec_i2c_data_rd,
-    input wire [31:0] codec_i2c_rd_data,
-    input wire        update_codec_i2c_rd_data
+    input  wire        clear_codec_i2c_data_wr,
+    input  wire        clear_codec_i2c_data_rd,
+	output wire        codec_i2c_data_wr,
+    output wire        codec_i2c_data_rd,
+	input  wire        controller_busy,
+	input  wire        codec_init_done,
+	output wire [31:0] codec_i2c_addr,
+	output wire [31:0] codec_i2c_wr_data,
+    input  wire [31:0] codec_i2c_rd_data,
+    input  wire        update_codec_i2c_rd_data
 
 );
 
-`include "register_params.inc"
+`include "register_params.svh"
 
-reg [31:0] reg_data_out;
+`define CODEC_I2C_CTRL_REG_ADDR    6'h00
+`define CODEC_I2C_ADDR_REG_ADDR    6'h01
+`define CODEC_I2C_WR_DATA_REG_ADDR 6'h02
+`define CODEC_I2C_RD_DATA_REG_ADDR 6'h03
+`define MISC_DATA_0_REG_ADDR       6'h04
+`define MISC_DATA_1_REG_ADDR       6'h05
+`define MISC_DATA_2_REG_ADDR       6'h06
 
-logic [31:0] codec_i2c_ctrl_reg;
 
-// codec_i2c_ctrl_reg
+logic [31:0] reg_data_out;
+
+
+
+///////////////////////////////////////
 // Address 0
+// codec_i2c_ctrl_reg
+///////////////////////////////////////
+logic [31:0] codec_i2c_ctrl_reg;
+reg codec_i2c_data_wr_reg;
+reg codec_i2c_data_rd_reg;
+reg controller_busy_reg;
+reg codec_init_done_reg;
+
+assign codec_i2c_ctrl_reg[0]    = codec_i2c_data_wr_reg;
+assign codec_i2c_ctrl_reg[1]    = codec_i2c_data_rd_reg;
+assign codec_i2c_ctrl_reg[2]    = controller_busy_reg;
+assign codec_i2c_ctrl_reg[3]    = codec_init_done_reg;
+assign codec_i2c_ctrl_reg[31:4] = 'h0;
+
+assign codec_i2c_data_wr = codec_i2c_data_wr_reg;
+assign codec_i2c_data_rd = codec_i2c_data_rd_reg;
+
 // Bit 0
-reg codec_i2c_data_wr;
-`GEN_REG_SW_WR1_HW_CLR(axi_clk, axi_reset, 1, 0, 6'h00, reg_addr, data_wren, data_in[0], clear_codec_i2c_data_wr, codec_i2c_data_wr)
+// Data WR
+`GEN_REG_SW_WR1_HW_CLR(axi_clk, axi_reset, 1, 0, `CODEC_I2C_CTRL_REG_ADDR, reg_addr_wr, data_wren, data_in[0], clear_codec_i2c_data_wr, codec_i2c_data_wr_reg)
 
 // Bit 1
-reg codec_i2c_data_rd;
-`GEN_REG_SW_WR1_HW_CLR(axi_clk, axi_reset, 1, 0, 6'h00, reg_addr, data_wren, data_in[1], clear_codec_i2c_data_rd, codec_i2c_data_rd)
+// Data RD
+`GEN_REG_SW_WR1_HW_CLR(axi_clk, axi_reset, 1, 0, `CODEC_I2C_CTRL_REG_ADDR, reg_addr_wr, data_wren, data_in[1], clear_codec_i2c_data_rd, codec_i2c_data_rd_reg)
 
-// codec_i2c_addr
+// Bit 2
+// Controller Busy
+`GEN_REG_SW_RO_HW_WO(axi_clk, axi_reset, 1'b0, 1'b1, controller_busy, controller_busy_reg)
+
+// Bit 3
+// CODEC Initialization Done
+`GEN_REG_SW_RO_HW_WO(axi_clk, axi_reset, 1'b0, 1'b1, codec_init_done, codec_init_done_reg)
+
+///////////////////////////////////////
 // Address 1
+// codec_i2c_addr
+///////////////////////////////////////
 reg   [31:0] codec_i2c_addr_reg;
-`GEN_REG_SW_RW(axi_clk, axi_reset, 0, 6'h01, reg_addr, data_wren, data_in[31:0], codec_i2c_addr_reg)
+assign codec_i2c_addr = codec_i2c_addr_reg;
 
-// codec_i2c_wr_data
+`GEN_REG_SW_RW(axi_clk, axi_reset, 0, `CODEC_I2C_ADDR_REG_ADDR, reg_addr_wr, data_wren, data_in, codec_i2c_addr_reg)
+
+///////////////////////////////////////
 // Address 2
-reg   [31:0] codec_i2c_wr_data_reg;
-`GEN_REG_SW_RW(axi_clk, axi_reset, 0, 6'h02, reg_addr, data_wren, data_in[31:0], codec_i2c_wr_data_reg)
-
 // codec_i2c_wr_data
+///////////////////////////////////////
+reg   [31:0] codec_i2c_wr_data_reg;
+assign codec_i2c_wr_data = codec_i2c_wr_data_reg;
+
+`GEN_REG_SW_RW(axi_clk, axi_reset, 0, `CODEC_I2C_WR_DATA_REG_ADDR, reg_addr_wr, data_wren, data_in, codec_i2c_wr_data_reg)
+
+///////////////////////////////////////
 // Address 3
+// codec_i2c_rd_data
+///////////////////////////////////////
 reg   [31:0] codec_i2c_rd_data_reg;
-`GEN_REG_SW_RO_HW_WO(axi_clk, axi_reset, 0, update_codec_i2c_rd_data, codec_i2c_rd_data, codec_i2c_rd_data_reg)
+
+`GEN_REG_SW_RO_HW_WO(axi_clk, axi_reset, 32'hcafecafe, update_codec_i2c_rd_data, codec_i2c_rd_data, codec_i2c_rd_data_reg)
+
+///////////////////////////////////////
+// Address 4
+// misc_data_0
+///////////////////////////////////////
+reg   [31:0] misc_data_0;
+
+`GEN_REG_SW_RW(axi_clk, axi_reset, 32'habcdabcd, `MISC_DATA_0_REG_ADDR, reg_addr_wr, data_wren, data_in, misc_data_0)
+
+///////////////////////////////////////
+// Address 5
+// misc_data_1
+///////////////////////////////////////
+reg   [31:0] misc_data_1;
+
+`GEN_REG_SW_RW(axi_clk, axi_reset, 32'hdeaddddd, `MISC_DATA_1_REG_ADDR, reg_addr_wr, data_wren, data_in, misc_data_1)
+
+///////////////////////////////////////
+// Address 6
+// misc_data_2
+///////////////////////////////////////
+reg   [31:0] misc_data_2;
+
+`GEN_REG_SW_RW(axi_clk, axi_reset, 0, `MISC_DATA_2_REG_ADDR, reg_addr_wr, data_wren, data_in, misc_data_2)
 
 
-assign codec_i2c_ctrl_reg[0]    = codec_i2c_data_wr;
-assign codec_i2c_ctrl_reg[1]    = codec_i2c_data_rd;
-assign codec_i2c_ctrl_reg[31:2] = {30{1'b1}};
 
-assign data_out                 = reg_data_out;
+////////////////////////////////////////
+// Data Read Logic
+////////////////////////////////////////
+assign data_out = reg_data_out;
 
-always @(*)
+always_comb
 	begin
 	      // Address decoding for reading registers
-	      case ( reg_addr )
-	        6'h00   : reg_data_out <= codec_i2c_ctrl_reg;
-	        6'h01   : reg_data_out <= codec_i2c_addr_reg;
-	        6'h02   : reg_data_out <= codec_i2c_wr_data_reg;
-	        6'h03   : reg_data_out <= codec_i2c_rd_data_reg;
-	        //6'h04   : reg_data_out <= slv_reg4;
-	        //6'h05   : reg_data_out <= slv_reg5;
-	        //6'h06   : reg_data_out <= slv_reg6;
-	        //6'h07   : reg_data_out <= slv_reg7;
-	        //6'h08   : reg_data_out <= slv_reg8;
-	        //6'h09   : reg_data_out <= slv_reg9;
-	        //6'h0A   : reg_data_out <= slv_reg10;
-	        //6'h0B   : reg_data_out <= slv_reg11;
-	        //6'h0C   : reg_data_out <= slv_reg12;
-	        //6'h0D   : reg_data_out <= slv_reg13;
-	        //6'h0E   : reg_data_out <= slv_reg14;
-	        //6'h0F   : reg_data_out <= slv_reg15;
-	        //6'h10   : reg_data_out <= slv_reg16;
-	        //6'h11   : reg_data_out <= slv_reg17;
-	        //6'h12   : reg_data_out <= slv_reg18;
-	        //6'h13   : reg_data_out <= slv_reg19;
-	        //6'h14   : reg_data_out <= slv_reg20;
-	        //6'h15   : reg_data_out <= slv_reg21;
-	        //6'h16   : reg_data_out <= slv_reg22;
-	        //6'h17   : reg_data_out <= slv_reg23;
-	        //6'h18   : reg_data_out <= slv_reg24;
-	        //6'h19   : reg_data_out <= slv_reg25;
-	        //6'h1A   : reg_data_out <= slv_reg26;
-	        //6'h1B   : reg_data_out <= slv_reg27;
-	        //6'h1C   : reg_data_out <= slv_reg28;
-	        //6'h1D   : reg_data_out <= slv_reg29;
-	        //6'h1E   : reg_data_out <= slv_reg30;
-	        //6'h1F   : reg_data_out <= slv_reg31;
-	        //6'h20   : reg_data_out <= slv_reg32;
-	        //6'h21   : reg_data_out <= slv_reg33;
-	        //6'h22   : reg_data_out <= slv_reg34;
-	        //6'h23   : reg_data_out <= slv_reg35;
-	        //6'h24   : reg_data_out <= slv_reg36;
-	        //6'h25   : reg_data_out <= slv_reg37;
-	        //6'h26   : reg_data_out <= slv_reg38;
-	        //6'h27   : reg_data_out <= slv_reg39;
-	        default : reg_data_out <= 32'hdeadbeef;
+	      case ( reg_addr_rd )
+	        `CODEC_I2C_CTRL_REG_ADDR     : reg_data_out = codec_i2c_ctrl_reg;
+	        `CODEC_I2C_ADDR_REG_ADDR    : reg_data_out = codec_i2c_addr_reg;
+	        `CODEC_I2C_WR_DATA_REG_ADDR : reg_data_out = codec_i2c_wr_data_reg;
+	        `CODEC_I2C_RD_DATA_REG_ADDR : reg_data_out = codec_i2c_rd_data_reg;
+	        `MISC_DATA_0_REG_ADDR       : reg_data_out = misc_data_0;
+	        `MISC_DATA_1_REG_ADDR       : reg_data_out = misc_data_1;
+	        `MISC_DATA_2_REG_ADDR       : reg_data_out = misc_data_2;
+	        default : reg_data_out = 32'hdeadbeef;
 	      endcase
 	end
 

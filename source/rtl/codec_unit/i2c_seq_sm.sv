@@ -26,7 +26,10 @@ module i2c_seq_sm (
   output wire [7:0] wb_data_out,
   input wire  [7:0] wb_data_in,
   input wire        wb_data_in_valid,
-  input wire        wb_done
+  input wire        wb_done,
+
+  // Misc
+  output wire       missed_ack
 );
 
 localparam I2C_CTRL_STS0_ADDR        = 4'h0;
@@ -71,6 +74,7 @@ reg  [7:0] wb_data_out_reg ;
 reg  [3:0] wb_address_reg  ;
 reg  [3:0] next_wb_addr_reg;
 reg  [7:0] wb_data_in_reg  ;
+reg        missed_ack_reg  ;
 
 reg [7:0] i2c_ctrl_data_reg;
 reg [2:0] i2c_ctrl_addr_reg;
@@ -91,7 +95,7 @@ reg       i2c_read_done;
 
 assign i2c_ctrl_data = i2c_ctrl_data_reg;
 
-assign controller_busy      = controller_busy_reg | !wb_done;
+assign controller_busy      = controller_busy_reg;
 assign codec_data_out       = codec_data_out_reg;
 assign codec_data_out_valid = codec_data_out_valid_reg;
 
@@ -102,6 +106,8 @@ assign wb_write    = wb_write_reg   ;
 assign wb_address  = wb_address_reg ;
 assign wb_data_out = wb_data_out_reg;
 
+// Misc outputs
+assign missed_ack = missed_ack_reg;
 
 /////////////////////////////////////////////////
 ////////////// END WB State Machines ////////////
@@ -139,6 +145,8 @@ always @ ( posedge clk or negedge reset ) begin
 
     codec_data_out_reg       <= 8'h00;
     codec_data_out_valid_reg <= 1'b0;
+    missed_ack_reg           <= 1'b0;
+
   end
   else begin
     controller_busy_reg <= controller_busy_reg;
@@ -164,6 +172,8 @@ always @ ( posedge clk or negedge reset ) begin
 
     int_addr_sent            <= int_addr_sent;
 
+    missed_ack_reg           <= missed_ack_reg;
+
     case (i2c_state_curr)
       I2C_IDLE: begin
         wb_read_reg         <= 'h0;
@@ -182,7 +192,7 @@ always @ ( posedge clk or negedge reset ) begin
           codec_data_out_valid_reg <= 1'b0;
           int_addr_sent            <= 1'b0;
         end
-        if (codec_wr_en) begin // Read register from the CODEC
+        if (codec_wr_en) begin // Write register to the CODEC
           i2c_state_next           <= I2C_WRITE_DEV_ADDR;
           i2c_addr                 <= {1'b0, CODEC_I2C_ADDR}; // Always the same
           i2c_int_addr             <= codec_reg_addr; // Internal Address
@@ -249,10 +259,10 @@ always @ ( posedge clk or negedge reset ) begin
         i2c_state_after_ack <= (int_addr_sent) ? I2C_WAIT_WR_XFR_DONE : I2C_WRITE_WB_CMD;
         i2c_state_next      <= I2C_WAIT_FOR_ACK;
 
-        // For RD operations, if the address hasn't been sent, send it before performing a RD request.
-        wb_data_out_reg <= (CMD_START & {8{~i2c_xfer_is_rd | (i2c_xfer_is_rd & int_addr_sent)}}) | 
-                           (CMD_WRITE & {8{~i2c_xfer_is_rd | (i2c_xfer_is_rd & ~int_addr_sent)}}) | //8'b00000101
-                           (CMD_READ  & {8{i2c_xfer_is_rd & int_addr_sent}}); //8'b00000011
+        // For RD operations, if the address hasn't been sent to the device, send it before performing a RD request.
+        // For WR operations you can start the transaction right away
+        wb_data_out_reg <= (i2c_xfer_is_rd == 1'b0) ? (CMD_START | CMD_WRITE) :
+                           (int_addr_sent  == 1'b0) ? (CMD_WRITE) : (CMD_READ | CMD_START);
         wb_address_reg  <= I2C_CTRL_CMD_ADDR;
         wb_write_reg    <= 1'b1;
 
@@ -275,6 +285,7 @@ always @ ( posedge clk or negedge reset ) begin
             i2c_xfer_started    <= 1'b0;
             // If the address has been sent, then read the data. Otherwise send the command to read the data
             i2c_state_next      <= (i2c_xfer_is_rd == 1'b0) ? I2C_IDLE : I2C_GET_DATA_RD;
+            missed_ack_reg      <= wb_data_in_reg[3];
           end
         end
         else begin
