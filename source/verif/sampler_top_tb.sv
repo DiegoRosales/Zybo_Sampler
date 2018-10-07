@@ -6,10 +6,10 @@ module sampler_top_tb (
 // Clocks
 //////////////////
 
-reg clk_125 = 1'b0;
-reg clk_50  = 1'b0;
-reg reset   = 1'b0;
-
+reg clk_125  = 1'b0;
+reg clk_50   = 1'b0;
+reg reset    = 1'b0;
+wire reset_n = ~reset;
 initial force sampler_top.codec_unit.controller_unit.i2c_sda_i = 1'b0;
 initial forever #(4ns) clk_125 = ~clk_125;
 initial forever #(10ns) clk_50 = ~clk_50;
@@ -41,21 +41,14 @@ pullup(i2c_scl);
 sampler_top sampler_top (
   .board_clk(clk_50),
   .reset(reset),
+  .s00_axi_aclk(clk_125),
+  .s00_axi_aresetn(reset_n),
 
-  .sw0(reset),
-  .sw1(),
-  .sw2(),
-  .sw3(reset),
+  .sw({reset, reset, reset, reset}),
 
-  .led0(),
-  .led1(),
-  .led2(),
-  .led3(),
+  .led(),
 
-  .btn0(),
-  .btn1(),
-  .btn2(),
-  .btn3(reset),
+  .btn({reset, reset, reset, reset}),
 
   // CODEC I2S Audio Data Signals
  // .i2s_bclk(),

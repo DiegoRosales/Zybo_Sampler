@@ -82,7 +82,7 @@ assign CONTROLLER_codec_reg_addr = ((init_done | init_error) == 1'b0) ? INIT_cod
 assign CONTROLLER_codec_data_in  = ((init_done | init_error) == 1'b0) ? INIT_codec_data_out : codec_data_in;
 // Outputs
 assign codec_data_out            = ((init_done | init_error) == 1'b0) ? 8'h00               : CONTROLLER_codec_data_out;
-assign codec_data_out_valid      = ((init_done | init_error) == 1'b0) ? 1'b0                : CONTROLLER_codec_data_out_valid;
+assign codec_data_out_valid      = CONTROLLER_codec_data_out_valid;//((init_done | init_error) == 1'b0) ? 1'b0                : CONTROLLER_codec_data_out_valid;
 assign controller_busy           = ((init_done | init_error) == 1'b0) ? 1'b1                : CONTROLLER_controller_busy;
 // Internal
 assign INIT_codec_data_in        = ((init_done | init_error) == 1'b1) ? 8'h00               : CONTROLLER_codec_data_out;

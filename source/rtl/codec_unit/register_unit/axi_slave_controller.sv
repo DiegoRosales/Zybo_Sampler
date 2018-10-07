@@ -88,6 +88,8 @@
 		output wire        codec_i2c_data_rd,
 		input  wire        controller_busy,
 		input  wire        codec_init_done,
+		input  wire        data_in_valid,
+		input  wire        missed_ack,		
 		output wire [31:0] codec_i2c_addr,
 		output wire [31:0] codec_i2c_wr_data,
     input  wire [31:0] codec_i2c_rd_data,

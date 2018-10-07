@@ -32,7 +32,8 @@ module i2c_seq_sm (
   output wire       missed_ack
 );
 
-localparam I2C_CTRL_STS0_ADDR        = 4'h0;
+localparam I2C_CTRL_STS0_ADDR       = 4'h0;
+localparam I2C_CTRL_STS1_ADDR       = 4'h1;
 localparam I2C_CTRL_CMD_ADDR        = 4'h3;
 localparam I2C_CTRL_ADDR_ADDR       = 4'h2;
 localparam I2C_CTRL_DATA_ADDR       = 4'h4;
@@ -58,7 +59,7 @@ localparam I2C_READ_WB_REG      = 4'h6;
 localparam I2C_WAIT_WR_XFR_DONE = 4'h7;
 localparam I2C_GET_DATA_RD      = 4'h8;
 localparam I2C_WRITE_DATA       = 4'h9;
-localparam I2C_WRITE_8          = 4'h10;
+localparam I2C_GET_RD_STS       = 4'ha;
 
 reg  [3:0] i2c_state_next;
 wire [3:0] i2c_state_curr;
@@ -176,12 +177,13 @@ always @ ( posedge clk or negedge reset ) begin
 
     case (i2c_state_curr)
       I2C_IDLE: begin
-        wb_read_reg         <= 'h0;
-        wb_write_reg        <= 'h0;
-        wb_data_out_reg     <= wb_data_out_reg;
-        wb_address_reg      <= wb_address_reg;
-        i2c_xfer_started    <= i2c_xfer_started;
-        controller_busy_reg <= 1'b0;
+        wb_read_reg              <= 'h0;
+        wb_write_reg             <= 'h0;
+        wb_data_out_reg          <= wb_data_out_reg;
+        wb_address_reg           <= wb_address_reg;
+        i2c_xfer_started         <= i2c_xfer_started;
+        controller_busy_reg      <= 1'b0;
+        codec_data_out_valid_reg <= 1'b0;
         if (codec_rd_en) begin // Read register from the CODEC
           i2c_state_next           <= I2C_WRITE_DEV_ADDR;
           i2c_addr                 <= {1'b0, CODEC_I2C_ADDR}; // Always the same
@@ -220,7 +222,7 @@ always @ ( posedge clk or negedge reset ) begin
         end
       end
 
-      I2C_READ_WB_REG: begin // Read a register from the I2C controller
+      I2C_READ_WB_REG: begin // Go to this state when you want to read a register from the I2C controller
         i2c_state_next      <= I2C_WAIT_FOR_RD_ACK;
 
         wb_address_reg      <= next_wb_addr_reg;
@@ -274,20 +276,22 @@ always @ ( posedge clk or negedge reset ) begin
       end
 
       I2C_WAIT_WR_XFR_DONE: begin // Step 5 - Poll the status register until the transaction is done
+        // The transfer has started, wait for the busy bit to clear
         if (i2c_xfer_started) begin // Check for the Busy bit to go 1 -> 0
-          if (wb_data_in_reg[0] == 1'b1) begin // Check for the Busy bit to go 0 -> 1
+          if (wb_data_in_reg[0] == 1'b1) begin // Busy bit is still 1
             i2c_state_next      <= I2C_READ_WB_REG;
             i2c_state_after_ack <= I2C_WAIT_WR_XFR_DONE;            
 
             next_wb_addr_reg    <= I2C_CTRL_STS0_ADDR;
           end
-          else begin 
+          else begin // Busy bit is 0
             i2c_xfer_started    <= 1'b0;
             // If the address has been sent, then read the data. Otherwise send the command to read the data
-            i2c_state_next      <= (i2c_xfer_is_rd == 1'b0) ? I2C_IDLE : I2C_GET_DATA_RD;
+            i2c_state_next      <= (i2c_xfer_is_rd == 1'b0) ? I2C_IDLE : I2C_GET_RD_STS;
             missed_ack_reg      <= wb_data_in_reg[3];
           end
         end
+        // The transfer hasn't started yet. Wait for the busy bit to assert
         else begin
           if (wb_data_in_reg[0] == 1'b0) begin // Check for the Busy bit to go 0 -> 1
             i2c_state_next      <= I2C_READ_WB_REG;
@@ -302,10 +306,29 @@ always @ ( posedge clk or negedge reset ) begin
         end
       end
 
+      I2C_GET_RD_STS: begin // Check the status bits to see if there was a missed_ack
+        if (missed_ack_reg) begin
+          i2c_state_next <= I2C_IDLE;
+        end 
+        else begin // There was not a missed ack. The next step is to check the  FIFO Status
+          // Read the status register 2
+          i2c_state_next      <= I2C_READ_WB_REG;
+          i2c_state_after_ack <= I2C_GET_DATA_RD;
+          next_wb_addr_reg    <= I2C_CTRL_STS1_ADDR;
+        end
+      end
+
       I2C_GET_DATA_RD: begin
-        next_wb_addr_reg    <= I2C_CTRL_DATA_ADDR;
-        i2c_state_next      <= I2C_READ_WB_REG;
-        i2c_state_after_ack <= I2C_IDLE;
+        if (wb_data_in_reg[6] == 1'b1) begin // FIFO is empty. Read again
+          i2c_state_next      <= I2C_READ_WB_REG;
+          i2c_state_after_ack <= I2C_GET_DATA_RD;
+          next_wb_addr_reg    <= I2C_CTRL_STS1_ADDR;
+        end
+        else begin // FIFO is not empty. Let's read the data
+          next_wb_addr_reg    <= I2C_CTRL_DATA_ADDR;
+          i2c_state_next      <= I2C_READ_WB_REG;
+          i2c_state_after_ack <= I2C_IDLE;
+        end
       end
 
       default: begin

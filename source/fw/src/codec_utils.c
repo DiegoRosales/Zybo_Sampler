@@ -17,6 +17,10 @@ int CodecRd(int addr, int display, int debug) {
 	if (debug) xil_printf("Waiting for the transfer to complete\n\r", addr);
 	BusyBitIsClear(debug);
 
+	WaitUntilDataIsAvailable(debug);
+
+	for(int i = 0; i < 100; i++);
+
 	// Step 4 - Read the data
 	data_rd = RegRd(CODEC_I2C_RD_DATA_REG_ADDR, debug);
 	if (display | debug) xil_printf("CODEC Register[%02x] = 0x%02x\n\r", addr, data_rd);
@@ -60,6 +64,20 @@ int CodecWr(int addr, int data, int check, int display, int debug) {
 	}
 
 	return ok;
+}
+
+void WaitUntilDataIsAvailable(int debug) {
+	int data_is_available = 0;
+	int xfer_done         = 0;
+
+	// Wait until the data_is_available bit is 1
+	do {
+		xfer_done         = RegRd(CODEC_I2C_CTRL_REG_ADDR, debug);
+		data_is_available = (xfer_done >> 4) & 0x1;
+	} while (data_is_available == 0);
+	//xil_printf("xfer_done = 0x%08x\n\t", xfer_done);
+	// Clear that bit
+	RegWr(CODEC_I2C_CTRL_REG_ADDR, 0x10, 0, debug);
 }
 
 void BusyBitIsClear(int debug) {

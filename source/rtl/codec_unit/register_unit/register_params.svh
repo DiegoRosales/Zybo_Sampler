@@ -53,6 +53,22 @@
 `define GEN_REG_SW_RO_HW_WO(CLK, RST, DEF_VAL, WR, WR_DATA, REG) \
     `GEN_REG(CLK, RST, REG, DEF_VAL, WR, WR_DATA)    
 
+// Generate an AXI register that the HW sets to 1 and gets cleared by the SW
+// CLK     = AXI Clock
+// RST     = AXI Reset
+// DEF_VAL = Value of the register after reset
+// ADDR    = Register Address
+// ADDR_WR = AXI Address Signal
+// WR      = AXI WR Signal
+// REG     = Register Signal
+// SET_REG = Signal that sets the register
+// CLR_REG = Signal that clears the register
+`define GEN_REG_SW_RWC1_HW_WO(CLK, RST, SIZE, DEF_VAL, WRITE_EN, CLR_REG, SET_REG, REG) \
+    logic UPDATE_``REG``; \
+    logic [SIZE - 1 : 0] NEXT_``REG``; \
+    assign UPDATE_``REG`` = (WRITE_EN & CLR_REG) | SET_REG; \
+    assign NEXT_``REG``   = (WRITE_EN & CLR_REG) ? 1'b0 : 1'b1; \
+    `GEN_REG(CLK, RST, REG, DEF_VAL, UPDATE_``REG``, NEXT_``REG``)
 
 `define REG_SYNC(CLK1, CLK2, SIZE, IN, OUT, NAME) \
     reg [SIZE - 1 : 0 ] ``NAME``_SYNC1; \

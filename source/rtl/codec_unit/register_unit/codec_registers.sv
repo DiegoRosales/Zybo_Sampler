@@ -21,6 +21,8 @@ module codec_registers (
     output wire        codec_i2c_data_rd,
 	input  wire        controller_busy,
 	input  wire        codec_init_done,
+	input  wire        data_in_valid,
+	input  wire        missed_ack,
 	output wire [31:0] codec_i2c_addr,
 	output wire [31:0] codec_i2c_wr_data,
     input  wire [31:0] codec_i2c_rd_data,
@@ -47,17 +49,22 @@ logic [31:0] reg_data_out;
 // Address 0
 // codec_i2c_ctrl_reg
 ///////////////////////////////////////
+wire  codec_i2c_ctrl_reg_wr_en = `DECODE_MEM_WR(`CODEC_I2C_CTRL_REG_ADDR, reg_addr_wr, data_wren);
 logic [31:0] codec_i2c_ctrl_reg;
 reg codec_i2c_data_wr_reg;
 reg codec_i2c_data_rd_reg;
 reg controller_busy_reg;
 reg codec_init_done_reg;
+reg data_in_valid_reg;
+reg missed_ack_reg;
 
 assign codec_i2c_ctrl_reg[0]    = codec_i2c_data_wr_reg;
 assign codec_i2c_ctrl_reg[1]    = codec_i2c_data_rd_reg;
 assign codec_i2c_ctrl_reg[2]    = controller_busy_reg;
 assign codec_i2c_ctrl_reg[3]    = codec_init_done_reg;
-assign codec_i2c_ctrl_reg[31:4] = 'h0;
+assign codec_i2c_ctrl_reg[4]    = data_in_valid_reg;
+assign codec_i2c_ctrl_reg[5]    = missed_ack_reg;
+assign codec_i2c_ctrl_reg[31:6] = 'h0;
 
 assign codec_i2c_data_wr = codec_i2c_data_wr_reg;
 assign codec_i2c_data_rd = codec_i2c_data_rd_reg;
@@ -76,7 +83,18 @@ assign codec_i2c_data_rd = codec_i2c_data_rd_reg;
 
 // Bit 3
 // CODEC Initialization Done
-`GEN_REG_SW_RO_HW_WO(axi_clk, axi_reset, 1'b0, 1'b1, codec_init_done, codec_init_done_reg)
+// This bit gets cleared by the SW when it writes a 1'b1
+`GEN_REG_SW_RWC1_HW_WO(axi_clk, axi_reset, 1, 0, codec_i2c_ctrl_reg_wr_en, data_in[3],  codec_init_done, codec_init_done_reg)
+
+// Bit 4
+// Data In Valid
+// This bit gets cleared by the SW when it writes a 1'b1
+`GEN_REG_SW_RWC1_HW_WO(axi_clk, axi_reset, 1, 0, codec_i2c_ctrl_reg_wr_en, data_in[4],  update_codec_i2c_rd_data, data_in_valid_reg)
+
+// Bit 5
+// Missed ACK
+// This bit gets cleared by the SW when it writes a 1'b1
+`GEN_REG_SW_RWC1_HW_WO(axi_clk, axi_reset, 1, 0, codec_i2c_ctrl_reg_wr_en, data_in[5],  missed_ack, missed_ack_reg)
 
 ///////////////////////////////////////
 // Address 1
@@ -101,8 +119,9 @@ assign codec_i2c_wr_data = codec_i2c_wr_data_reg;
 // codec_i2c_rd_data
 ///////////////////////////////////////
 reg   [31:0] codec_i2c_rd_data_reg;
-
-`GEN_REG_SW_RO_HW_WO(axi_clk, axi_reset, 32'hcafecafe, update_codec_i2c_rd_data, codec_i2c_rd_data, codec_i2c_rd_data_reg)
+wire data_rd_reset;
+assign data_rd_reset = axi_reset & (~codec_i2c_data_rd_reg);
+`GEN_REG_SW_RO_HW_WO(axi_clk, data_rd_reset, 32'hcafecafe, update_codec_i2c_rd_data, codec_i2c_rd_data, codec_i2c_rd_data_reg)
 
 ///////////////////////////////////////
 // Address 4

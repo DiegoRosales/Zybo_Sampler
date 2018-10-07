@@ -148,6 +148,8 @@ wire        codec_i2c_data_wr;
 wire        codec_i2c_data_rd;
 wire        controller_busy;
 wire        codec_init_done;
+wire        data_in_valid;
+wire        missed_ack;
 wire [31:0] codec_i2c_addr;
 wire [31:0] codec_i2c_wr_data;
 wire [31:0] codec_i2c_rd_data;
@@ -180,7 +182,8 @@ controller_unit_top controller_unit(
   .codec_data_in        (codec_i2c_wr_data       ), // Input
   .codec_data_out       (codec_i2c_rd_data       ), // Output
   .codec_data_out_valid (update_codec_i2c_rd_data), // Output
-  .controller_busy, // Output
+  .controller_busy,                                 // Output
+  .missed_ack,
 
   .init_done,
   .init_error,
@@ -222,6 +225,8 @@ register_unit #(
   .codec_i2c_data_rd,
   .controller_busy,
   .codec_init_done,
+  .data_in_valid(update_codec_i2c_rd_data),
+  .missed_ack, 
   .codec_i2c_addr,
   .codec_i2c_wr_data,
   .codec_i2c_rd_data,

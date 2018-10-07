@@ -7,10 +7,7 @@
 //#include <stdbool.h>
 
 //send data over UART
-#include "xil_printf.h"
-
-#include "reg_utils.h"
-#include "codec_utils.h"
+#include "main_program.h"
 
 int main_program()
 {
@@ -18,11 +15,20 @@ int main_program()
 	xil_printf("Hello From Main Program\n\r");
 	int iteration = 0;
 	int check     = 1;
+	int display   = 1;
 	int debug     = 0;
 	while (1)
 	{
 		xil_printf("=========== %d ==========\n\r", iteration);
-		CodecRd(POWER_MGMT_REG_ADDR, check, debug);
+		CodecRd(ACTIVE_REG_ADDR, display, debug);
+		for (int i = 0; i < 90000000; i++);
+
+		xil_printf("=========== %d ==========\n\r", iteration);
+		CodecRd(LEFT_CHANN_INPUT_VOL_REG_ADDR, display, debug);
+		for (int i = 0; i < 90000000; i++);
+
+		xil_printf("=========== %d ==========\n\r", iteration);
+		CodecRd(DIGITAL_AUDIO_PATH_REG_ADDR, display, debug);
 		for (int i = 0; i < 90000000; i++);
 
 //		CodecRd(LEFT_CHANN_INPUT_VOL_REG_ADDR, check, debug);
