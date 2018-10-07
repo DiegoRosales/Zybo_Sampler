@@ -12,8 +12,13 @@ Note that this board has been discontinued and replaced with the Zybo Z7 which i
 ## Milestones
 
 [**DONE**] Created the git repo
+
 [**DONE**] CODEC control module (I2C)
+
 [**DONE**] AXI Registers module
+
 [**DONE**] Basic FW Interface to the RTL registers 
+
 [**IN PROGRESS**] I2S Interface to the CODEC
+
 [**NOT STARTED**] DMA Interface between the ARM core and the I2S controller
