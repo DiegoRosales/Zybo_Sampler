@@ -25,12 +25,18 @@ Note that this board has been discontinued and replaced with the Zybo Z7 which i
 
 ---
 # Build instructions
-To build the project, you need to execute 2 scripts using Vivado: `create_packaged_ip.tcl` and `create_integrated_design.tcl`. You can do it like this:
+To build the project, you need to execute 1 script using Vivado: `run_design.tcl`. This script can take parameters to build whatever you need. Here are some examples
 
 ```
->> vivado -mode batch -source scripts\create_packaged_ip.tcl
->> vivado -mode batch -source scripts\create_integrated_design.tcl
+## Run the complete flow from scratch and burn the bitfile once it is done
+[CMD]>> vivado -mode batch -source scripts\run_design.tcl -tclargs all
+## Run only the Design Integration
+[CMD]>> vivado -mode batch -source scripts\run_design.tcl -tclargs integ
+## Only burn the bitfile
+[CMD]>> vivado -mode batch -source scripts\run_design.tcl -tclargs burn_only
 ```
+
+This script calls two scripts `create_packaged_ip.tcl` and `create_integrated_design.tcl`.
 
 The first script will create a packaged ip so that it can be integrated with the Zynq Processor in the second script.
 The second script will also run Synthesis and Place and Route, as well as the bitstream generation (aka: the *bitfile*)
