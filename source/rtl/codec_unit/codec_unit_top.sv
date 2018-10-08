@@ -198,15 +198,15 @@ controller_unit_top controller_unit(
   );
 
 
-i2s_controller i2s_controller(
-  .clk      (clk_24mhz),
-  .reset    (reset    ),
-  .data     (fifo_data),
-  .data_rd  (fifo_rd  ),
-  .i2s_bclk (i2s_bclk ),
-  .i2s_wclk (i2s_wclk ),
-  .i2s_data (i2s_data )
-  );
+//i2s_controller i2s_controller(
+//  .clk      (clk_24mhz),
+//  .reset    (reset    ),
+//  .data     (fifo_data),
+//  .data_rd  (fifo_rd  ),
+//  .i2s_bclk (i2s_bclk ),
+//  .i2s_wclk (i2s_wclk ),
+//  .i2s_data (i2s_data )
+//  );
 
 
 register_unit #(
