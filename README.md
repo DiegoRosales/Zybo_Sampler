@@ -22,3 +22,15 @@ Note that this board has been discontinued and replaced with the Zybo Z7 which i
 [**IN PROGRESS**] I2S Interface to the CODEC
 
 [**NOT STARTED**] DMA Interface between the ARM core and the I2S controller
+
+---
+# Build instructions
+To build the project, you need to execute 2 scripts using Vivado: `create_packaged_ip.tcl` and `create_integrated_design.tcl`. You can do it like this:
+
+```
+>> vivado -mode batch -source scripts\create_packaged_ip.tcl
+>> vivado -mode batch -source scripts\create_integrated_design.tcl
+```
+
+The first script will create a packaged ip so that it can be integrated with the Zynq Processor in the second script.
+The second script will also run Synthesis and Place and Route, as well as the bitstream generation (aka: the *bitfile*)
