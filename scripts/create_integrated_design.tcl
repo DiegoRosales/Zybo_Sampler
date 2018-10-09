@@ -17,7 +17,7 @@ set project_name      ${integrated_ip_project_name}
 set project_path      "${project_root}/${project_name}"
 
 ## Set Block Design Variables
-set block_design_name "block_design_1"
+set block_design_name "audio_sampler_block_design"
 set bd_output_dirname ${project_path}/${project_name}.srcs/sources_1/bd/${block_design_name}
 
 ###########################################
@@ -117,4 +117,21 @@ if { $burn_bitfile == 1 } {
     refresh_hw_device -update_hw_probes false [lindex [get_hw_devices xc7z010_1] 0]
     program_hw_devices [get_hw_devices xc7z010_1]
     refresh_hw_device [lindex [get_hw_devices xc7z010_1] 0]
+}
+
+if { $export_ws == 1 } {
+    ## Open the project if we're running only this flow
+    if { $skip_project_gen == 1 } {
+        open_project ${project_path}/${project_name}.xpr
+    } 
+    file mkdir ${worskpace_project_path}
+    write_hwdef -force  -file ${worskpace_project_path}/${block_design_name}_wrapper.hdf
+}
+
+if { $launch_sdk == 1 } {
+    ## Launch the SDK
+    if { $skip_project_gen == 1 } {
+        open_project ${project_path}/${project_name}.xpr
+    } 
+    launch_sdk -workspace  ${worskpace_project_path} -hwspec ${worskpace_project_path}/${block_design_name}_wrapper.hdf
 }
