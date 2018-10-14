@@ -53,3 +53,6 @@ project*
 test*
 audio_sampler_*
 packaged_ip*
+*.Xil
+*.vscode
+fsm_encodings.os
