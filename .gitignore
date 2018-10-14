@@ -55,4 +55,4 @@ audio_sampler_*
 packaged_ip*
 *.Xil
 *.vscode
-fsm_encodings.os
+fsm_encoding.os
