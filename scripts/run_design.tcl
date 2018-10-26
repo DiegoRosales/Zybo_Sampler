@@ -38,7 +38,7 @@ if { $argc > 0 } {
             set launch_sdk       1
         }
         default {
-            puts "You didn't select any options
+            puts "You didn't select any options"
         }
     }
 }
