@@ -19,6 +19,8 @@ Note that this board has been discontinued and replaced with the Zybo Z7 which i
 
 [**DONE**] Basic FW Interface to the RTL registers 
 
+[**IN PROGRESS**] Basic interrupt handler mechanism for the board buttons
+
 [**IN PROGRESS**] I2S Interface to the CODEC
 
 [**NOT STARTED**] DMA Interface between the ARM core and the I2S controller
