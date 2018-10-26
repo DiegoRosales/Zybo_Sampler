@@ -25,5 +25,6 @@
 int CodecRd(int addr, int display, int debug);
 int CodecWr(int addr, int data, int check, int display, int debug);
 void BusyBitIsClear(int debug);
+void ControllerReset(int debug);
 
 #endif

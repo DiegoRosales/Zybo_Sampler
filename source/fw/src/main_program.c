@@ -68,8 +68,13 @@ void gpio_interrupt_handler(void *IntParams){
 		button = XGpio_DiscreteRead(&gpio, 2);
 		if (button) {
 			xil_printf("Buttons pressed - %x\n\r", button);
-			if (button <= 4) {
+			if (button < 4) {
 				CodecRd(button, 1, 0);
+			} else if (button == 4) {
+				xil_printf("%c[2J",27);
+				xil_printf("SOFT RESET - %x\n\r", button);
+				ControllerReset(1);
+				//xil_printf("%c[2J",27);
 			} else {
 				xil_printf("%c[2J",27);
 				xil_printf("RESET BUTTON PRESSED - %x\n\r", button);

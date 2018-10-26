@@ -88,3 +88,12 @@ void BusyBitIsClear(int debug) {
 		busy      = (xfer_done >> 2) & 0x1;
 	} while (busy == 1);
 }
+
+void ControllerReset(int debug) {
+	int reset_status = 0;
+	RegWr(CODEC_I2C_CTRL_REG_ADDR, (1 << CONTROLLER_RESET_BIT), 0, debug);
+	do {
+		reset_status = RegRd(CODEC_I2C_CTRL_REG_ADDR, debug);
+		reset_status = (reset_status >> CONTROLLER_RESET_BIT) & 0x1;
+	} while (reset_status == 1);
+}

@@ -20,8 +20,10 @@
 #define MISC_DATA_2_REG_ADDR       0x06
 
 // Control Register Bits
-#define WR_DATA_BIT 0x1
-#define RD_DATA_BIT 0x2
+#define WR_DATA_BIT          1
+#define RD_DATA_BIT          2
+#define CONTROLLER_RESET_BIT 31
+
 
 int RegWr(int addr, int value, int check, int display);
 int RegRd(int addr, int display);
