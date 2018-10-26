@@ -27,6 +27,7 @@ module register_unit #(
 	output wire [31:0] codec_i2c_wr_data,
     input  wire [31:0] codec_i2c_rd_data,
     input  wire        update_codec_i2c_rd_data,
+	output wire        controller_reset,
 
     //---- AXI Clock Domain ----//
     // Ports of Axi Slave Bus Interface S00_AXI
@@ -78,6 +79,7 @@ wire [31:0] codec_i2c_addr_sync;
 wire [31:0] codec_i2c_wr_data_sync;
 wire [31:0] codec_i2c_rd_data_sync;
 wire        update_codec_i2c_rd_data_sync;
+wire        controller_reset_sync;
 
 
 // Instantiation of Axi Bus Interface S00_AXI
@@ -118,7 +120,8 @@ wire        update_codec_i2c_rd_data_sync;
 		.codec_i2c_addr           (codec_i2c_addr_sync          ),
 		.codec_i2c_wr_data        (codec_i2c_wr_data_sync       ),
 		.codec_i2c_rd_data        (codec_i2c_rd_data_sync       ),
-		.update_codec_i2c_rd_data (update_codec_i2c_rd_data_sync)
+		.update_codec_i2c_rd_data (update_codec_i2c_rd_data_sync),
+		.controller_reset         (controller_reset_sync        )
 
 	);
 
@@ -127,20 +130,21 @@ wire        update_codec_i2c_rd_data_sync;
 // Synchronizers //
 ///////////////////
 // AXI -> Board Clock
-synchronizer #(.DATA_WIDTH(1))  AXI_2_BOARD_codec_i2c_data_wr_sync (.clk_in(s00_axi_aclk),  .clk_out(board_clk), .data_in(codec_i2c_data_wr_sync),  .data_out(codec_i2c_data_wr));
-synchronizer #(.DATA_WIDTH(1))  AXI_2_BOARD_codec_i2c_data_rd_sync (.clk_in(s00_axi_aclk),  .clk_out(board_clk), .data_in(codec_i2c_data_rd_sync),  .data_out(codec_i2c_data_rd));
-synchronizer #(.DATA_WIDTH(32)) AXI_2_BOARD_codec_i2c_addr_sync    (.clk_in(s00_axi_aclk),  .clk_out(board_clk), .data_in(codec_i2c_addr_sync   ),  .data_out(codec_i2c_addr   ));
-synchronizer #(.DATA_WIDTH(32)) AXI_2_BOARD_codec_i2c_wr_data_sync (.clk_in(s00_axi_aclk),  .clk_out(board_clk), .data_in(codec_i2c_wr_data_sync),  .data_out(codec_i2c_wr_data));
+synchronizer #(.DATA_WIDTH(1))  AXI_2_BOARD_codec_i2c_data_wr_sync      (.clk_in(s00_axi_aclk),  .clk_out(board_clk), .data_in(codec_i2c_data_wr_sync),  .data_out(codec_i2c_data_wr));
+synchronizer #(.DATA_WIDTH(1))  AXI_2_BOARD_codec_i2c_data_rd_sync      (.clk_in(s00_axi_aclk),  .clk_out(board_clk), .data_in(codec_i2c_data_rd_sync),  .data_out(codec_i2c_data_rd));
+synchronizer #(.DATA_WIDTH(32)) AXI_2_BOARD_codec_i2c_addr_sync         (.clk_in(s00_axi_aclk),  .clk_out(board_clk), .data_in(codec_i2c_addr_sync   ),  .data_out(codec_i2c_addr   ));
+synchronizer #(.DATA_WIDTH(32)) AXI_2_BOARD_codec_i2c_wr_data_sync      (.clk_in(s00_axi_aclk),  .clk_out(board_clk), .data_in(codec_i2c_wr_data_sync),  .data_out(codec_i2c_wr_data));
+pulse_synchronizer              AXI_2_BOARD_controller_reset_pulse_sync (.clk_in(s00_axi_aclk),  .clk_out(board_clk), .data_in(controller_reset_sync),   .data_out(controller_reset ));
 
 
 // Board Clock -> AXI
 synchronizer       #(.DATA_WIDTH(1 )) BOARD_2_AXI_clear_codec_i2c_data_wr_sync        (.clk_in(board_clk),  .clk_out(s00_axi_aclk), .data_in(clear_codec_i2c_data_wr ),  .data_out(clear_codec_i2c_data_wr_sync ));
 synchronizer       #(.DATA_WIDTH(1 )) BOARD_2_AXI_clear_codec_i2c_data_rd_sync        (.clk_in(board_clk),  .clk_out(s00_axi_aclk), .data_in(clear_codec_i2c_data_rd ),  .data_out(clear_codec_i2c_data_rd_sync ));
-synchronizer       #(.DATA_WIDTH(1 )) BOARD_2_AXI_codec_init_done_sync                (.clk_in(board_clk),  .clk_out(s00_axi_aclk), .data_in(codec_init_done_sync    ),  .data_out(codec_init_done_sync_sync    ));
 synchronizer       #(.DATA_WIDTH(1 )) BOARD_2_AXI_controller_busy_sync                (.clk_in(board_clk),  .clk_out(s00_axi_aclk), .data_in(controller_busy         ),  .data_out(controller_busy_sync         ));
 synchronizer       #(.DATA_WIDTH(32)) BOARD_2_AXI_codec_i2c_rd_data_sync              (.clk_in(board_clk),  .clk_out(s00_axi_aclk), .data_in(codec_i2c_rd_data       ),  .data_out(codec_i2c_rd_data_sync       ));
 synchronizer       #(.DATA_WIDTH(1 )) BOARD_2_AXI_data_in_valid_sync                  (.clk_in(board_clk),  .clk_out(s00_axi_aclk), .data_in(data_in_valid           ),  .data_out(data_in_valid_sync           ));
 synchronizer       #(.DATA_WIDTH(1 )) BOARD_2_AXI_missed_ack_sync                     (.clk_in(board_clk),  .clk_out(s00_axi_aclk), .data_in(missed_ack              ),  .data_out(missed_ack_sync              ));
-
+pulse_synchronizer                    BOARD_2_AXI_codec_init_done_pulse_sync          (.clk_in(board_clk),  .clk_out(s00_axi_aclk), .data_in(codec_init_done         ),  .data_out(codec_init_done_sync         ));
 pulse_synchronizer                    BOARD_2_AXI_update_codec_i2c_rd_data_pulse_sync (.clk_in(board_clk),  .clk_out(s00_axi_aclk), .data_in(update_codec_i2c_rd_data),  .data_out(update_codec_i2c_rd_data_sync));
+
 endmodule

@@ -22,11 +22,11 @@
 // REG     = Register Signal
 // SET_REG = Signal that sets the register
 // CLR_REG = Signal that clears the register
-`define GEN_REG_SW_WR1_HW_CLR(CLK, RST, SIZE, DEF_VAL, ADDR, ADDR_WR, WR, SET_REG, CLR_REG, REG) \
+`define GEN_REG_SW_WR1_HW_CLR(CLK, RST, SIZE, DEF_VAL, WR, SET_REG, CLR_REG, REG) \
     logic UPDATE_``REG``; \
     logic [SIZE - 1 : 0] NEXT_``REG``; \
-    assign UPDATE_``REG`` = (`DECODE_MEM_WR(ADDR, ADDR_WR, WR) & SET_REG) | CLR_REG; \
-    assign NEXT_``REG``   = (`DECODE_MEM_WR(ADDR, ADDR_WR, WR) & SET_REG) ? 1'b1 : 1'b0; \
+    assign UPDATE_``REG`` = ( WR & SET_REG) | CLR_REG; \
+    assign NEXT_``REG``   = ( WR & SET_REG); \
     `GEN_REG(CLK, RST, REG, DEF_VAL, UPDATE_``REG``, NEXT_``REG``)
 
 // Generate an AXI register that the sofware can RD and WR
@@ -38,8 +38,8 @@
 // WR      = AXI WR Signal
 // WR_DATA = AXI Data to be written
 // REG     = Register Signal
-`define GEN_REG_SW_RW(CLK, RST, DEF_VAL, ADDR, ADDR_WR, WR, WR_DATA, REG) \
-    `GEN_REG(CLK, RST, REG, DEF_VAL, `DECODE_MEM_WR(ADDR, ADDR_WR, WR), WR_DATA)
+`define GEN_REG_SW_RW(CLK, RST, DEF_VAL, MEM_WR, WR_DATA, REG) \
+    `GEN_REG(CLK, RST, REG, DEF_VAL, MEM_WR, WR_DATA)
 
 // Generate an AXI register that the hardware can WR and the Software can RD
 // CLK     = AXI Clock

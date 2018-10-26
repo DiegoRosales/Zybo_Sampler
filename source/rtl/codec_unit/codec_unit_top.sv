@@ -154,8 +154,11 @@ wire [31:0] codec_i2c_addr;
 wire [31:0] codec_i2c_wr_data;
 wire [31:0] codec_i2c_rd_data;
 wire        update_codec_i2c_rd_data;
+wire        controller_reset;
+wire        sw_reset;
 
-assign codec_init_done = init_done;
+assign codec_init_done  = init_done | init_error;
+assign controller_reset = sw_reset | reset;
 
 IOBUF sda_iobuf (
   .I  (i2c_sda_o), 
@@ -172,8 +175,8 @@ IOBUF scl_iobuf (
   );   
 
 controller_unit_top controller_unit(
-  .clk  (board_clk),
-  .reset(reset    ),
+  .clk  (board_clk       ),
+  .reset(controller_reset),
 
   // CODEC RW signals
   .codec_rd_en          (codec_i2c_data_rd       ), // Input
@@ -231,6 +234,7 @@ register_unit #(
   .codec_i2c_wr_data,
   .codec_i2c_rd_data,
   .update_codec_i2c_rd_data,
+  .controller_reset(sw_reset),
   
   //---- AXI Clock Domain ----//
   .s00_axi_aclk,

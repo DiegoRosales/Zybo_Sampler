@@ -93,7 +93,8 @@
 		output wire [31:0] codec_i2c_addr,
 		output wire [31:0] codec_i2c_wr_data,
     input  wire [31:0] codec_i2c_rd_data,
-    input  wire        update_codec_i2c_rd_data
+    input  wire        update_codec_i2c_rd_data,
+		output wire        controller_reset
 
 	);
 
