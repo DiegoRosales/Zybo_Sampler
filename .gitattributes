@@ -15,3 +15,9 @@
 *.PDF	 diff=astextplain
 *.rtf	 diff=astextplain
 *.RTF	 diff=astextplain
+
+# Languages
+*.v linguist-language=Verilog
+*.sv linguist-language=SystemVerilog
+*.vh linguist-language=SystemVerilog
+*.svh linguist-language=SystemVerilog
