@@ -9,6 +9,8 @@ set skip_project_gen 0
 set export_ws        0
 set launch_sdk       0
 
+source scripts/common_variables.tcl
+
 if { $argc > 0 } {
     switch [lindex $argv 0] {
         pack {
@@ -28,8 +30,11 @@ if { $argc > 0 } {
             set export_ws        1
         }         
         all {
-            set pack  1
-            set integ 1
+            set pack             1
+            set integ            1
+            set implement        1
+            set burn_bitfile     1
+            set export_ws        1
         }
         burn_only {
             set integ            1
@@ -50,6 +55,11 @@ if { $argc > 0 } {
             puts "You didn't select any options"
         }
     }
+}
+
+if { [file exists ${results_dir}] == 0} {
+    puts "Creating Results Directory: ${results_dir}"
+    file mkdir ${results_dir}
 }
 
 if { $pack == 1 } {

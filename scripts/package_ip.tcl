@@ -29,7 +29,7 @@ if { [file exists ${packaged_ip_root_dir}/component.xml] == 1} {
 }
 
 ## Pack the project
-ipx::package_project -root_dir $packaged_ip_root_dir -vendor xilinx.com -library user -taxonomy /UserIP -import_files -set_current false
+ipx::package_project -root_dir ${packaged_ip_root_dir} -vendor xilinx.com -library user -taxonomy /UserIP -import_files -set_current false
 
 ## Open the IP Core
 ipx::open_core ${packaged_ip_root_dir}/component.xml
@@ -57,7 +57,7 @@ set_property description  ${packaged_ip_name}      [ipx::current_core]
 
 ## Increment the revision
 incr revision
-set_property core_revision $revision [ipx::current_core]
+set_property core_revision ${revision} [ipx::current_core]
 
 ## Generate collaterals
 ipx::create_xgui_files [ipx::current_core]

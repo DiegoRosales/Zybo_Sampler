@@ -13,18 +13,17 @@ source scripts/common_variables.tcl
 ###########################################
 
 ## Set the project Variables
-set project_name      ${integrated_ip_project_name}
-set project_path      "${project_root}/${project_name}"
+set block_design_name "audio_sampler_block_design"
 
 ## Set Block Design Variables
-set block_design_name "audio_sampler_block_design"
-set bd_output_dirname ${project_path}/${project_name}.srcs/sources_1/bd/${block_design_name}
+
+set bd_output_dirname ${integrated_ip_project_path}/${integrated_ip_project_name}.srcs/sources_1/bd/${block_design_name}
 
 ###########################################
 if { $skip_project_gen == 0 } {
 
     ## Create the project
-    create_project $project_name $project_path -part xc7z010clg400-1 -force
+    create_project ${integrated_ip_project_name} ${integrated_ip_project_path} -part xc7z010clg400-1 -force
 
     ## Set the project properties
     set_property board_part digilentinc.com:zybo:part0:1.0 [current_project]
@@ -38,7 +37,7 @@ if { $skip_project_gen == 0 } {
     ###########################################
 
     ## Create the Block Design
-    create_bd_design $block_design_name
+    create_bd_design ${block_design_name}
 
     ## Run the block design integration
     source ${project_root}/scripts/integrate_design.tcl
@@ -76,7 +75,7 @@ if { $skip_project_gen == 0 } {
         route_design
         
         ### Write the bitstream
-        write_bitstream -force ${project_path}/${project_name}.bit
+        write_bitstream -force ${integrated_ip_project_path}/${integrated_ip_project_name}.bit
     }
     ###############################################
 }
@@ -86,7 +85,7 @@ if { $burn_bitfile == 1 } {
     open_hw
     connect_hw_server
     open_hw_target
-    set_property PROGRAM.FILE  ${project_path}/${project_name}.bit [get_hw_devices xc7z010_1]
+    set_property PROGRAM.FILE  ${integrated_ip_project_path}/${integrated_ip_project_name}.bit [get_hw_devices xc7z010_1]
     set_property PROBES.FILE {} [get_hw_devices xc7z010_1]
     set_property FULL_PROBES.FILE {} [get_hw_devices xc7z010_1]
     current_hw_device [get_hw_devices xc7z010_1]
@@ -98,7 +97,7 @@ if { $burn_bitfile == 1 } {
 if { $export_ws == 1 } {
     ## Open the project if we're running only this flow
     if { $skip_project_gen == 1 } {
-        open_project ${project_path}/${project_name}.xpr
+        open_project ${integrated_ip_project_path}/${integrated_ip_project_name}.xpr
     } 
     file mkdir ${worskpace_project_path}
     write_hwdef -force  -file ${worskpace_project_path}/${block_design_name}_wrapper.hdf
@@ -107,7 +106,7 @@ if { $export_ws == 1 } {
 if { $launch_sdk == 1 } {
     ## Launch the SDK
     if { $skip_project_gen == 1 } {
-        open_project ${project_path}/${project_name}.xpr
+        open_project ${integrated_ip_project_path}/${integrated_ip_project_name}.xpr
     } 
     launch_sdk -workspace  ${worskpace_project_path} -hwspec ${worskpace_project_path}/${block_design_name}_wrapper.hdf
 }

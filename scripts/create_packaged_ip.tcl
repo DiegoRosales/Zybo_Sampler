@@ -9,7 +9,7 @@ source scripts/vivado_init.tcl
 source scripts/common_variables.tcl
 
 ## Create the project
-create_project $project_name $packaged_ip_project_path -part xc7z010clg400-1 -force
+create_project ${packaged_ip_project_name} ${packaged_ip_project_path} -part xc7z010clg400-1 -force
 
 ## Set the project properties
 set_property board_part digilentinc.com:zybo:part0:1.0 [current_project]
@@ -17,7 +17,7 @@ set_property board_part digilentinc.com:zybo:part0:1.0 [current_project]
 ## Add all the files
 source $rtl_file_list
 ## Use [subst ..] because the filielist contains the $project_root variable
-add_files -norecurse [subst $synthesis_file_list] -scan_for_includes
+add_files -norecurse [subst ${synthesis_file_list}] -scan_for_includes
 
 ## Package the IP
 source ${project_root}/scripts/package_ip.tcl
