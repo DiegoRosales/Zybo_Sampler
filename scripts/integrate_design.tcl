@@ -51,11 +51,26 @@ create_bd_port -dir I -type clk board_clk
 set_property CONFIG.FREQ_HZ 50000000 [get_bd_ports board_clk]
 connect_bd_net [get_bd_ports board_clk] [get_bd_pins ${packaged_ip_inst_name}/board_clk]
 
+## I2S
+## Master Clock
+create_bd_port -dir O ac_mclk   
+## I2S Serial Clock
+create_bd_port -dir I ac_bclk   
+## I2S Playback Channel Clock (Left/Right)
+create_bd_port -dir I ac_pblrc  
+## I2S Playback Data
+create_bd_port -dir O ac_pbdat  
+## I2S Recorded Channel Clock (Left/Right)
+create_bd_port -dir I ac_reclrc 
+## I2S Recorded Data
+create_bd_port -dir I ac_recdat 
+## Digital Enable (Active Low)
+create_bd_port -dir O ac_muten  
+
 ## I2C
 create_bd_port -dir IO i2c_sda
 create_bd_port -dir IO i2c_scl
-connect_bd_net [get_bd_ports i2c_scl] [get_bd_pins ${packaged_ip_inst_name}/i2c_scl]
-connect_bd_net [get_bd_ports i2c_sda] [get_bd_pins ${packaged_ip_inst_name}/i2c_sda]
+
 
 ## GPIO
 # Create a Xilinx gpio_rtl interface
@@ -68,16 +83,30 @@ create_bd_intf_port -mode Master -vlnv xilinx.com:interface:gpio_rtl:1.0 LED
 ##############################################
 
 #### Run Board Connection Automation for the Zynq Processing Unit, the AXI GPIO and the AXI Interface of the Samples ####
-# INFO - The Board Pin information for the board automation is under board_files/zybo/B.3/*.xml
-# Zynq
+#### INFO - The Board Pin information for the board automation is under board_files/zybo/B.3/*.xml
+## Zynq
 apply_bd_automation -rule xilinx.com:bd_rule:processing_system7 -config {make_external "FIXED_IO, DDR" apply_board_preset "1" Master "Disable" Slave "Disable" } [get_bd_cells processing_system7_0]
 
-# Sampler
+## Sampler
+# AXI Interface
 apply_bd_automation -rule xilinx.com:bd_rule:axi4               -config {Master "/processing_system7_0/M_AXI_GP0" intc_ip "New AXI Interconnect" Clk_xbar "Auto" Clk_master "Auto" Clk_slave "Auto" }  [get_bd_intf_pins ${packaged_ip_inst_name}/s00_axi]
-connect_bd_intf_net [get_bd_intf_pins audio_sampler_inst/LED]  [get_bd_intf_ports LED ]
-connect_bd_intf_net [get_bd_intf_pins audio_sampler_inst/SW ]  [get_bd_intf_ports SW  ] 
-connect_bd_intf_net [get_bd_intf_pins audio_sampler_inst/BTN]  [get_bd_intf_ports BTN ]
-# AXI GPIO
+# GPIO
+connect_bd_intf_net [get_bd_intf_pins ${packaged_ip_inst_name}/LED]  [get_bd_intf_ports LED ]
+connect_bd_intf_net [get_bd_intf_pins ${packaged_ip_inst_name}/SW ]  [get_bd_intf_ports SW  ] 
+connect_bd_intf_net [get_bd_intf_pins ${packaged_ip_inst_name}/BTN]  [get_bd_intf_ports BTN ]
+# CODEC I2C (Control)
+connect_bd_net      [get_bd_pins ${packaged_ip_inst_name}/i2c_scl ]  [get_bd_ports i2c_scl] 
+connect_bd_net      [get_bd_pins ${packaged_ip_inst_name}/i2c_sda ]  [get_bd_ports i2c_sda] 
+# CODEC I2S (Audio)
+connect_bd_net      [get_bd_pins ${packaged_ip_inst_name}/ac_bclk  ]  [get_bd_ports ac_bclk  ] 
+connect_bd_net      [get_bd_pins ${packaged_ip_inst_name}/ac_mclk  ]  [get_bd_ports ac_mclk  ] 
+connect_bd_net      [get_bd_pins ${packaged_ip_inst_name}/ac_pblrc ]  [get_bd_ports ac_pblrc ] 
+connect_bd_net      [get_bd_pins ${packaged_ip_inst_name}/ac_pbdat ]  [get_bd_ports ac_pbdat ] 
+connect_bd_net      [get_bd_pins ${packaged_ip_inst_name}/ac_reclrc]  [get_bd_ports ac_reclrc] 
+connect_bd_net      [get_bd_pins ${packaged_ip_inst_name}/ac_recdat]  [get_bd_ports ac_recdat] 
+connect_bd_net      [get_bd_pins ${packaged_ip_inst_name}/ac_muten ]  [get_bd_ports ac_muten ] 
+
+## AXI GPIO
 apply_bd_automation -rule xilinx.com:bd_rule:axi4               -config {Master "/processing_system7_0/M_AXI_GP0" intc_ip "/ps7_0_axi_periph" Clk_xbar "Auto" Clk_master "Auto" Clk_slave "Auto" }     [get_bd_intf_pins axi_gpio_0/S_AXI]
 connect_bd_intf_net [get_bd_intf_pins axi_gpio_0/GPIO        ]  [get_bd_intf_ports SW  ] 
 connect_bd_intf_net [get_bd_intf_pins axi_gpio_0/GPIO2       ]  [get_bd_intf_ports BTN ]

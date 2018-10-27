@@ -26,14 +26,22 @@ module codec_unit_top #(
   input wire board_clk, // 50MHz
   input wire reset,
 
-  ///////////////////////////////////////////////
-  ///////////// I2S SIGNALS (Audio) ///////////// 
-  output wire i2s_bclk,
-  output wire i2s_wclk,
-  output wire i2s_data,
+  /////////////////////////////////////////////////
+  ///////////// CODEC SIGNALS (Audio) ///////////// 
+  // Clocks
+  output wire ac_mclk   , // Master Clock
+  input  wire ac_bclk   , // I2S Serial Clock
+  // Playback
+  input  wire ac_pblrc  , // I2S Playback Channel Clock (Left/Right)
+  output wire ac_pbdat  , // I2S Playback Data
+  // Record
+  input  wire ac_recdat , // I2S Recorded Data
+  input  wire ac_reclrc , // I2S Recorded Channel Clock (Left/Right)
+  // Misc
+  output wire ac_muten  , // Digital Enable (Active Low)
 
-  ///////////////////////////////////////////////
-  //////////// I2C SIGNALS (Control) //////////// 
+  /////////////////////////////////////////////////
+  //////////// CODEC SIGNALS (Control) //////////// 
   inout wire i2c_scl,
   inout wire i2c_sda,
 
@@ -118,6 +126,7 @@ wire clk_48_16b;
 wire clk_48_24b;
 wire fifo_empty;
 wire i2s_busy;
+wire board_clk_bufg;
 
 // I2C
 wire        i2c_scl_i;
@@ -174,6 +183,11 @@ IOBUF scl_iobuf (
   .T  (i2c_scl_t)
   );   
 
+BUFGCE board_clk_bufg_inst (
+  .I  (board_clk     ),
+  .O  (board_clk_bufg)
+);
+
 controller_unit_top controller_unit(
   .clk  (board_clk       ),
   .reset(controller_reset),
@@ -201,15 +215,31 @@ controller_unit_top controller_unit(
   );
 
 
-//i2s_controller i2s_controller(
-//  .clk      (clk_24mhz),
-//  .reset    (reset    ),
-//  .data     (fifo_data),
-//  .data_rd  (fifo_rd  ),
-//  .i2s_bclk (i2s_bclk ),
-//  .i2s_wclk (i2s_wclk ),
-//  .i2s_data (i2s_data )
-//  );
+audio_unit_top audio_unit_top (
+  .clock (board_clk_bufg),
+  .reset (reset),
+
+  /////////////////////////////////////////////////
+  ///////////// CODEC SIGNALS (Audio) ///////////// 
+  // Clocks
+  .ac_mclk  , // Master Clock
+  .ac_bclk  , // I2S Serial Clock
+  // Playback
+  .ac_pblrc , // I2S Playback Channel Clock (Left/Right)
+  .ac_pbdat , // I2S Playback Data
+  // Record
+  .ac_recdat, // I2S Recorded Data
+  .ac_reclrc, // I2S Recorded Channel Clock (Left/Right)
+  // Misc
+  .ac_muten , // Digital Enable (Active Low)
+
+  ////////////////////////////////////////////////////
+  //////////////// Input Data Signals ////////////////
+  .audio_data_in(),
+  .audio_data_wr(),
+  .audio_buffer_full()
+
+);
 
 
 register_unit #(

@@ -43,7 +43,7 @@ pullup(i2c_sda);
 pullup(i2c_scl);
 
 sampler_top sampler_top (
-  .board_clk(clk_50),
+  .board_clk(clk_125),
   .reset(reset),
   .s00_axi_aclk(clk_125),
   .s00_axi_aresetn(reset_n),

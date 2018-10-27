@@ -3,49 +3,43 @@ module sampler_top #(
   parameter C_S00_AXI_DATA_WIDTH = 32,
   parameter C_S00_AXI_ADDR_WIDTH = 8
 ) (
+  //********************************************//
+  //              Board Signals                 //
+  //********************************************//
+  //// Clocks and Resets
   input wire board_clk,
   input wire reset,
 
+  //// GPIOs
   // Switches
   input wire sw[3:0],
-  //input wire sw0,
-  //input wire sw1,
-  //input wire sw2,
-  //input wire sw3,
-
   // Push Buttons
   input wire btn[3:0],
-  //input wire btn0,
-  //input wire btn1,
-  //input wire btn2,
-  //input wire btn3,
-
   // LEDs
   output wire led[3:0],
-  //output wire led0,
-  //output wire led1,
-  //output wire led2,
-  //output wire led3,
 
-  // CODEC I2S Audio Data Signals
-  //output wire i2s_bclk,
-  //output wire i2s_wclk,
-  //output wire i2s_data,
+  /////////////////////////////////////////////////
+  ///////////// CODEC SIGNALS (Audio) ///////////// 
+  // Clocks
+  output wire ac_mclk   , // Master Clock
+  input  wire ac_bclk   , // I2S Serial Clock
+  // Playback
+  input  wire ac_pblrc  , // I2S Playback Channel Clock (Left/Right)
+  output wire ac_pbdat  , // I2S Playback Data
+  // Record
+  input  wire ac_recdat , // I2S Recorded Data
+  input  wire ac_reclrc , // I2S Recorded Channel Clock (Left/Right)
+  // Misc
+  output wire ac_muten  , // Digital Enable (Active Low)
 
-  // CODEC Misc Signals
-  output wire ac_bclk,
-  output wire ac_mclk,
-  output wire ac_muten,
-  output wire ac_pbdat,
-  output wire ac_pblrc,
-  output wire ac_recdat,
-  output wire ac_reclrc,
-
-  // CODEC I2C Control Signals
+  /////////////////////////////////////////////////
+  //////////// CODEC SIGNALS (Control) //////////// 
   inout wire i2c_scl,
   inout wire i2c_sda,
 
-  //---- AXI Clock Domain ----//
+  //********************************************//
+  //            AXI Clock Domain                //
+  //********************************************//
   // Ports of Axi Slave Bus Interface S00_AXI
 	input  wire                                  s00_axi_aclk,
 	input  wire                                  s00_axi_aresetn,
@@ -68,6 +62,8 @@ module sampler_top #(
 	output wire [1 : 0]                          s00_axi_rresp,
 	output wire                                  s00_axi_rvalid,
 	input  wire                                  s00_axi_rready
+
+  ////////////////////////////////////////////
 );
 
 wire       output_en    = 0;
@@ -110,14 +106,22 @@ codec_unit_top #(
   .board_clk, // 50MHz
   .reset(btn[3]),
 
-  ///////////////////////////////////////////////
-  ///////////////// I2S SIGNALS ///////////////// 
- // .i2s_bclk,
- // .i2s_wclk,
- // .i2s_data,
+  /////////////////////////////////////////////////
+  ///////////// CODEC SIGNALS (Audio) ///////////// 
+  // Clocks
+  .ac_mclk  , // Master Clock
+  .ac_bclk  , // I2S Serial Clock
+  // Playback
+  .ac_pblrc , // I2S Playback Channel Clock (Left/Right)
+  .ac_pbdat , // I2S Playback Data
+  // Record
+  .ac_recdat, // I2S Recorded Data
+  .ac_reclrc, // I2S Recorded Channel Clock (Left/Right)
+  // Misc
+  .ac_muten , // Digital Enable (Active Low)
 
-  ///////////////////////////////////////////////
-  ///////////////// I2C SIGNALS ///////////////// 
+  /////////////////////////////////////////////////
+  //////////// CODEC SIGNALS (Control) //////////// 
   .i2c_scl,
   .i2c_sda,
 
