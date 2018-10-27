@@ -3,6 +3,7 @@
 #####################
 set pack             0
 set integ            0
+set implement        0
 set burn_bitfile     0
 set skip_project_gen 0
 set export_ws        0
@@ -14,10 +15,18 @@ if { $argc > 0 } {
             set pack 1
         }
         integ {
-            set integ            1
-            set burn_bitfile     1
-            set skip_project_gen 0
+            set integ 1
         } 
+        integ_impl {
+            set integ     1
+            set implement 1
+        }         
+        integ_all {
+            set integ            1
+            set implement        1
+            set burn_bitfile     1
+            set export_ws        1
+        }         
         all {
             set pack  1
             set integ 1

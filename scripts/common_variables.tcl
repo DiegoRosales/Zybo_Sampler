@@ -5,7 +5,7 @@ set integrated_ip_project_name ${project_name}_integ
 set workspace_project_name     ${integrated_ip_project_name}_sdk_ws
 
 ## Project Path Variables
-set project_root [pwd]
+set project_root               [pwd]
 set packaged_ip_project_path   "${project_root}/${packaged_ip_project_name}"
 set integrated_ip_project_path "${project_root}/${integrated_ip_project_name}"
 set worskpace_project_path     "${project_root}/${workspace_project_name}"
