@@ -40,6 +40,8 @@ module audio_unit_top(
 
   input  wire [63:0] audio_data_in,
   input  wire        audio_data_wr,
+  output wire [63:0] audio_data_out,
+  input  wire        audio_data_rd,
   output wire        audio_buffer_full
 
 );
@@ -58,6 +60,14 @@ module audio_unit_top(
 
     );      // input clock_in_125
 
-    
+
+  reg [63:0] counter;
+
+  always @ (posedge ac_bclk or negedge locked) begin
+    if (locked == 1'b0) counter <= 'h0;
+    else counter <= counter + 1;
+  end
+
+  assign audio_data_out = counter;
     
 endmodule

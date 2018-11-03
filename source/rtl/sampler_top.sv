@@ -90,10 +90,10 @@ wire        missed_ack;
 wire pll_locked;
 
 
-assign led[0] = init_done;
-assign led[1] = init_error;
-assign led[2] = missed_ack;
-assign led[3] = controller_busy;
+assign led[0] = (sw[0] == 1) ? init_done      : sw[0];
+assign led[1] = (sw[0] == 1) ? init_error     : sw[1];
+assign led[2] = (sw[0] == 1) ? missed_ack     : sw[2];
+assign led[3] = (sw[0] == 1) ? controller_busy: sw[3];
 
 codec_unit_top #(
   .C_S00_AXI_DATA_WIDTH(C_S00_AXI_DATA_WIDTH),

@@ -13,6 +13,7 @@ module register_unit #(
     //---- Board Clock Domain ----//
     input wire board_clk,
     input wire reset,
+	input wire ac_bclk,
 
     // Interface to the controller_unit //
     input  wire        clear_codec_i2c_data_wr,
@@ -28,6 +29,7 @@ module register_unit #(
     input  wire [31:0] codec_i2c_rd_data,
     input  wire        update_codec_i2c_rd_data,
 	output wire        controller_reset,
+	input  wire [63:0] audio_data_out,
 
     //---- AXI Clock Domain ----//
     // Ports of Axi Slave Bus Interface S00_AXI
@@ -80,6 +82,7 @@ wire [31:0] codec_i2c_wr_data_sync;
 wire [31:0] codec_i2c_rd_data_sync;
 wire        update_codec_i2c_rd_data_sync;
 wire        controller_reset_sync;
+wire [63:0] audio_data_out_sync;
 
 
 // Instantiation of Axi Bus Interface S00_AXI
@@ -121,7 +124,8 @@ wire        controller_reset_sync;
 		.codec_i2c_wr_data        (codec_i2c_wr_data_sync       ),
 		.codec_i2c_rd_data        (codec_i2c_rd_data_sync       ),
 		.update_codec_i2c_rd_data (update_codec_i2c_rd_data_sync),
-		.controller_reset         (controller_reset_sync        )
+		.controller_reset         (controller_reset_sync        ),
+		.audio_data_out           (audio_data_out_sync          )
 
 	);
 
@@ -146,5 +150,9 @@ synchronizer       #(.DATA_WIDTH(1 )) BOARD_2_AXI_data_in_valid_sync            
 synchronizer       #(.DATA_WIDTH(1 )) BOARD_2_AXI_missed_ack_sync                     (.clk_in(board_clk),  .clk_out(s00_axi_aclk), .data_in(missed_ack              ),  .data_out(missed_ack_sync              ));
 pulse_synchronizer                    BOARD_2_AXI_codec_init_done_pulse_sync          (.clk_in(board_clk),  .clk_out(s00_axi_aclk), .data_in(codec_init_done         ),  .data_out(codec_init_done_sync         ));
 pulse_synchronizer                    BOARD_2_AXI_update_codec_i2c_rd_data_pulse_sync (.clk_in(board_clk),  .clk_out(s00_axi_aclk), .data_in(update_codec_i2c_rd_data),  .data_out(update_codec_i2c_rd_data_sync));
+
+// CODEC Clock -> AXI
+synchronizer       #(.DATA_WIDTH(64)) CODEC_2_AXI_clear_codec_i2c_data_wr_sync        (.clk_in(ac_bclk),  .clk_out(s00_axi_aclk), .data_in(audio_data_out ),  .data_out(audio_data_out_sync ));
+
 
 endmodule

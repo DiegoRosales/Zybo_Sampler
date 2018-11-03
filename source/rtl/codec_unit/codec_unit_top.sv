@@ -166,6 +166,9 @@ wire        update_codec_i2c_rd_data;
 wire        controller_reset;
 wire        sw_reset;
 
+///////////////////////////
+wire [63:0] audio_data_out;
+
 assign codec_init_done  = init_done | init_error;
 assign controller_reset = sw_reset | reset;
 
@@ -237,8 +240,8 @@ audio_unit_top audio_unit_top (
   //////////////// Input Data Signals ////////////////
   .audio_data_in(),
   .audio_data_wr(),
-  .audio_buffer_full()
-
+  .audio_buffer_full(),
+  .audio_data_out
 );
 
 
@@ -249,6 +252,7 @@ register_unit #(
   //---- Board Clock Domain ----//
   .board_clk,
   .reset,
+  .ac_bclk,
 
 
   // Interface to the controller_unit
@@ -265,6 +269,7 @@ register_unit #(
   .codec_i2c_rd_data,
   .update_codec_i2c_rd_data,
   .controller_reset(sw_reset),
+  .audio_data_out(audio_data_out),
   
   //---- AXI Clock Domain ----//
   .s00_axi_aclk,

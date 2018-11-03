@@ -27,7 +27,9 @@ module codec_registers (
 	output wire [31:0] codec_i2c_wr_data,
     input  wire [31:0] codec_i2c_rd_data,
     input  wire        update_codec_i2c_rd_data,
-	output wire        controller_reset
+	output wire        controller_reset,
+	input  wire [63:0] audio_data_out
+
 
 );
 
@@ -210,7 +212,12 @@ wire misc_data_0_wr_en = `DECODE_MEM_WR(`MISC_DATA_0_REG_ADDR, reg_addr_wr, data
 // Register
 reg   [31:0] misc_data_0;
 
-`GEN_REG_SW_RW(axi_clk, axi_reset, 32'habcdabcd, misc_data_0_wr_en, data_in, misc_data_0)
+`GEN_REG_SW_RO_HW_WO(axi_clk, data_rd_reset,      // Clock and Reset
+						32'hcafecafe,             // Reset Value
+						1'b1,                     // Write Enable
+						audio_data_out[31:0],     // Data In
+						misc_data_0)              // Register
+
 
 ///////////////////////////////////////
 // Address 5
@@ -221,8 +228,11 @@ wire misc_data_1_wr_en = `DECODE_MEM_WR(`MISC_DATA_1_REG_ADDR, reg_addr_wr, data
 // Register
 reg   [31:0] misc_data_1;
 
-`GEN_REG_SW_RW(axi_clk, axi_reset, 32'hdeaddddd, misc_data_1_wr_en, data_in, misc_data_1)
-
+`GEN_REG_SW_RO_HW_WO(axi_clk, data_rd_reset,      // Clock and Reset
+						32'hcafecafe,             // Reset Value
+						1'b1,                     // Write Enable
+						audio_data_out[63:32],    // Data In
+						misc_data_1)              // Register
 ///////////////////////////////////////
 // Address 6
 // misc_data_2
