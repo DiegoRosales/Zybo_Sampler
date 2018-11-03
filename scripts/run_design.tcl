@@ -36,6 +36,12 @@ if { $argc > 0 } {
             set burn_bitfile     1
             set export_ws        1
         }
+        all_update {
+            set pack             1
+            set integ            1
+            set implement        1
+            set burn_bitfile     1
+        }        
         burn_only {
             set integ            1
             set skip_project_gen 1

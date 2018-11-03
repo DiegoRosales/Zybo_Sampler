@@ -32,6 +32,8 @@ wire i2c_sda_t;
 assign i2c_sda_pin = 1'b0;
 assign i2c_sda_t   = 1'b1;//(i2c_sda_i === 1'b0) ? 1'b1 : 1'b0;
 
+wire codec_mclk;
+
 IOBUF sda_iobuf (
   .I  (i2c_sda_pin), 
   .IO (i2c_sda  ), 
@@ -60,8 +62,8 @@ sampler_top sampler_top (
  // .i2s_data(),
 
   // CODEC Misc Signals
-  .ac_bclk(),
-  .ac_mclk(),
+  .ac_bclk(codec_mclk), // Loopback
+  .ac_mclk(codec_mclk),
   .ac_muten(),
   .ac_pbdat(),
   .ac_pblrc(),
