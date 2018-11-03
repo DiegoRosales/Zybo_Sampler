@@ -22,9 +22,16 @@
 #define ALC_CTRL_2_REG_ADDR             0x11
 #define NOISE_GATE_REG_ADDR             0x12
 
+// Control Registers
+#define BUSY_BIT 2
+
+
 int CodecRd(int addr, int display, int debug);
 int CodecWr(int addr, int data, int check, int display, int debug);
 void BusyBitIsClear(int debug);
 void ControllerReset(int debug);
+void ClearStatusBits(debug);
+void WaitUntilDataIsAvailable(int debug);
+void CodecInit(int debug);
 
 #endif

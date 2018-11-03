@@ -37,17 +37,6 @@ int main_program()
 	XGpio_InterruptGlobalEnable(&gpio);
 	while (1)
 	{
-		//xil_printf("=========== %d ==========\n\r", iteration);
-		//CodecRd(ACTIVE_REG_ADDR, display, debug);
-		//for (int i = 0; i < 90000000; i++);
-
-		//xil_printf("=========== %d ==========\n\r", iteration);
-		//CodecRd(LEFT_CHANN_INPUT_VOL_REG_ADDR, display, debug);
-		//for (int i = 0; i < 90000000; i++);
-
-		//xil_printf("=========== %d ==========\n\r", iteration);
-		//CodecRd(DIGITAL_AUDIO_PATH_REG_ADDR, display, debug);
-		//for (int i = 0; i < 90000000; i++);
 	}
 }
 
@@ -62,25 +51,58 @@ void gpio_interrupt_handler(void *IntParams){
 	chan1_int = status & 0x1;        // Bit 0
 	chan2_int = (status >> 1) & 0x1; // Bit 1
 
-	xil_printf("Interrupt on Channel %d\n\r", (status & 0x3));
+	//xil_printf("Interrupt on Channel %d\n\r", (status & 0x3));
 
 	if (chan2_int) {
 		button = XGpio_DiscreteRead(&gpio, 2);
+		sw     = (XGpio_DiscreteRead(&gpio, 1) >> 1) & 0x7;
+		xil_printf("%c[2J",27);
 		if (button) {
-			xil_printf("Buttons pressed - %x\n\r", button);
-			if (button < 4) {
-				CodecRd(button, 1, 0);
-			} else if (button == 4) {
-				xil_printf("%c[2J",27);
-				xil_printf("SOFT RESET - %x\n\r", button);
-				ControllerReset(1);
-				//xil_printf("%c[2J",27);
-			} else {
-				xil_printf("%c[2J",27);
-				xil_printf("RESET BUTTON PRESSED - %x\n\r", button);
+			xil_printf("Buttons pressed\n\r", button);
+			xil_printf("Button = %x\n\r", button);
+			switch (button)
+			{
+				case 1:
+					xil_printf("Misc Register 0 - %x\n\r", button);
+					RegRd(MISC_DATA_0_REG_ADDR, 1);					
+					break;
+				case 2:
+					xil_printf("Switch Value = %x\n\r", sw);
+					switch (sw)
+					{
+						case 0:
+							xil_printf("Reading POWER_MGMT_REG_ADDR (0x6)\n\r");
+							CodecRd(POWER_MGMT_REG_ADDR, 1, 0);
+							break;
+						case 1:
+							xil_printf("Reading DIGITAL_AUDIO_IF_REG_ADDR (0x7)\n\r");
+							CodecRd(DIGITAL_AUDIO_IF_REG_ADDR, 1, 0);
+							break;
+						case 2:
+							xil_printf("Initializing the CODEC\n\r");
+							CodecInit(1);
+							break;
+
+						default:
+							xil_printf("Misc Register 1 - %x\n\r", button);
+							RegRd(MISC_DATA_1_REG_ADDR, 1);
+							break;
+					}					
+					break;
+				case 4:
+					xil_printf("SOFT RESET - %x\n\r", button);
+					ControllerReset(1);
+					break;
+				case 8:
+					xil_printf("RESET BUTTON PRESSED - %x\n\r", button);
+					break;									
+				default:
+					break;
 			}
-		} else {
+		} 
+		else {
 			xil_printf("Buttons released\n\r");
+			xil_printf("Button = %x\n\r", button);
 		}
 		
 	} else {
