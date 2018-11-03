@@ -19,7 +19,7 @@ module controller_unit_top (
   input  wire       codec_rd_en,
   input  wire       codec_wr_en,
   input  wire [7:0] codec_reg_addr,
-  input  wire [7:0] codec_data_in,
+  input  wire [8:0] codec_data_in,
   output wire [7:0] codec_data_out,
   output wire       codec_data_out_valid,
   output wire       controller_busy,
@@ -60,7 +60,7 @@ wire       wb_data_in_valid;
 // Initialization Controller
 wire       INIT_codec_rd_en        ;
 wire       INIT_codec_wr_en        ;
-wire [7:0] INIT_codec_data_out     ;
+wire [8:0] INIT_codec_data_out     ;
 wire [7:0] INIT_codec_reg_addr     ;
 wire [7:0] INIT_codec_data_in      ;
 wire       INIT_codec_data_in_valid;
@@ -68,7 +68,7 @@ wire       INIT_codec_data_in_valid;
 // I2C State Machine
 wire       CONTROLLER_codec_rd_en         ;
 wire       CONTROLLER_codec_wr_en         ;
-wire [7:0] CONTROLLER_codec_data_in       ;
+wire [8:0] CONTROLLER_codec_data_in       ;
 wire [7:0] CONTROLLER_codec_reg_addr      ;
 wire [7:0] CONTROLLER_codec_data_out      ;
 wire       CONTROLLER_codec_data_out_valid;
@@ -159,7 +159,9 @@ i2c_seq_sm i2c_seq_sm_inst (
 
 );
 
-i2c_master_wbs_8 i2c_master_inst(
+i2c_master_wbs_8 #(
+  .DEFAULT_PRESCALE(80)
+) i2c_master_inst(
   .clk,
   .rst(reset),
   // Wishbone

@@ -4,6 +4,7 @@
 // This module talks to the WB Controller.         //
 /////////////////////////////////////////////////////
 // Rev. 0.1 - Init                                 //
+// Rev. 0.2 - Sequencing issues                    //
 /////////////////////////////////////////////////////
 
 module i2c_seq_sm (
@@ -14,7 +15,7 @@ module i2c_seq_sm (
   input  wire       codec_rd_en,
   input  wire       codec_wr_en,
   input  wire [7:0] codec_reg_addr,
-  input  wire [7:0] codec_data_in,
+  input  wire [8:0] codec_data_in,
   output wire [7:0] codec_data_out,
   output wire       codec_data_out_valid,
   output wire       controller_busy,
@@ -42,10 +43,11 @@ localparam CODEC_I2C_ADDR           = 7'b0011010; // I2C Address of the SSM2603 
 
 /////////////////////////////////////////////////
 /////////// I2C WB Command Registers ////////////
-localparam CMD_START = 8'b00000001;
-localparam CMD_READ  = 8'b00000010;
-localparam CMD_WRITE = 8'b00000100;
-localparam CMD_STOP  = 8'b00001000;
+localparam CMD_START       = 8'b00000001; // Bit 0
+localparam CMD_READ        = 8'b00000010; // Bit 1
+localparam CMD_WRITE       = 8'b00000100; // Bit 2
+localparam CMD_MULTIPLE_WR = 8'b00001000; // Bit 3
+localparam CMD_STOP        = 8'b00010000; // Bit 4
 
 /////////////////////////////////////////////////
 ///////// High-level I2C State Machine //////////
@@ -60,6 +62,7 @@ localparam I2C_WAIT_WR_XFR_DONE = 4'h7;
 localparam I2C_GET_DATA_RD      = 4'h8;
 localparam I2C_WRITE_DATA       = 4'h9;
 localparam I2C_GET_RD_STS       = 4'ha;
+localparam I2C_WR_STOP_CMD      = 4'hb;
 
 reg  [3:0] i2c_state_next;
 wire [3:0] i2c_state_curr;
@@ -86,7 +89,7 @@ reg [7:0] codec_data_out_reg;
 reg       codec_data_out_valid_reg;
 
 // I2C Registers
-reg [7:0] i2c_data;
+reg [8:0] i2c_data; // 9 bits
 reg [7:0] i2c_addr;
 reg [7:0] i2c_int_addr;
 reg [7:0] i2c_command;
@@ -177,6 +180,7 @@ always @ ( posedge clk or negedge reset ) begin
 
     case (i2c_state_curr)
       I2C_IDLE: begin
+        i2c_xfer_is_rd           <= 1'b0;
         wb_read_reg              <= 'h0;
         wb_write_reg             <= 'h0;
         wb_data_out_reg          <= wb_data_out_reg;
@@ -187,8 +191,9 @@ always @ ( posedge clk or negedge reset ) begin
         if (codec_rd_en) begin // Read register from the CODEC
           i2c_state_next           <= I2C_WRITE_DEV_ADDR;
           i2c_addr                 <= {1'b0, CODEC_I2C_ADDR}; // Always the same
-          i2c_int_addr             <= codec_reg_addr; // Internal Address
-          i2c_data                 <= 'h0;  // Data to write to the Internal Address
+          // For RD operations, the internal address is shifted 1 bit to the right and the LSB is always 1'b1
+          i2c_int_addr             <= {codec_reg_addr[6:0], 1'b0}; // Internal Address
+          i2c_data                 <= 'h0;                         // Data to write to the Internal Address
           controller_busy_reg      <= 1'b1;
           i2c_xfer_is_rd           <= 1'b1;
           codec_data_out_valid_reg <= 1'b0;
@@ -197,10 +202,10 @@ always @ ( posedge clk or negedge reset ) begin
         if (codec_wr_en) begin // Write register to the CODEC
           i2c_state_next           <= I2C_WRITE_DEV_ADDR;
           i2c_addr                 <= {1'b0, CODEC_I2C_ADDR}; // Always the same
-          i2c_int_addr             <= codec_reg_addr; // Internal Address
-          i2c_data                 <= codec_data_in;  // Data to write to the Internal Address
+          // For Write operations, the MSB of the WR Data is in the LSB of the Address
+          i2c_int_addr             <= {codec_reg_addr[6:0], codec_data_in[8]}; // Internal Address
+          i2c_data                 <= codec_data_in[7:0];                      // Data to write to the Internal Address
           controller_busy_reg      <= 1'b1;
-          i2c_xfer_is_rd           <= 1'b0;
           codec_data_out_valid_reg <= 1'b0;
         end        
       end // I2C_IDLE:
@@ -258,13 +263,17 @@ always @ ( posedge clk or negedge reset ) begin
 
       I2C_WRITE_WB_CMD: begin // Step 4 - Write the I2C Command to the I2C Controller Interface
         // For RD operations, if the address hasn't been sent, send it before performing a RD request.
-        i2c_state_after_ack <= (int_addr_sent) ? I2C_WAIT_WR_XFR_DONE : I2C_WRITE_WB_CMD;
+        // For WR operations, you need to send the device address again
+        i2c_state_after_ack <= (i2c_xfer_is_rd && !int_addr_sent) ? I2C_WRITE_WB_CMD : I2C_WR_STOP_CMD;
+                                                          
         i2c_state_next      <= I2C_WAIT_FOR_ACK;
 
         // For RD operations, if the address hasn't been sent to the device, send it before performing a RD request.
         // For WR operations you can start the transaction right away
         wb_data_out_reg <= (i2c_xfer_is_rd == 1'b0) ? (CMD_START | CMD_WRITE) :
                            (int_addr_sent  == 1'b0) ? (CMD_WRITE) : (CMD_READ | CMD_START);
+        
+
         wb_address_reg  <= I2C_CTRL_CMD_ADDR;
         wb_write_reg    <= 1'b1;
 
@@ -275,6 +284,17 @@ always @ ( posedge clk or negedge reset ) begin
 
       end
 
+      I2C_WR_STOP_CMD: begin // Step 4.5 - Send the STOP bit to stop after the whole transaction is done
+        wb_address_reg  <= I2C_CTRL_CMD_ADDR;
+        wb_data_out_reg <= CMD_STOP;
+        wb_write_reg    <= 1'b1;
+
+        i2c_state_next      <= I2C_WAIT_FOR_ACK;
+        i2c_state_after_ack <= (i2c_xfer_is_rd) ? I2C_WAIT_WR_XFR_DONE : 
+                               (int_addr_sent)  ? I2C_WAIT_WR_XFR_DONE : I2C_WRITE_DEV_ADDR;
+
+      end
+      
       I2C_WAIT_WR_XFR_DONE: begin // Step 5 - Poll the status register until the transaction is done
         // The transfer has started, wait for the busy bit to clear
         if (i2c_xfer_started) begin // Check for the Busy bit to go 1 -> 0

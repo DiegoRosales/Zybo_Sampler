@@ -548,14 +548,20 @@ always @* begin
             STATE_WRITE_3: begin
                 // read ack bit
                 missed_ack_next = phy_rx_data_reg;
-
-                if (mode_write_multiple_reg && !last_reg) begin
+                if (mode_stop_reg) begin
+                   // last cycle and stop selected
+                   phy_stop_bit = 1'b1;
+                   state_next = STATE_IDLE;
+                end else if (mode_write_multiple_reg || data_in_valid) begin
                     // more to write
                     state_next = STATE_WRITE_1;
-                end else if (mode_stop_reg) begin
-                    // last cycle and stop selected
-                    phy_stop_bit = 1'b1;
-                    state_next = STATE_IDLE;
+                //if (mode_write_multiple_reg && !last_reg) begin
+                //    // more to write
+                //    state_next = STATE_WRITE_1;
+                //end else if (mode_stop_reg) begin
+                //    // last cycle and stop selected
+                //    phy_stop_bit = 1'b1;
+                //    state_next = STATE_IDLE;
                 end else begin
                     // otherwise, return to bus active state
                     state_next = STATE_ACTIVE_WRITE;
