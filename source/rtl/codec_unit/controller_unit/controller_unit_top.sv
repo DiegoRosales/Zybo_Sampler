@@ -160,7 +160,7 @@ i2c_seq_sm i2c_seq_sm_inst (
 );
 
 i2c_master_wbs_8 #(
-  .DEFAULT_PRESCALE(80)
+  .DEFAULT_PRESCALE(160)
 ) i2c_master_inst(
   .clk,
   .rst(reset),
