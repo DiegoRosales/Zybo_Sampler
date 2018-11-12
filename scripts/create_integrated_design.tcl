@@ -12,9 +12,6 @@ source scripts/common_variables.tcl
 
 ###########################################
 
-## Set the project Variables
-set block_design_name "audio_sampler_block_design"
-
 ## Set Block Design Variables
 
 set bd_output_dirname ${integrated_ip_project_path}/${integrated_ip_project_name}.srcs/sources_1/bd/${block_design_name}
