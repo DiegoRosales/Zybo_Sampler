@@ -19,11 +19,15 @@ Note that this board has been discontinued and replaced with the Zybo Z7 which i
 
 [**DONE**] Basic FW Interface to the RTL registers 
 
-[**IN PROGRESS**] Basic interrupt handler mechanism for the board buttons
+[**DONE**] Basic interrupt handler mechanism for the board buttons
 
-[**IN PROGRESS**] I2S Interface to the CODEC
+[**DONE**] I2S Serializer + test tone
+
+[**IN PROGRESS**] I2S HW Control Registers
 
 [**NOT STARTED**] DMA Interface between the ARM core and the I2S controller
+
+[**NOT WELL DEFINED**] FW Application to playback audio using FreeRTOS
 
 ---
 # Build instructions
