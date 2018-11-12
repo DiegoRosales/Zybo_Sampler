@@ -26,6 +26,9 @@ module codec_unit_top #(
   input wire board_clk, // 50MHz
   input wire reset,
 
+  // Misc
+  output wire [3:0] led_status,
+
   /////////////////////////////////////////////////
   ///////////// CODEC SIGNALS (Audio) ///////////// 
   // Clocks
@@ -172,6 +175,8 @@ wire [63:0] audio_data_out;
 assign codec_init_done  = init_done | init_error;
 assign controller_reset = sw_reset | reset;
 
+assign led_status = audio_data_out[3:0];
+
 IOBUF sda_iobuf (
   .I  (i2c_sda_o), 
   .IO (i2c_sda  ), 
@@ -235,6 +240,10 @@ audio_unit_top audio_unit_top (
   .ac_reclrc, // I2S Recorded Channel Clock (Left/Right)
   // Misc
   .ac_muten , // Digital Enable (Active Low)
+
+  ///////////////////////////////////////////////////
+  ///////////// Control Signals (Audio) ///////////// 
+  .test_mode(1'b1),
 
   ////////////////////////////////////////////////////
   //////////////// Input Data Signals ////////////////

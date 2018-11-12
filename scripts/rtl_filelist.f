@@ -8,6 +8,7 @@ set synthesis_file_list {
     ${project_root}/source/rtl/codec_unit/register_unit/codec_registers.sv
     ${project_root}/source/rtl/codec_unit/register_unit/register_unit.sv
     ${project_root}/source/rtl/codec_unit/audio_unit/audio_unit_top.sv
+    ${project_root}/source/rtl/codec_unit/audio_unit/audio_data_serializer.sv
     ${project_root}/source/rtl/codec_unit/pulse_synchronizer.sv
     ${project_root}/source/rtl/codec_unit/synchronizer.sv
     ${project_root}/source/rtl/sampler_top.sv

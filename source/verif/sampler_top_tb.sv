@@ -33,6 +33,11 @@ assign i2c_sda_pin = 1'b0;
 assign i2c_sda_t   = 1'b1;//(i2c_sda_i === 1'b0) ? 1'b1 : 1'b0;
 
 wire codec_mclk;
+wire lr_clk;
+reg [5:0] counter = 'h0;
+always @(posedge codec_mclk) counter <= counter + 1;
+assign lr_clk = &counter;
+
 
 IOBUF sda_iobuf (
   .I  (i2c_sda_pin), 
@@ -66,7 +71,7 @@ sampler_top sampler_top (
   .ac_mclk(codec_mclk),
   .ac_muten(),
   .ac_pbdat(),
-  .ac_pblrc(),
+  .ac_pblrc(lr_clk),
   .ac_recdat(),
   .ac_reclrc(),
 
