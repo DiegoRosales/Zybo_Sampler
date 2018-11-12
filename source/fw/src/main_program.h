@@ -16,6 +16,9 @@
 #include "reg_utils.h"
 #include "codec_utils.h"
 #include "intc/intc.h"
+#include "FreeRTOS.h"
+#include "task.h"
+#include "FreeRTOS_MemAlloc.h"
 
 // Interrupt ID of the GPIO
 // This parameter is taken from the "xparameters.h" 

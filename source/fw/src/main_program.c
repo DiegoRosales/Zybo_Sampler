@@ -35,6 +35,7 @@ int main_program()
 	XGpio_InterruptClear(&gpio, 0xffffffff);
 	XGpio_InterruptEnable(&gpio, 0xffffffff);
 	XGpio_InterruptGlobalEnable(&gpio);
+	CodecInit(0);
 	while (1)
 	{
 	}
@@ -56,15 +57,26 @@ void gpio_interrupt_handler(void *IntParams){
 	if (chan2_int) {
 		button = XGpio_DiscreteRead(&gpio, 2);
 		sw     = (XGpio_DiscreteRead(&gpio, 1) >> 1) & 0x7;
-		xil_printf("%c[2J",27);
 		if (button) {
+			xil_printf("%c[2J",27);
 			xil_printf("Buttons pressed\n\r", button);
 			xil_printf("Button = %x\n\r", button);
 			switch (button)
 			{
 				case 1:
-					xil_printf("Misc Register 0 - %x\n\r", button);
-					RegRd(MISC_DATA_0_REG_ADDR, 1);					
+					switch (sw)
+					{
+						case 0:
+							xil_printf("Misc Register 0 - %x\n\r", button);
+							RegRd(MISC_DATA_0_REG_ADDR, 1);
+							break;
+						case 1:
+							xil_printf("Misc Register 1 - %x\n\r", button);
+							RegRd(MISC_DATA_1_REG_ADDR, 1);		
+							break;
+						default:
+							break;
+					}					
 					break;
 				case 2:
 					xil_printf("Switch Value = %x\n\r", sw);
@@ -80,7 +92,7 @@ void gpio_interrupt_handler(void *IntParams){
 							break;
 						case 2:
 							xil_printf("Initializing the CODEC\n\r");
-							CodecInit(1);
+							CodecInit(0);
 							break;
 
 						default:
@@ -101,8 +113,10 @@ void gpio_interrupt_handler(void *IntParams){
 			}
 		} 
 		else {
+			xil_printf("\n\r=============\n\r");
 			xil_printf("Buttons released\n\r");
 			xil_printf("Button = %x\n\r", button);
+			xil_printf("=============\n\r");
 		}
 		
 	} else {
@@ -125,3 +139,4 @@ void enable_gpio_interrupts() {
 	fnEnableInterrupts(&intc, &ivt[0], sizeof(ivt)/sizeof(ivt[0]));
 	xil_printf("Done\n\n\r");
 }
+
