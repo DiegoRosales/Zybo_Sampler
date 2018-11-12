@@ -87,13 +87,15 @@ wire        data_wr      = 0;
 wire        init_done;
 wire        init_error;
 wire        missed_ack;
-wire pll_locked;
+wire        pll_locked;
+
+wire [3:0]  led_status;
 
 
-assign led[0] = (sw[0] == 1) ? init_done      : sw[0];
-assign led[1] = (sw[0] == 1) ? init_error     : sw[1];
-assign led[2] = (sw[0] == 1) ? missed_ack     : sw[2];
-assign led[3] = (sw[0] == 1) ? controller_busy: sw[3];
+assign led[0] = (sw[0] == 1) ? init_done      : led_status[0];
+assign led[1] = (sw[0] == 1) ? init_error     : led_status[1];
+assign led[2] = (sw[0] == 1) ? missed_ack     : led_status[2];
+assign led[3] = (sw[0] == 1) ? controller_busy: led_status[3];
 
 codec_unit_top #(
   .C_S00_AXI_DATA_WIDTH(C_S00_AXI_DATA_WIDTH),
@@ -105,6 +107,9 @@ codec_unit_top #(
   // Board Clock and Reset
   .board_clk, // 50MHz
   .reset(btn[3]),
+
+  // Misc
+  .led_status,
 
   /////////////////////////////////////////////////
   ///////////// CODEC SIGNALS (Audio) ///////////// 

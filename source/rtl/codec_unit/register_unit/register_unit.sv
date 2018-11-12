@@ -152,7 +152,7 @@ pulse_synchronizer                    BOARD_2_AXI_codec_init_done_pulse_sync    
 pulse_synchronizer                    BOARD_2_AXI_update_codec_i2c_rd_data_pulse_sync (.clk_in(board_clk),  .clk_out(s00_axi_aclk), .data_in(update_codec_i2c_rd_data),  .data_out(update_codec_i2c_rd_data_sync));
 
 // CODEC Clock -> AXI
-synchronizer       #(.DATA_WIDTH(64)) CODEC_2_AXI_clear_codec_i2c_data_wr_sync        (.clk_in(ac_bclk),  .clk_out(s00_axi_aclk), .data_in(audio_data_out ),  .data_out(audio_data_out_sync ));
+synchronizer       #(.DATA_WIDTH(64)) CODEC_2_AXI_audio_data_out_sync                 (.clk_in(ac_bclk),  .clk_out(s00_axi_aclk), .data_in(audio_data_out ),  .data_out(audio_data_out_sync ));
 
 
 endmodule
