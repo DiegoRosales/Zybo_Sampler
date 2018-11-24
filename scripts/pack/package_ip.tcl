@@ -1,6 +1,6 @@
 ## Script that creates a packaged IP
 
-set  revision 0
+set revision 0
 set led_gpio_interface_name LED
 set btn_gpio_interface_name BTN
 set sw_gpio_interface_name  SW
@@ -21,6 +21,12 @@ proc create_gpio_interface {name port_name interface_mode description display_na
     
 }
 
+###################################################################################################################
+###################################################################################################################
+
+##########################
+######### STEP 1 #########
+##########################
 ## First check if there was a previously packed IP to get the revision and the version
 if { [file exists ${packaged_ip_root_dir}/component.xml] == 1} {
     ipx::open_core ${packaged_ip_root_dir}/component.xml
@@ -28,11 +34,22 @@ if { [file exists ${packaged_ip_root_dir}/component.xml] == 1} {
     ipx::unload_core ${packaged_ip_root_dir}/component.xml
 }
 
+##########################
+######### STEP 2 #########
+##########################
 ## Pack the project
 ipx::package_project -root_dir ${packaged_ip_root_dir} -vendor xilinx.com -library user -taxonomy /UserIP -import_files -set_current false
 
+##########################
+######### STEP 3 #########
+##########################
 ## Open the IP Core
 ipx::open_core ${packaged_ip_root_dir}/component.xml
+
+##########################
+######### STEP 4 #########
+##########################
+## Create the GPIO Interfaces
 
 ##########################################
 ## Create the GPIO interface for the LEDs
@@ -49,6 +66,9 @@ create_gpio_interface ${sw_gpio_interface_name} sw monitor gpio_sw gpio_sw TRI_I
 create_gpio_interface ${btn_gpio_interface_name} btn monitor gpio_btn gpio_btn TRI_I [ipx::current_core]
 ##########################################
 
+##########################
+######### STEP 5 #########
+##########################
 ## Set the display name and version
 set_property name         ${packaged_ip_name}      [ipx::current_core]
 set_property version      ${packaged_ip_ver}       [ipx::current_core]
@@ -59,9 +79,17 @@ set_property description  ${packaged_ip_name}      [ipx::current_core]
 incr revision
 set_property core_revision ${revision} [ipx::current_core]
 
+
+##########################
+######### STEP 6 #########
+##########################
 ## Generate collaterals
 ipx::create_xgui_files [ipx::current_core]
 
+
+##########################
+######### STEP 7 #########
+##########################
 ## Update and save
 ipx::update_checksums  [ipx::current_core]
 ipx::save_core         [ipx::current_core]

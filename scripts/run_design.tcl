@@ -68,12 +68,17 @@ if { [file exists ${results_dir}] == 0} {
     file mkdir ${results_dir}
 }
 
+if { [file exists ${generated_ip_path}] == 0} {
+    puts "Creating Generated IP Directory: ${generated_ip_path}"
+    file mkdir ${generated_ip_path}
+}
+
 if { $pack == 1 } {
     puts "Running the Pack IP Flow..."
-    source scripts/create_packaged_ip.tcl
+    source scripts/pack/create_packaged_ip.tcl
 }
 
 if { $integ == 1 } {
     puts "Running the Design Integration Flow..."
-    source scripts/create_integrated_design.tcl
+    source scripts/integ/create_integrated_design.tcl
 }

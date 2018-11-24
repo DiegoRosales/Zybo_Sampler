@@ -1,3 +1,6 @@
+## FPGA Part Variables
+set ZYBO_FPGA_PART_NUMBER "xc7z010clg400-1"
+
 ## Project Name Variables
 set project_name               audio_sampler
 set packaged_ip_project_name   ${project_name}_pack
@@ -7,6 +10,7 @@ set workspace_project_name     ${integrated_ip_project_name}_sdk_ws
 ## Project Path Variables
 set project_root               [pwd]
 set results_dir                "${project_root}/results"
+set generated_ip_path          "${results_dir}/generated_ip"
 set packaged_ip_project_path   "${results_dir}/${packaged_ip_project_name}"
 set integrated_ip_project_path "${results_dir}/${integrated_ip_project_name}"
 set worskpace_project_path     "${results_dir}/${workspace_project_name}"

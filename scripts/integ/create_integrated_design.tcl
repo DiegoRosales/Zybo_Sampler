@@ -37,7 +37,7 @@ if { $skip_project_gen == 0 } {
     create_bd_design ${block_design_name}
 
     ## Run the block design integration
-    source ${project_root}/scripts/integrate_design.tcl
+    source ${project_root}/scripts/integ/integrate_design.tcl
     
 
     ##############################################
