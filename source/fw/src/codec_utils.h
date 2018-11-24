@@ -5,6 +5,7 @@
 //send data over UART
 #include "xil_printf.h"
 #include "reg_utils.h"
+#include "SSM2603_codec_registers.h"
 
 // CODEC Registers
 #define LEFT_CHANN_INPUT_VOL_REG_ADDR   0x00
@@ -30,8 +31,8 @@ int CodecRd(int addr, int display, int debug);
 int CodecWr(int addr, int data, int check, int display, int debug);
 void BusyBitIsClear(int debug);
 void ControllerReset(int debug);
-void ClearStatusBits(debug);
+void ClearStatusBits(int debug);
 void WaitUntilDataIsAvailable(int debug);
 void CodecInit(int debug);
-
+void CodecReset(int debug);
 #endif
