@@ -87,7 +87,7 @@ set audio_pll_xci_path       ${generated_ip_path}/${audio_pll_component_name}/${
 set audio_pll_ip_name        "clk_wiz"
 set audio_pll_ip_vendor      "xilinx.com"
 set audio_pll_ip_library     "ip"
-set audio_pll_ip_version     5.4
+set audio_pll_ip_version     6.0
 
 ## FIFO Settings
 # Input clock frequency (MHz)
