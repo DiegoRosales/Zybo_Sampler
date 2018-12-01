@@ -83,8 +83,8 @@ void gpio_interrupt_handler(void *IntParams){
 					switch (sw)
 					{
 						case 0:
-							xil_printf("Reading POWER_MGMT_REG_ADDR (0x6)\n\r");
-							CodecRd(POWER_MGMT_REG_ADDR, 1, 0);
+							xil_printf("Reading RIGHT_CHANN_INPUT_VOL_REG_ADDR (0x1)\n\r");
+							CodecRd(RIGHT_CHANN_INPUT_VOL_REG_ADDR, 1, 0);
 							break;
 						case 1:
 							xil_printf("Reading DIGITAL_AUDIO_IF_REG_ADDR (0x7)\n\r");

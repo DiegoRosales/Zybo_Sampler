@@ -7,16 +7,36 @@
 #ifndef SSM2603_CODEC_REGISTERS_H
 #define SSM2603_CODEC_REGISTERS_H
 
+// CODEC Registers
+#define LEFT_CHANN_INPUT_VOL_REG_ADDR   0x00
+#define RIGHT_CHANN_INPUT_VOL_REG_ADDR  0x01
+#define LEFT_CHANN_OUTPUT_VOL_REG_ADDR  0x02
+#define RIGHT_CHANN_OUTPUT_VOL_REG_ADDR 0x03
+#define ANALOG_AUDIO_PATH_REG_ADDR      0x04
+#define DIGITAL_AUDIO_PATH_REG_ADDR     0x05
+#define POWER_MGMT_REG_ADDR             0x06
+#define DIGITAL_AUDIO_IF_REG_ADDR       0x07
+#define SAMPLING_RATE_REG_ADDR          0x08
+#define ACTIVE_REG_ADDR                 0x09
+#define SW_RESET_REG_ADDR               0x0f
+#define ALC_CTRL_1_REG_ADDR             0x10
+#define ALC_CTRL_2_REG_ADDR             0x11
+#define NOISE_GATE_REG_ADDR             0x12
+
+// Default value for 0db
+#define DB_DEFAULT_0 0x79
+#define DB_TO_INT(DB) ((uint8_t)(DB_DEFAULT_0 + DB))
+
 //////////////////////////////////////////////////
 // LEFT-CHANNEL ADC INPUT VOLUME, ADDRESS 0x00
 //////////////////////////////////////////////////
 typedef union {
     // Individual Fields
     struct {
-        uint8_t  LINVOL   : 6 ; // Bits 0 - 5
-        uint8_t  RSVD     : 1 ; // Bit 6
-        uint8_t  LINMUTE  : 1 ; // Bit 7
-        uint8_t  LRINBOTH : 1 ; // Bit 8
+        uint32_t  LINVOL   : 6 ; // Bits 0 - 5
+        uint32_t  RSVD     : 1 ; // Bit 6
+        uint32_t  LINMUTE  : 1 ; // Bit 7
+        uint32_t  LRINBOTH : 1 ; // Bit 8
     } field;
     // Complete Value
     uint32_t value;
@@ -28,10 +48,10 @@ typedef union {
 typedef union {
     // Individual Fields
     struct {
-        uint8_t  RINVOL   : 6 ; // Bits 0 - 5
-        uint8_t  RSVD     : 1 ; // Bit 6
-        uint8_t  RINMUTE  : 1 ; // Bit 7
-        uint8_t  RLINBOTH : 1 ; // Bit 8
+        uint32_t  RINVOL   : 6 ; // Bits 0 - 5
+        uint32_t  RSVD     : 1 ; // Bit 6
+        uint32_t  RINMUTE  : 1 ; // Bit 7
+        uint32_t  RLINBOTH : 1 ; // Bit 8
     } field;
     // Complete Value
     uint32_t value;
@@ -43,9 +63,9 @@ typedef union {
 typedef union {
     // Individual Fields
     struct {
-        uint8_t  LINVOL   : 7 ; // Bits 0 - 6
-        uint8_t  RSVD     : 1 ; // Bit 7
-        uint8_t  LRHPBOTH : 1 ; // Bit 8
+        uint32_t  LHPVOL   : 7 ; // Bits 0 - 6
+        uint32_t  RSVD     : 1 ; // Bit 7
+        uint32_t  LRHPBOTH : 1 ; // Bit 8
     } field;
     // Complete Value
     uint32_t value;
@@ -57,9 +77,9 @@ typedef union {
 typedef union {
     // Individual Fields
     struct {
-        uint8_t  LINVOL   : 7 ; // Bits 0 - 6
-        uint8_t  RSVD     : 1 ; // Bit 7
-        uint8_t  RLHPBOTH : 1 ; // Bit 8
+        uint32_t  RHPVOL   : 7 ; // Bits 0 - 6
+        uint32_t  RSVD     : 1 ; // Bit 7
+        uint32_t  RLHPBOTH : 1 ; // Bit 8
     } field;
     // Complete Value
     uint32_t value;
@@ -71,13 +91,13 @@ typedef union {
 typedef union {
     // Individual Fields
     struct {
-        uint8_t MICBOOST     : 1 ; // Bit 0
-        uint8_t MUTEMIC      : 1 ; // Bit 1
-        uint8_t INSEL        : 1 ; // Bit 2
-        uint8_t Bypass       : 1 ; // Bit 3
-        uint8_t DACSEL       : 1 ; // Bit 4
-        uint8_t SIDETONE_EN  : 1 ; // Bit 5
-        uint8_t SIDETONE_ATT : 2 ; // Bits 6-7
+        uint32_t MICBOOST     : 1 ; // Bit 0
+        uint32_t MUTEMIC      : 1 ; // Bit 1
+        uint32_t INSEL        : 1 ; // Bit 2
+        uint32_t Bypass       : 1 ; // Bit 3
+        uint32_t DACSEL       : 1 ; // Bit 4
+        uint32_t SIDETONE_EN  : 1 ; // Bit 5
+        uint32_t SIDETONE_ATT : 2 ; // Bits 6-7
     } field;
     // Complete Value
     uint32_t value;
@@ -90,10 +110,10 @@ typedef union {
 typedef union {
     // Individual Fields
     struct {
-        uint8_t ADCHPF : 1 ; // Bit 0
-        uint8_t DEEMPH : 2 ; // Bit 1-2
-        uint8_t DACMU  : 1 ; // Bit 3
-        uint8_t HPOR   : 1 ; // Bit 4
+        uint32_t ADCHPF : 1 ; // Bit 0
+        uint32_t DEEMPH : 2 ; // Bit 1-2
+        uint32_t DACMU  : 1 ; // Bit 3
+        uint32_t HPOR   : 1 ; // Bit 4
     } field;
     // Complete Value
     uint32_t value;
@@ -106,14 +126,14 @@ typedef union {
 typedef union {
     // Individual Fields
     struct {
-        uint8_t LINEIN : 1 ; // Bit 0
-        uint8_t MIC    : 1 ; // Bit 1
-        uint8_t ADC    : 1 ; // Bit 3
-        uint8_t DAC    : 1 ; // Bit 4
-        uint8_t Out    : 1 ; // Bit 5
-        uint8_t OSC    : 1 ; // Bit 6
-        uint8_t CLKOUT : 1 ; // Bit 7
-        uint8_t PWROFF : 1 ; // Bit 8        
+        uint32_t LINEIN : 1 ; // Bit 0
+        uint32_t MIC    : 1 ; // Bit 1
+        uint32_t ADC    : 1 ; // Bit 3
+        uint32_t DAC    : 1 ; // Bit 4
+        uint32_t Out    : 1 ; // Bit 5
+        uint32_t OSC    : 1 ; // Bit 6
+        uint32_t CLKOUT : 1 ; // Bit 7
+        uint32_t PWROFF : 1 ; // Bit 8        
     } field;
     // Complete Value
     uint32_t value;
@@ -125,12 +145,12 @@ typedef union {
 typedef union {
     // Individual Fields
     struct {
-        uint8_t Format  : 2 ; // Bits 0-1
-        uint8_t WL      : 2 ; // Bits 2-3
-        uint8_t LRP     : 1 ; // Bit 4
-        uint8_t LRSWAP  : 1 ; // Bit 5
-        uint8_t MS      : 1 ; // Bit 6
-        uint8_t BCLKINV : 1 ; // Bit 7
+        uint32_t Format  : 2 ; // Bits 0-1
+        uint32_t WL      : 2 ; // Bits 2-3
+        uint32_t LRP     : 1 ; // Bit 4
+        uint32_t LRSWAP  : 1 ; // Bit 5
+        uint32_t MS      : 1 ; // Bit 6
+        uint32_t BCLKINV : 1 ; // Bit 7
     } field;
     // Complete Value
     uint32_t value;
@@ -142,11 +162,11 @@ typedef union {
 typedef union {
     // Individual Fields
     struct {
-        uint8_t USB      : 1 ; // Bit 0
-        uint8_t BOSR     : 1 ; // Bit 1
-        uint8_t SR       : 4 ; // Bits 2-5
-        uint8_t CLKDIV2  : 1 ; // Bit 6
-        uint8_t CLKODIV2 : 1 ; // Bit 7
+        uint32_t USB      : 1 ; // Bit 0
+        uint32_t BOSR     : 1 ; // Bit 1
+        uint32_t SR       : 4 ; // Bits 2-5
+        uint32_t CLKDIV2  : 1 ; // Bit 6
+        uint32_t CLKODIV2 : 1 ; // Bit 7
     } field;
     // Complete Value
     uint32_t value;
@@ -159,7 +179,7 @@ typedef union {
 typedef union {
     // Individual Fields
     struct {
-        uint8_t Active : 1 ; // Bit 0
+        uint32_t Active : 1 ; // Bit 0
     } field;
     // Complete Value
     uint32_t value;
@@ -172,7 +192,7 @@ typedef union {
 typedef union {
     // Individual Fields
     struct {
-        uint8_t Reset : 8 ; // Bit 0-7
+        uint32_t Reset : 8 ; // Bit 0-7
     } field;
     // Complete Value
     uint32_t value;
@@ -185,9 +205,9 @@ typedef union {
 typedef union {
     // Individual Fields
     struct {
-        uint8_t ALCL    : 4 ; // Bits 0-3
-        uint8_t MAXGAIN : 3 ; // Bits 4-6
-        uint8_t ALCSEL  : 2 ; // Bits 7-8
+        uint32_t ALCL    : 4 ; // Bits 0-3
+        uint32_t MAXGAIN : 3 ; // Bits 4-6
+        uint32_t ALCSEL  : 2 ; // Bits 7-8
     } field;
     // Complete Value
     uint32_t value;
@@ -199,8 +219,8 @@ typedef union {
 typedef union {
     // Individual Fields
     struct {
-        uint8_t ATK : 4 ; // Bits 0-3
-        uint8_t DCY : 4 ; // Bits 4-7
+        uint32_t ATK : 4 ; // Bits 0-3
+        uint32_t DCY : 4 ; // Bits 4-7
     } field;
     // Complete Value
     uint32_t value;
@@ -213,9 +233,9 @@ typedef union {
 typedef union {
     // Individual Fields
     struct {
-        uint8_t NGAT : 1 ; // Bit 0
-        uint8_t NGG  : 2 ; // Bits 1-2
-        uint8_t NGTH : 5 ; // Bits 3-7
+        uint32_t NGAT : 1 ; // Bit 0
+        uint32_t NGG  : 2 ; // Bits 1-2
+        uint32_t NGTH : 5 ; // Bits 3-7
     } field;
     // Complete Value
     uint32_t value;
