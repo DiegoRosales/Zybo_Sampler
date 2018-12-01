@@ -193,7 +193,7 @@ wire [63:0] audio_data_out;
 assign codec_init_done  = init_done | init_error;
 assign controller_reset = sw_reset | reset;
 
-assign led_status = audio_data_out[3:0];
+assign led_status = {2'b0, audio_data_out[2], audio_data_out[0]};
 
 IOBUF sda_iobuf (
   .I  (i2c_sda_o), 
