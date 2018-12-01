@@ -18,6 +18,7 @@ set bd_output_dirname ${integrated_ip_project_path}/${integrated_ip_project_name
 
 ###########################################
 if { $skip_project_gen == 0 } {
+    set_param general.maxThreads 8
 
     ## Create the project
     create_project ${integrated_ip_project_name} ${integrated_ip_project_path} -part xc7z010clg400-1 -force
@@ -54,6 +55,7 @@ if { $skip_project_gen == 0 } {
 
     set_property synth_checkpoint_mode None [get_files ${bd_output_dirname}/${block_design_name}.bd]
     generate_target -force all [get_files ${bd_output_dirname}/${block_design_name}.bd]
+    puts "Finished generating target"
 
     ###############################################
     set top_module [find_top]

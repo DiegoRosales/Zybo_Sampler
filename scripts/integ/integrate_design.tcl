@@ -42,6 +42,10 @@ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_gpio:2.0 axi_gpio_0
 set_property -dict ${gpio_configuration} [get_bd_cells axi_gpio_0]
 
 #### Add the AXI DMA IP
+# Properties:
+# - Address width = 32-bit
+# - Data Width = 64-bit
+
 create_bd_cell -type ip -vlnv xilinx.com:ip:axi_dma:7.1 axi_dma_0
 
 set dma_configuration [list \
@@ -56,6 +60,10 @@ set dma_configuration [list \
                         ] 
 
 set_property -dict ${dma_configuration} [get_bd_cells axi_dma_0]
+
+#### Add the Concat module to concatenate multiple interrupts from different sources
+create_bd_cell -type ip -vlnv xilinx.com:ip:xlconcat:2.1 xlconcat_0
+
 
 #### Add the custom IP and make the connections ####
 set packaged_ip_inst_name ${packaged_ip_name}_inst
@@ -129,7 +137,7 @@ connect_bd_net      [get_bd_pins ${packaged_ip_inst_name}/ac_muten ]  [get_bd_po
 apply_bd_automation -rule xilinx.com:bd_rule:axi4               -config {Master "/processing_system7_0/M_AXI_GP0" intc_ip "/ps7_0_axi_periph" Clk_xbar "Auto" Clk_master "Auto" Clk_slave "Auto" }     [get_bd_intf_pins axi_gpio_0/S_AXI]
 connect_bd_intf_net [get_bd_intf_pins axi_gpio_0/GPIO        ]  [get_bd_intf_ports SW  ] 
 connect_bd_intf_net [get_bd_intf_pins axi_gpio_0/GPIO2       ]  [get_bd_intf_ports BTN ]
-connect_bd_net      [get_bd_pins      axi_gpio_0/ip2intc_irpt]  [get_bd_pins  processing_system7_0/IRQ_F2P]
+#connect_bd_net      [get_bd_pins      axi_gpio_0/ip2intc_irpt]  [get_bd_pins  processing_system7_0/IRQ_F2P]
 
 ## AXI DMA
 # AXI Stream to the Audio Controller
@@ -139,3 +147,11 @@ apply_bd_automation -rule xilinx.com:bd_rule:clkrst -config {Clk "/processing_sy
 apply_bd_automation -rule xilinx.com:bd_rule:axi4 -config {Master "/axi_dma_0/M_AXI_MM2S" intc_ip "Auto" Clk_xbar "Auto" Clk_master "Auto" Clk_slave "Auto" }  [get_bd_intf_pins processing_system7_0/S_AXI_HP0]
 # AXI-Lite DMA to the Zynq Processor
 apply_bd_automation -rule xilinx.com:bd_rule:axi4 -config {Master "/processing_system7_0/M_AXI_GP0" intc_ip "/ps7_0_axi_periph" Clk_xbar "Auto" Clk_master "Auto" Clk_slave "Auto" }  [get_bd_intf_pins axi_dma_0/S_AXI_LITE]
+
+## Interrupts to the CPU
+# GPIO to input 0 of the concatenator block
+connect_bd_net [get_bd_pins xlconcat_0/In0] [get_bd_pins axi_gpio_0/ip2intc_irpt]
+# DMA to input 1 of the concatenator block
+connect_bd_net [get_bd_pins xlconcat_0/In1] [get_bd_pins axi_dma_0/mm2s_introut]
+# Concatenator block to the CPU
+connect_bd_net [get_bd_pins xlconcat_0/dout] [get_bd_pins processing_system7_0/IRQ_F2P]
