@@ -18,7 +18,7 @@ module codec_init_unit (
   output wire       codec_wr_en,
   output wire [7:0] codec_reg_addr,
   output wire [8:0] codec_data_out,
-  input  wire [7:0] codec_data_in,
+  input  wire [8:0] codec_data_in,
   input  wire       codec_data_in_valid,
   
   output wire       init_done,
@@ -60,7 +60,7 @@ localparam INIT_DONE      = 3'h5;
 localparam INIT_ERROR     = 3'h6;
 
 // 8'h97
-localparam DEFAULT_VALUE  = 8'b10010111;
+localparam DEFAULT_VALUE  = 8'b010010111;
 reg [2:0] init_sm_cs;
 reg [2:0] init_sm_ns;
 

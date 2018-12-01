@@ -407,7 +407,7 @@ always @* begin
             end
             STATE_ACTIVE_READ: begin
                 // line active to current address
-                cmd_ready_next = ~data_out_valid;
+                cmd_ready_next = 1'b1;//~data_out_valid;
 
                 if (cmd_ready & cmd_valid) begin
                     // command valid
