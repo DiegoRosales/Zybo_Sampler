@@ -17,7 +17,9 @@ set synthesis_file_list {
     ${project_root}/source/rtl/codec_unit/controller_unit/i2c_core/verilog-i2c/rtl/axis_fifo.v
 }
 ## This should be populated when the collateral IPs are generated
-set generated_ip_file_list {}
+set generated_ip_file_list {
+}
+     #${project_root}/source/generated_ips/codec_audio_clock_generator/codec_audio_clock_generator.xci
 
 set simulation_file_list {
     ${project_root}/source/verif/sampler_top_tb.sv
