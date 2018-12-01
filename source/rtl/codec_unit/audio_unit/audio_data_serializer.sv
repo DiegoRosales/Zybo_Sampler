@@ -30,13 +30,17 @@ module audio_data_serializer(
   //// Input Data Signals  ////
   /////////////////////////////
 
-  input  wire [63:0] audio_data_in,     // Data for the L and R channels
-  output wire        audio_data_rd      // Read the data from the buffer
+  output wire          m_axis_tready,
+  input  wire          m_axis_tvalid,
+  input  wire [63 : 0] m_axis_tdata
 );
 
 // Data out
 reg [63:0] audio_data_shift_reg;
-reg [63:0] audio_data_pre;
+
+// Data to be serialized
+wire [63:0] audio_data_in;
+wire [63:0] audio_data_pre;
 
 // Data Read Register
 reg data_rd_reg;
@@ -44,8 +48,9 @@ reg data_rd_reg;
 // Ouptut serial data
 assign ac_pbdat = audio_data_shift_reg[63];
 // Output Data Read
-assign audio_data_rd = data_rd_reg;
+assign m_axis_tready = data_rd_reg;
 
+assign audio_data_in = m_axis_tdata;
 // Select the data based on the word length
 // All modes shift out MSB first
 assign audio_data_pre = (word_length == 2'b00) ? {audio_data_in[15:0], audio_data_in[47:32], {32{1'b0}}} : // 16-bit
@@ -60,7 +65,7 @@ always_ff @(posedge ac_bclk) begin
   data_rd_reg <= 1'b0;
 
   // Get the new data
-  if (ac_pblrc) begin
+  if ( ac_pblrc && m_axis_tvalid ) begin
     audio_data_shift_reg <= audio_data_pre;
     data_rd_reg          <= 1'b1; // Assert the Data RD to get the data for the next cycle
   end

@@ -39,6 +39,21 @@ module audio_unit_top(
   ////////////////////////////////  
   input wire test_mode,
 
+
+  /////////////////////////////
+  //// AXI4 Stream Signals ////
+  /////////////////////////////
+  // Clock
+  input  wire          s_axis_aclk,
+  // Reset
+  input  wire          s_axis_aresetn,
+  // Ready
+  output wire          s_axis_tready,
+  // Data Valid (WR)
+  input  wire          s_axis_tvalid,
+  // Data
+  input  wire [63 : 0] s_axis_tdata,
+
   /////////////////////////////
   //// Input Data Signals  ////
   /////////////////////////////
@@ -58,10 +73,20 @@ wire [63:0] serializer_audio_in;
 reg  [31:0] test_signal_reg;
 reg  [31:0]  test_counter;
 
+// AXI Stream
+wire          m_axis_aclk;
+wire          m_axis_aresetn;
+wire          m_axis_tready;
+wire          m_axis_tvalid;
+wire [63 : 0] m_axis_tdata;
+
+wire fifo_data_valid;
+
 ////////////////////////////////////
-assign serializer_audio_in = (test_mode) ? {test_signal_reg, test_signal_reg} : 'h0;
-assign audio_data_out = /*(locked) ?*/ /*counter*/ {{60{1'b0}}, test_counter[18:17], counter[24:23]};// : 'hdeadbeef_deadcafe;
-assign ac_muten = 1'b1;
+assign serializer_audio_in = (test_mode) ? {test_signal_reg, test_signal_reg} : m_axis_tdata;
+assign audio_data_out      = /*(locked) ?*/ /*counter*/ {counter[27:0], test_counter[31:0], test_counter[18:17], counter[24:23]};// : 'hdeadbeef_deadcafe;
+assign ac_muten            = 1'b1;
+assign fifo_data_valid     = (m_axis_tvalid | test_mode);
 ////////////////////////////////////
 // Audio Clock Generator
 ////////////////////////////////////
@@ -94,7 +119,7 @@ assign ac_muten = 1'b1;
     end
     else begin
       test_counter <= test_counter;
-      if (audio_data_rd) begin
+      if (m_axis_tready) begin
         test_counter <= test_counter + 1'b1;
         if (test_counter[6] == 0) begin
           test_signal_reg <= TEST_SIGNAL_1;
@@ -126,8 +151,48 @@ assign ac_muten = 1'b1;
     //// Input Data Signals  ////
     /////////////////////////////
 
-    .audio_data_in(serializer_audio_in), // Data for the L and R channels
-    .audio_data_rd                       // Read the data from the buffer
+    // Ready (RD)
+    .m_axis_tready,
+    // Data Valid
+    .m_axis_tvalid (fifo_data_valid    ),
+    // Data
+    .m_axis_tdata  (serializer_audio_in)
+
   );
+
+  audio_data_fifo audio_data_fifo_inst (
+  /////////////////////////////////////
+  // Slave Clock Domain (I2S Codec)
+  /////////////////////////////////////
+  // Clock
+  .m_axis_aclk    (ac_bclk), // input wire m_axis_aclk
+  // Reset
+  .m_axis_aresetn (reset),   // input wire m_axis_aresetn
+  // Ready (RD)
+  .m_axis_tready,            // input wire m_axis_tready
+  // Data Valid
+  .m_axis_tvalid,            // output wire m_axis_tvalid
+  // Data
+  .m_axis_tdata,             // output wire [63 : 0] m_axis_tdata
+
+  /////////////////////////////////////////
+  // Master Clock Domain (Zynq Processor)
+  /////////////////////////////////////////
+  // Clock
+  .s_axis_aclk   , // input wire s_axis_aclk
+  // Reset
+  .s_axis_aresetn, // input wire s_axis_aresetn
+  // Ready
+  .s_axis_tready , // output wire s_axis_tready
+  // Data Valid (WR)
+  .s_axis_tvalid , // input wire s_axis_tvalid
+  // Data
+  .s_axis_tdata  , // input wire [63 : 0] s_axis_tdata
+
+  /// MISC
+  .axis_data_count    ( ), // output wire [31 : 0] axis_data_count
+  .axis_wr_data_count ( ), // output wire [31 : 0] axis_wr_data_count
+  .axis_rd_data_count ( )  // output wire [31 : 0] axis_rd_data_count
+);
     
 endmodule

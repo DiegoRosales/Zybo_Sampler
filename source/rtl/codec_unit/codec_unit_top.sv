@@ -28,6 +28,7 @@ module codec_unit_top #(
 
   // Misc
   output wire [3:0] led_status,
+  input  wire       test_mode,
 
   /////////////////////////////////////////////////
   ///////////// CODEC SIGNALS (Audio) ///////////// 
@@ -92,8 +93,11 @@ module codec_unit_top #(
   output wire pll_locked,
 
   //********************************************//
+  //            AXI Clock Domain                //
+  //********************************************//
 
-  //---- AXI Clock Domain ----//
+  //////////////////////////////////////////////
+  ///////////// AXI4-Lite Signals //////////////
   // Ports of Axi Slave Bus Interface S00_AXI
 	input  wire                                  s00_axi_aclk,
 	input  wire                                  s00_axi_aresetn,
@@ -115,7 +119,21 @@ module codec_unit_top #(
 	output wire [C_S00_AXI_DATA_WIDTH-1 : 0]     s00_axi_rdata,
 	output wire [1 : 0]                          s00_axi_rresp,
 	output wire                                  s00_axi_rvalid,
-	input  wire                                  s00_axi_rready
+	input  wire                                  s00_axi_rready,
+
+
+  ////////////////////////////////////////////////
+  ///////////// AXI4 Stream Signals //////////////
+  // Clock
+  input  wire          s_axis_aclk,
+  // Reset
+  input  wire          s_axis_aresetn,
+  // Ready
+  output wire          s_axis_tready,
+  // Data Valid (WR)
+  input  wire          s_axis_tvalid,
+  // Data
+  input  wire [63 : 0] s_axis_tdata
 
 );
 
@@ -204,7 +222,7 @@ controller_unit_top controller_unit(
   .codec_rd_en          (codec_i2c_data_rd       ), // Input
   .codec_wr_en          (codec_i2c_data_wr       ), // Input
   .codec_reg_addr       (codec_i2c_addr[7:0]     ), // Input
-  .codec_data_in        (codec_i2c_wr_data       ), // Input
+  .codec_data_in        (codec_i2c_wr_data[8:0]  ), // Input
   .codec_data_out       (codec_i2c_rd_data       ), // Output
   .codec_data_out_valid (update_codec_i2c_rd_data), // Output
   .controller_busy,                                 // Output
@@ -243,7 +261,20 @@ audio_unit_top audio_unit_top (
 
   ///////////////////////////////////////////////////
   ///////////// Control Signals (Audio) ///////////// 
-  .test_mode(1'b1),
+  .test_mode,
+
+  ////////////////////////////////////////////////
+  ///////////// AXI4 Stream Signals //////////////
+  // Clock
+  .s_axis_aclk   , // input wire s_axis_aclk
+  // Reset
+  .s_axis_aresetn, // input wire s_axis_aresetn
+  // Ready
+  .s_axis_tready , // output wire s_axis_tready
+  // Data Valid (WR)
+  .s_axis_tvalid , // input wire s_axis_tvalid
+  // Data
+  .s_axis_tdata  , // input wire [63 : 0] s_axis_tdata
 
   ////////////////////////////////////////////////////
   //////////////// Input Data Signals ////////////////

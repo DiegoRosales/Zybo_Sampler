@@ -61,7 +61,20 @@ module sampler_top #(
 	output wire [C_S00_AXI_DATA_WIDTH-1 : 0]     s00_axi_rdata,
 	output wire [1 : 0]                          s00_axi_rresp,
 	output wire                                  s00_axi_rvalid,
-	input  wire                                  s00_axi_rready
+	input  wire                                  s00_axi_rready,
+
+  ////////////////////////////////////////////////
+  ///////////// AXI4 Stream Signals //////////////
+  // Clock
+  input  wire          s_axis_aclk,
+  // Reset
+  input  wire          s_axis_aresetn,
+  // Ready
+  output wire          s_axis_tready,
+  // Data Valid (WR)
+  input  wire          s_axis_tvalid,
+  // Data
+  input  wire [63 : 0] s_axis_tdata
 
   ////////////////////////////////////////////
 );
@@ -110,6 +123,7 @@ codec_unit_top #(
 
   // Misc
   .led_status,
+  .test_mode(sw[3]),
 
   /////////////////////////////////////////////////
   ///////////// CODEC SIGNALS (Audio) ///////////// 
@@ -195,8 +209,20 @@ codec_unit_top #(
   .s00_axi_rdata,
   .s00_axi_rresp,
   .s00_axi_rvalid,
-  .s00_axi_rready
+  .s00_axi_rready,
 
+  ////////////////////////////////////////////////
+  ///////////// AXI4 Stream Signals //////////////
+  // Clock
+  .s_axis_aclk   , // input wire s_axis_aclk
+  // Reset
+  .s_axis_aresetn, // input wire s_axis_aresetn
+  // Ready
+  .s_axis_tready , // output wire s_axis_tready
+  // Data Valid (WR)
+  .s_axis_tvalid , // input wire s_axis_tvalid
+  // Data
+  .s_axis_tdata    // input wire [63 : 0] s_axis_tdata
   );
 
 
