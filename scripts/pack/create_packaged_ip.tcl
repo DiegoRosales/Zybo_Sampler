@@ -23,7 +23,7 @@ source ${project_root}/scripts/pack/generate_collateral_ips.tcl
 
 ## Use [subst ..] because the filielist contains the $project_root variable
 add_files                -norecurse [subst ${synthesis_file_list}   ] -scan_for_includes
-add_files                -norecurse [subst ${generated_ip_file_list}] -scan_for_includes
+#add_files                -norecurse [subst ${generated_ip_file_list}] -scan_for_includes
 add_files -fileset sim_1 -norecurse [subst ${simulation_file_list}  ] -scan_for_includes
 
 ## Package the IP
