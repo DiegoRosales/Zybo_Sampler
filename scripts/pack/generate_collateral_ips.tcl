@@ -102,7 +102,8 @@ set audio_pll_output_clock_port_name "codec_mclk"
 
 ## Configuration parameters
 # Note - Some of these are just calculations from the GUI
-# Whenever attempting to change the clock frequencies, re-run the IP Generator with the GUI and copy the new ones
+# Whenever attempting to change the clock frequencies or upgrade the IP, 
+# re-run the IP Generator with the GUI and copy the new settings
 set audio_pll_configuration_parameters [list \
                                             CONFIG.Component_Name             ${audio_pll_component_name} \
                                             CONFIG.PRIMITIVE                  {PLL} \
