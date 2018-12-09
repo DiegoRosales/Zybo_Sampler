@@ -43,16 +43,19 @@ module audio_unit_top(
   /////////////////////////////
   //// AXI4 Stream Signals ////
   /////////////////////////////
-  // Clock
-  input  wire          s_axis_aclk,
-  // Reset
-  input  wire          s_axis_aresetn,
-  // Ready
-  output wire          s_axis_tready,
-  // Data Valid (WR)
-  input  wire          s_axis_tvalid,
-  // Data
-  input  wire [63 : 0] s_axis_tdata,
+  // Clock and Reset
+  input  wire          axis_aclk,
+  input  wire          axis_aresetn,
+
+  // Slave Interface Signals (DMA -> CODEC) //
+  output wire          s_axis_tready,  // Ready
+  input  wire          s_axis_tvalid,  // Data Valid (WR)
+  input  wire [63 : 0] s_axis_tdata,   // Data
+
+  // Master Interface Signals (CODEC -> DMA) //
+  input  wire          m_axis_tready,  // Ready (RD)
+  output wire          m_axis_tvalid,  // Data Valid
+  output wire [63 : 0] m_axis_tdata,   // Data
 
   /////////////////////////////
   //// Input Data Signals  ////
@@ -71,14 +74,22 @@ localparam TEST_SIGNAL_2 = 32'h0000_0000;
 
 wire [63:0] serializer_audio_in;
 reg  [31:0] test_signal_reg;
-reg  [31:0]  test_counter;
+reg  [31:0] test_counter;
 
-// AXI Stream
-wire          m_axis_aclk;
-wire          m_axis_aresetn;
-wire          m_axis_tready;
-wire          m_axis_tvalid;
-wire [63 : 0] m_axis_tdata;
+/////////////////////////
+// Input FIFO Signals  //
+/////////////////////////
+wire        audio_data_IN_ready;
+wire        audio_data_IN_valid;
+wire [63:0] audio_data_IN_data;
+
+/////////////////////////
+// Output FIFO Signals  //
+/////////////////////////
+wire        audio_data_OUT_ready;
+wire        audio_data_OUT_valid;
+wire [63:0] audio_data_OUT_data;
+
 
 wire fifo_data_valid;
 
@@ -91,16 +102,18 @@ assign fifo_data_valid     = (m_axis_tvalid | test_mode);
 // Audio Clock Generator
 ////////////////////////////////////
 
+  // PLL To generate the 12MHz clock for the CODEC
   codec_audio_clock_generator codec_audio_clock_generator_inst (
     .reset        (reset ), // input reset
     .locked       (locked), // output locked
 
     .clock_in_125 (clock  ), // Input Clock
-    .codec_mclk   (ac_mclk) // Output Clock
+    .codec_mclk   (ac_mclk) // Output Clock (12MHz)
 
     );      // input clock_in_125
 
 
+  // Counter for a heartbeat signal to make sure that the clock from the CODEC is running
   reg [63:0] counter;
 
   always @ (posedge ac_bclk or negedge locked) begin
@@ -141,6 +154,9 @@ assign fifo_data_valid     = (m_axis_tvalid | test_mode);
     // Playback
     .ac_pblrc, // I2S Playback Channel Clock (Left/Right)
     .ac_pbdat, // I2S Playback Data
+    // Record
+    .ac_recdat, // I2S Recorded Data
+    .ac_reclrc, // I2S Recorded Channel Clock (Left/Right)
 
     /////////////////////////////
     //// Input Data Signals  ////
@@ -152,36 +168,51 @@ assign fifo_data_valid     = (m_axis_tvalid | test_mode);
     /////////////////////////////
 
     // Ready (RD)
-    .m_axis_tready,
+    .m_axis_tready (audio_data_OUT_ready),
     // Data Valid
-    .m_axis_tvalid (fifo_data_valid    ),
+    .m_axis_tvalid (audio_data_OUT_valid),
     // Data
-    .m_axis_tdata  (serializer_audio_in)
+    .m_axis_tdata  (audio_data_OUT_data),
+
+    ///////////*//////////////////
+    //// Output Data Signals  ////
+    //////////*///////////////////
+
+    // Ready
+    .s_axis_tready (audio_data_IN_ready),
+    // Data Valid (WR)
+    .s_axis_tvalid (audio_data_IN_valid),
+    // Data
+    .s_axis_tdata  (audio_data_IN_data)
 
   );
 
-  audio_data_fifo audio_data_fifo_inst (
+  //////////////////////////////////////////////
+  // AXI Streaming FIFO for the output signal
+  //////////////////////////////////////////////
+  // DMA ---> FIFO ---> CODEC
+  audio_data_fifo audio_data_OUT_fifo_inst (
   /////////////////////////////////////
   // Slave Clock Domain (I2S Codec)
   /////////////////////////////////////
   // Clock
-  .m_axis_aclk    (ac_bclk), // input wire m_axis_aclk
+  .m_axis_aclk    (ac_bclk),              // input wire m_axis_aclk
   // Reset
-  .m_axis_aresetn (reset),   // input wire m_axis_aresetn
+  .m_axis_aresetn (reset),                // input wire m_axis_aresetn
   // Ready (RD)
-  .m_axis_tready,            // input wire m_axis_tready
+  .m_axis_tready  (audio_data_OUT_ready), // input wire m_axis_tready
   // Data Valid
-  .m_axis_tvalid,            // output wire m_axis_tvalid
+  .m_axis_tvalid  (audio_data_OUT_valid), // output wire m_axis_tvalid
   // Data
-  .m_axis_tdata,             // output wire [63 : 0] m_axis_tdata
+  .m_axis_tdata   (audio_data_OUT_data),  // output wire [63 : 0] m_axis_tdata
 
   /////////////////////////////////////////
   // Master Clock Domain (Zynq Processor)
   /////////////////////////////////////////
   // Clock
-  .s_axis_aclk   , // input wire s_axis_aclk
+  .s_axis_aclk    (axis_aclk),    // input wire s_axis_aclk
   // Reset
-  .s_axis_aresetn, // input wire s_axis_aresetn
+  .s_axis_aresetn (axis_aresetn), // input wire s_axis_aresetn
   // Ready
   .s_axis_tready , // output wire s_axis_tready
   // Data Valid (WR)
@@ -193,6 +224,45 @@ assign fifo_data_valid     = (m_axis_tvalid | test_mode);
   .axis_data_count    ( ), // output wire [31 : 0] axis_data_count
   .axis_wr_data_count ( ), // output wire [31 : 0] axis_wr_data_count
   .axis_rd_data_count ( )  // output wire [31 : 0] axis_rd_data_count
-);
+  );
     
+  //////////////////////////////////////////////
+  // AXI Streaming FIFO for the input signal
+  //////////////////////////////////////////////
+  // CODEC ---> FIFO ---> DMA
+  audio_data_fifo audio_data_IN_fifo_inst (
+  /////////////////////////////////////
+  // Slave Clock Domain (Zynq Processor)
+  /////////////////////////////////////
+  // Clock
+  .m_axis_aclk    (axis_aclk),    // input wire m_axis_aclk
+  // Reset
+  .m_axis_aresetn (axis_aresetn), // input wire m_axis_aresetn
+  // Ready (RD)
+  .m_axis_tready, // input wire m_axis_tready
+  // Data Valid
+  .m_axis_tvalid, // output wire m_axis_tvalid
+  // Data
+  .m_axis_tdata,  // output wire [63 : 0] m_axis_tdata
+
+  /////////////////////////////////////////
+  // Master Clock Domain (I2S Codec)
+  /////////////////////////////////////////
+  // Clock
+  .s_axis_aclk    (ac_bclk),             // input wire s_axis_aclk
+  // Reset
+  .s_axis_aresetn (reset ),              // input wire s_axis_aresetn
+  // Ready
+  .s_axis_tready  (audio_data_IN_ready), // output wire s_axis_tready
+  // Data Valid (WR)
+  .s_axis_tvalid  (audio_data_IN_valid), // input wire s_axis_tvalid
+  // Data
+  .s_axis_tdata   (audio_data_IN_data),  // input wire [63 : 0] s_axis_tdata
+
+  /// MISC
+  .axis_data_count    ( ), // output wire [31 : 0] axis_data_count
+  .axis_wr_data_count ( ), // output wire [31 : 0] axis_wr_data_count
+  .axis_rd_data_count ( )  // output wire [31 : 0] axis_rd_data_count
+  );
+
 endmodule

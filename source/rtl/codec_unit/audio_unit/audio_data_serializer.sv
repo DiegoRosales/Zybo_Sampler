@@ -20,6 +20,9 @@ module audio_data_serializer(
   // Playback
   input  wire ac_pblrc, // I2S Playback Channel Clock (Left/Right)
   output wire ac_pbdat, // I2S Playback Data
+  // Record
+  input  wire ac_recdat , // I2S Recorded Data
+  input  wire ac_reclrc , // I2S Recorded Channel Clock (Left/Right)  
 
   /////////////////////////////
   //// Input Data Signals  ////
@@ -32,48 +35,96 @@ module audio_data_serializer(
 
   output wire          m_axis_tready,
   input  wire          m_axis_tvalid,
-  input  wire [63 : 0] m_axis_tdata
+  input  wire [63 : 0] m_axis_tdata,
+
+  //////////////////////////////
+  //// Output Data Signals  ////
+  //////////////////////////////
+
+  input  wire          s_axis_tready,
+  output wire          s_axis_tvalid,
+  output wire [63 : 0] s_axis_tdata
 );
 
 // Data out
-reg [63:0] audio_data_shift_reg;
-
-// Data to be serialized
-wire [63:0] audio_data_in;
-wire [63:0] audio_data_pre;
+reg [63:0] audio_data_out_shift_reg;
+// Data in
+reg [63:0] audio_data_in_shift_reg;
+reg [63:0] audio_data_in_to_fifo;
 
 // Data Read Register
 reg data_rd_reg;
+// Write the data to the FIFO
+reg audio_data_in_wr;
+
+// Data to be serialized
+wire [63:0] audio_data_in;
+wire [63:0] audio_data_out_pre;
+
+// Input data for the FIFO
+wire [63:0] audio_data_in_pre;
 
 // Ouptut serial data
-assign ac_pbdat = audio_data_shift_reg[63];
+assign ac_pbdat = audio_data_out_shift_reg[63];
 // Output Data Read
 assign m_axis_tready = data_rd_reg;
 
+// Input data write
+assign s_axis_tvalid = audio_data_in_wr;
+assign s_axis_tdata  = audio_data_in_to_fifo;
+
 assign audio_data_in = m_axis_tdata;
+
 // Select the data based on the word length
 // All modes shift out MSB first
-assign audio_data_pre = (word_length == 2'b00) ? {audio_data_in[15:0], audio_data_in[47:32], {32{1'b0}}} : // 16-bit
-                        (word_length == 2'b01) ? {audio_data_in[19:0], audio_data_in[51:32], {24{1'b0}}} : // 20-bit
-                        (word_length == 2'b10) ? {audio_data_in[23:0], audio_data_in[55:32], {16{1'b0}}} : // 24-bit
-                        (word_length == 2'b11) ? {audio_data_in[31:0], audio_data_in[63:32]}             : // 32-bit
-                        'h0;
+// The least significant bits are the Left channel
+// The most significant bits are the Right channel
+assign audio_data_out_pre = (word_length == 2'b00) ? {audio_data_in[15:0], audio_data_in[47:32], {32{1'b0}}} : // 16-bit
+                            (word_length == 2'b01) ? {audio_data_in[19:0], audio_data_in[51:32], {24{1'b0}}} : // 20-bit
+                            (word_length == 2'b10) ? {audio_data_in[23:0], audio_data_in[55:32], {16{1'b0}}} : // 24-bit
+                            (word_length == 2'b11) ? {audio_data_in[31:0], audio_data_in[63:32]}             : // 32-bit
+                            'h0;
 
-// Shift Register
+// Shift Register for the output data
 always_ff @(posedge ac_bclk) begin
-  
-  data_rd_reg <= 1'b0;
-
+  data_rd_reg       <= 1'b0;
   // Get the new data
   if ( ac_pblrc && m_axis_tvalid ) begin
-    audio_data_shift_reg <= audio_data_pre;
-    data_rd_reg          <= 1'b1; // Assert the Data RD to get the data for the next cycle
+    audio_data_out_shift_reg <= audio_data_out_pre;
+    data_rd_reg              <= 1'b1; // Assert the Data RD to get the data for the next cycle
   end
   // Shift the data
   else begin
-    audio_data_shift_reg <= { audio_data_shift_reg[62:0], audio_data_shift_reg[63] };
+    // Output Data
+    audio_data_out_shift_reg <= { audio_data_out_shift_reg[62:0], audio_data_out_shift_reg[63] };
   end
-  
+end
+
+
+// Select the data based on the word length
+// All modes shift in MSB first
+// The least significant bits are the Left channel
+// The most significant bits are the Right channel
+assign audio_data_in_pre = (word_length == 2'b00) ? { {16{1'b0}}, audio_data_in_shift_reg[63:48], {16{1'b0}}, audio_data_in_shift_reg[47:32]} : // 16-bit
+                           (word_length == 2'b01) ? { {12{1'b0}}, audio_data_in_shift_reg[63:44], {12{1'b0}}, audio_data_in_shift_reg[43:24]} : // 20-bit
+                           (word_length == 2'b10) ? { {8{1'b0}} , audio_data_in_shift_reg[63:40], {8{1'b0}} , audio_data_in_shift_reg[39:16]} : // 24-bit
+                           (word_length == 2'b11) ? {audio_data_in_shift_reg[63:32], audio_data_in_shift_reg[31:0]} :                           // 32-bit
+                           'h0;
+
+// Shift Register for the input data
+always_ff @(posedge ac_bclk) begin
+  audio_data_in_wr  <= 1'b0;
+
+  // Write the new data
+  if ( ac_reclrc && s_axis_tready ) begin
+    audio_data_in_to_fifo <= audio_data_in_pre;
+    audio_data_in_wr      <= 1'b1;
+  end
+  // Shift the data
+  else begin
+    // Input Data
+    audio_data_in_shift_reg  <= { ac_recdat, audio_data_in_shift_reg[63:1]};
+  end
 end
 
 endmodule

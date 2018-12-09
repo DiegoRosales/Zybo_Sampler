@@ -124,16 +124,19 @@ module codec_unit_top #(
 
   ////////////////////////////////////////////////
   ///////////// AXI4 Stream Signals //////////////
-  // Clock
-  input  wire          s_axis_aclk,
-  // Reset
-  input  wire          s_axis_aresetn,
-  // Ready
-  output wire          s_axis_tready,
-  // Data Valid (WR)
-  input  wire          s_axis_tvalid,
-  // Data
-  input  wire [63 : 0] s_axis_tdata
+  // Clock and Reset
+  input  wire          axis_aclk,
+  input  wire          axis_aresetn,
+
+  // Slave Interface Signals (DMA -> CODEC) //
+  output wire          s_axis_tready,  // Ready
+  input  wire          s_axis_tvalid,  // Data Valid (WR)
+  input  wire [63 : 0] s_axis_tdata,   // Data
+
+  // Master Interface Signals (CODEC -> DMA) //
+  input  wire          m_axis_tready,  // Ready (RD)
+  output wire          m_axis_tvalid,  // Data Valid
+  output wire [63 : 0] m_axis_tdata    // Data
 
 );
 
@@ -265,16 +268,20 @@ audio_unit_top audio_unit_top (
 
   ////////////////////////////////////////////////
   ///////////// AXI4 Stream Signals //////////////
-  // Clock
-  .s_axis_aclk   , // input wire s_axis_aclk
-  // Reset
-  .s_axis_aresetn, // input wire s_axis_aresetn
-  // Ready
-  .s_axis_tready , // output wire s_axis_tready
-  // Data Valid (WR)
-  .s_axis_tvalid , // input wire s_axis_tvalid
-  // Data
-  .s_axis_tdata  , // input wire [63 : 0] s_axis_tdata
+  // Clock and Reset
+  .axis_aclk   , // input wire s_axis_aclk
+  .axis_aresetn, // input wire s_axis_aresetn
+
+  // Slave Interface Signals (DMA -> CODEC) //
+  .s_axis_tready , // Ready
+  .s_axis_tvalid , // Data Valid (WR)
+  .s_axis_tdata  , // Data
+
+  // Master Interface Signals (CODEC -> DMA) //
+  .m_axis_tready , // Ready (RD)
+  .m_axis_tvalid , // Data Valid
+  .m_axis_tdata  , // Data
+
 
   ////////////////////////////////////////////////////
   //////////////// Input Data Signals ////////////////
