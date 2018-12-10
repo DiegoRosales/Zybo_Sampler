@@ -37,7 +37,7 @@ Before you build, you need to setup the environment. To do that, you need to run
 # Vivado
 [CMD]>> call D:\Xilinx\Vivado\2018.2\settings64.bat
 # Xilinx SDK
-[CMD]>> call D:\SDK\Vivado\2018.2\settings64.bat
+[CMD]>> call D:\Xilinx\SDK\2018.2\settings64.bat
 ## From the Linux Bash shell (TODO)
 ...
 ```
@@ -58,7 +58,7 @@ To build the project, you need to execute 1 script using Vivado: `run_design.tcl
 ## To create the SDK Workspace
 [CMD]>> vivado -mode batch -source scripts\run_design.tcl -tclargs export_ws
 ## To make the BSP (note, this won't add the source code to the workspace)
-[CMD]>> xsdk -mode batch scripts\fw\build_fw.tcl
+[CMD]>> xsdk -batch scripts\fw\build_fw.tcl
 ```
 
 To add the source code to the SDK Workspace, right clic on `src` and select `New -> Folder`. Then click on `Advanced` and select `Link to alternate location`. Browse to the `source\fw` directory and add click `Ok` and `Finish`.
