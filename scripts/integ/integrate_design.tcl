@@ -45,6 +45,7 @@ set_property -dict ${gpio_configuration} [get_bd_cells axi_gpio_0]
 # Properties:
 # - Address width = 32-bit
 # - Data Width = 64-bit
+# - Enable Scatter/Gather engine
 
 create_bd_cell -type ip -vlnv xilinx.com:ip:axi_dma:7.1 axi_dma_0
 
@@ -60,12 +61,18 @@ set dma_configuration [list \
                             CONFIG.c_m_axi_s2mm_data_width.VALUE_SRC USER \
                             CONFIG.c_include_s2mm                    {1}  \
                             CONFIG.c_m_axi_s2mm_data_width           {64} \
+                            CONFIG.c_include_sg                      {1}  \
                         ] 
 
 set_property -dict ${dma_configuration} [get_bd_cells axi_dma_0]
 
 #### Add the Concat module to concatenate multiple interrupts from different sources
+set concatenator_block_properties [list \
+                                        CONFIG.NUM_PORTS {3} \
+                                  ]
 create_bd_cell -type ip -vlnv xilinx.com:ip:xlconcat:2.1 xlconcat_0
+
+set_property -dict ${concatenator_block_properties} [get_bd_cells xlconcat_0]
 
 
 #### Add the custom IP and make the connections ####
@@ -152,6 +159,8 @@ apply_bd_automation -rule xilinx.com:bd_rule:clkrst -config {Clk "/processing_sy
 # AXI DMA to the Zynq Processor
 apply_bd_automation -rule xilinx.com:bd_rule:axi4 -config {Master "/axi_dma_0/M_AXI_MM2S" intc_ip "Auto" Clk_xbar "Auto" Clk_master "Auto" Clk_slave "Auto" }  [get_bd_intf_pins processing_system7_0/S_AXI_HP0]
 apply_bd_automation -rule xilinx.com:bd_rule:axi4 -config { Clk_master {/processing_system7_0/FCLK_CLK0 (100 MHz)} Clk_slave {/processing_system7_0/FCLK_CLK0 (100 MHz)} Clk_xbar {/processing_system7_0/FCLK_CLK0 (100 MHz)} Master {/axi_dma_0/M_AXI_S2MM} Slave {/processing_system7_0/S_AXI_HP0} intc_ip {/axi_smc} master_apm {0}}  [get_bd_intf_pins axi_dma_0/M_AXI_S2MM]
+apply_bd_automation -rule xilinx.com:bd_rule:axi4 -config { Clk_master {Auto} Clk_slave {/processing_system7_0/FCLK_CLK0 (100 MHz)} Clk_xbar {/processing_system7_0/FCLK_CLK0 (100 MHz)} Master {/axi_dma_0/M_AXI_SG} Slave {/processing_system7_0/S_AXI_HP0} intc_ip {/axi_smc} master_apm {0}}  [get_bd_intf_pins axi_dma_0/M_AXI_SG]
+
 # AXI-Lite DMA to the Zynq Processor
 apply_bd_automation -rule xilinx.com:bd_rule:axi4 -config {Master "/processing_system7_0/M_AXI_GP0" intc_ip "/ps7_0_axi_periph" Clk_xbar "Auto" Clk_master "Auto" Clk_slave "Auto" }  [get_bd_intf_pins axi_dma_0/S_AXI_LITE]
 
@@ -160,5 +169,7 @@ apply_bd_automation -rule xilinx.com:bd_rule:axi4 -config {Master "/processing_s
 connect_bd_net [get_bd_pins xlconcat_0/In0] [get_bd_pins axi_gpio_0/ip2intc_irpt]
 # DMA to input 1 of the concatenator block
 connect_bd_net [get_bd_pins xlconcat_0/In1] [get_bd_pins axi_dma_0/mm2s_introut]
+# DMA to input 2 of the concatenator block
+connect_bd_net [get_bd_pins xlconcat_0/In2] [get_bd_pins axi_dma_0/s2mm_introut]
 # Concatenator block to the CPU
 connect_bd_net [get_bd_pins xlconcat_0/dout] [get_bd_pins processing_system7_0/IRQ_F2P]
