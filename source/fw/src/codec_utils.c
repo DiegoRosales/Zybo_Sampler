@@ -158,11 +158,11 @@ void CodecReset(int debug) {
 }
 
 // Set the Volume in dB
-int SetOutputVolume(uint8_t volume) {
+int SetOutputVolume(int volume) {
 	LEFT_CHAN_DAC_VOL_t  left_volume;
 	RIGHT_CHAN_DAC_VOL_t right_volume;
 
-	left_volume.field.LHPVOL   = DB_TO_INT(volume); // Set the volume
+	left_volume.field.LHPVOL   = DB_TO_INT_OUT(volume); // Set the volume
 	left_volume.field.LRHPBOTH = 1; // Adjust left and right at the same time
 
 	// Write the Volume
@@ -179,15 +179,35 @@ int SetOutputVolume(uint8_t volume) {
 
 }
 
+// Set the Volume in dB
+int SetInputVolume(int volume) {
+	LEFT_CHAN_ADC_IN_VOL_t  left_volume;
+	RIGHT_CHAN_ADC_IN_VOL_t right_volume;
+
+	left_volume.field.LINVOL   = volume;//DB_TO_INT(volume); // Set the volume
+	left_volume.field.LINMUTE  = 0; // Disable Mute
+	left_volume.field.LRINBOTH = 1; // Adjust left and right at the same time
+
+	CodecRd(RIGHT_CHANN_INPUT_VOL_REG_ADDR, 1, 0);
+	// Write the Volume
+	CodecWr(LEFT_CHANN_INPUT_VOL_REG_ADDR, left_volume.value, 0, 1, 0);
+	// Read the volume of the other channel to see if it was set
+	right_volume.value = CodecRd(RIGHT_CHANN_INPUT_VOL_REG_ADDR, 1, 0);
+
+	// Check the values
+	if (left_volume.field.LINVOL == right_volume.field.RINVOL) {
+		return 0;
+	} else {
+		return 0xff;
+	}
+
+}
+
 void CodecInit(int debug) {
 	int readback  = 0;
 	int check     = 0;
 
 	CODEC_REGISTERS_t codec_registers;
-
-
-
-
 
 	// Reset the CODEC
 	CodecReset(debug);
@@ -202,6 +222,8 @@ void CodecInit(int debug) {
 	codec_registers.POWER_MANAGEMENT.value        = 0x0ff; // Initialize all powered OFF
 	codec_registers.POWER_MANAGEMENT.field.PWROFF = 0; // Power UP the Chip
 	codec_registers.POWER_MANAGEMENT.field.DAC    = 0; // Power UP the DAC
+	codec_registers.POWER_MANAGEMENT.field.ADC    = 0; // Power UP the ADC
+	codec_registers.POWER_MANAGEMENT.field.LINEIN = 0; // Power UP the Line Input
 	codec_registers.POWER_MANAGEMENT.field.CLKOUT = 0; // Power UP the Clock Output to the FPGA
 	
 	check = CodecWr(POWER_MGMT_REG_ADDR, codec_registers.POWER_MANAGEMENT.value, 1, 0, debug);
@@ -268,6 +290,7 @@ void CodecInit(int debug) {
 	// Analog Audio Path Settings
 	codec_registers.ANALOG_AUDIO_PATH.value        = 0;   // Initialize
 	codec_registers.ANALOG_AUDIO_PATH.field.DACSEL = 0x1; // Select the DAC as the output
+	codec_registers.ANALOG_AUDIO_PATH.field.Bypass = 0x1; // Mix the input with the output
 
 	check = CodecWr(ANALOG_AUDIO_PATH_REG_ADDR, codec_registers.ANALOG_AUDIO_PATH.value, 1, 0, debug);
 	if (check) {
@@ -289,7 +312,8 @@ void CodecInit(int debug) {
 	codec_registers.DIGITAL_AUDIO_PATH.value = CodecRd(DIGITAL_AUDIO_PATH_REG_ADDR, 0, debug);
 
 	// Digital Audio Path Settings
-	codec_registers.DIGITAL_AUDIO_PATH.field.DACMU = 0;
+	codec_registers.DIGITAL_AUDIO_PATH.field.DACMU  = 0;
+	codec_registers.DIGITAL_AUDIO_PATH.field.ADCHPF = 1;
 
 	check = CodecWr(DIGITAL_AUDIO_PATH_REG_ADDR, codec_registers.DIGITAL_AUDIO_PATH.value, 1, 0, debug);
 	if (check) {
@@ -303,16 +327,31 @@ void CodecInit(int debug) {
 	///////////////////////////////////
 	// Set the volume
 	///////////////////////////////////
-	xil_printf("Setting the volume...\n\r");
+	xil_printf("Setting the output volume...\n\r");
 
-	check = SetOutputVolume(-35);
+	check = SetOutputVolume(-15);
 
 	if (check) {
-		xil_printf("[ERROR] Setting the volume...\n\n\r");
+		xil_printf("[ERROR] Setting the output volume...\n\n\r");
 	}
 	else {
 		xil_printf("Done\n\n\r");
 	}		
+
+	///////////////////////////////////
+	// Set the volume
+	///////////////////////////////////
+	xil_printf("Setting the input volume...\n\r");
+
+	check = SetInputVolume(0x17); // 0 dB
+
+	if (check) {
+		xil_printf("[ERROR] Setting the input volume...\n\n\r");
+	}
+	else {
+		xil_printf("Done\n\n\r");
+	}	
+	
 
 	// Wait a little bit according to the spec
 	for (int i = 0; i < 1000000 ; i++);

@@ -15,6 +15,7 @@
 
 #include "reg_utils.h"
 #include "codec_utils.h"
+#include "dma_utils.h"
 #include "intc/intc.h"
 #include "FreeRTOS.h"
 #include "task.h"

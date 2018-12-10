@@ -19,5 +19,7 @@ void ClearStatusBits(int debug);
 void WaitUntilDataIsAvailable(int debug);
 void CodecInit(int debug);
 void CodecReset(int debug);
-int SetOutputVolume(uint8_t volume);
+int SetOutputVolume(int volume);
+int SetInputVolume(int volume);
+
 #endif

@@ -23,9 +23,9 @@
 #define ALC_CTRL_2_REG_ADDR             0x11
 #define NOISE_GATE_REG_ADDR             0x12
 
-// Default value for 0db
-#define DB_DEFAULT_0 0x79
-#define DB_TO_INT(DB) ((uint8_t)(DB_DEFAULT_0 + DB))
+// Default value for 0dB
+#define DB_OUT_DEFAULT_0 0x79
+#define DB_TO_INT_OUT(DB) ((uint8_t)(DB_OUT_DEFAULT_0 + DB))
 
 //////////////////////////////////////////////////
 // LEFT-CHANNEL ADC INPUT VOLUME, ADDRESS 0x00

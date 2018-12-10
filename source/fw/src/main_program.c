@@ -6,19 +6,37 @@
 #include "main_program.h"
 
 // Global Variables
+const audio_structure_t audio_structure;
 // Interrupt Controller
 INTC intc;
 const int IntParams = 0;
 XGpio gpio;
 // Interrupt Vector Table
 const ivt_t ivt[] = {
+	// GPIO Interrupt
 	(ivt_t) {
 		GPIO_INT_ID, //u8 id;
 		(XInterruptHandler)gpio_interrupt_handler,  //XInterruptHandler handler;
 		&IntParams,//void *pvCallbackRef;
 		0x0,//u8 priority; //not used for microblaze, set to 0
 		0x3//0x3//u8 trigType; //not used for microblaze, set to 0
-	}
+	},
+	// DMA Interrupt
+	(ivt_t) {
+		DMA_DOWNSTREAM_INT_ID, //u8 id;
+		(XInterruptHandler)DMA_interrupt_handler,  //XInterruptHandler handler;
+		&IntParams,//void *pvCallbackRef;
+		0x0,//u8 priority; //not used for microblaze, set to 0
+		0x3//0x3//u8 trigType; //not used for microblaze, set to 0
+	},
+	// DMA Interrupt
+	(ivt_t) {
+		DMA_UPSTREAM_INT_ID, //u8 id;
+		(XInterruptHandler)DMA_interrupt_handler,  //XInterruptHandler handler;
+		&IntParams,//void *pvCallbackRef;
+		0x0,//u8 priority; //not used for microblaze, set to 0
+		0x3//0x3//u8 trigType; //not used for microblaze, set to 0
+	}		
 };
 
 int main_program()
@@ -36,6 +54,10 @@ int main_program()
 	XGpio_InterruptEnable(&gpio, 0xffffffff);
 	XGpio_InterruptGlobalEnable(&gpio);
 	CodecInit(0);
+	InitDMA_engine(audio_structure.audio_dma_engine_addr, audio_structure.audio_dma_engine_cfg_addr);
+	StartDMA(audio_structure.input_stream_buffer_addr,  128, audio_structure.input_stream_dma_desc_addr,  audio_structure.audio_dma_engine_addr, 1); // Start upstream DMA
+	StartDMA(audio_structure.output_stream_buffer_addr, 128, audio_structure.output_stream_dma_desc_addr, audio_structure.audio_dma_engine_addr, 0); // Start downstream DMA
+
 	while (1)
 	{
 	}

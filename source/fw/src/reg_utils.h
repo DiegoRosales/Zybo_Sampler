@@ -27,14 +27,14 @@
 typedef union {
     // Individual Fields
     struct {
-        uint8_t  codec_i2c_data_wr_reg : 1 ; // Bit 0
-        uint8_t  codec_i2c_data_rd_reg : 1 ; // Bit 1
-        uint8_t  controller_busy_reg   : 1 ; // Bit 2
-        uint8_t  codec_init_done_reg   : 1 ; // Bit 3
-        uint8_t  data_in_valid_reg     : 1 ; // Bit 4
-        uint8_t  missed_ack_reg        : 1 ; // Bit 5
+        uint32_t codec_i2c_data_wr_reg : 1 ; // Bit 0
+        uint32_t codec_i2c_data_rd_reg : 1 ; // Bit 1
+        uint32_t controller_busy_reg   : 1 ; // Bit 2
+        uint32_t codec_init_done_reg   : 1 ; // Bit 3
+        uint32_t data_in_valid_reg     : 1 ; // Bit 4
+        uint32_t missed_ack_reg        : 1 ; // Bit 5
         uint32_t RSVD                  : 25; // Bits 6-30
-        uint8_t  controller_reset_reg  : 1 ; // Bit 31
+        uint32_t controller_reset_reg  : 1 ; // Bit 31
     } field;
     // Complete Value
     uint32_t value;
