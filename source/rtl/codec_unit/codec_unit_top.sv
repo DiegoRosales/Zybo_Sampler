@@ -192,11 +192,12 @@ wire        sw_reset;
 
 ///////////////////////////
 wire [63:0] audio_data_out;
+wire [3:0]  heartbeat;
 
 assign codec_init_done  = init_done | init_error;
 assign controller_reset = sw_reset | reset;
 
-assign led_status = {2'b0, audio_data_out[2], audio_data_out[0]};
+assign led_status = heartbeat;
 
 IOBUF sda_iobuf (
   .I  (i2c_sda_o), 
@@ -282,6 +283,7 @@ audio_unit_top audio_unit_top (
   .m_axis_tvalid , // Data Valid
   .m_axis_tdata  , // Data
 
+  .heartbeat,
 
   ////////////////////////////////////////////////////
   //////////////// Input Data Signals ////////////////

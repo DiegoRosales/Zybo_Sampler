@@ -57,6 +57,11 @@ module audio_unit_top(
   output wire          m_axis_tvalid,  // Data Valid
   output wire [63 : 0] m_axis_tdata,   // Data
 
+  //////////////////////
+  //// Misc Signals ////
+  //////////////////////
+  output wire [3:0]    heartbeat,
+
   /////////////////////////////
   //// Input Data Signals  ////
   /////////////////////////////
@@ -95,7 +100,7 @@ wire fifo_data_valid;
 
 ////////////////////////////////////
 assign serializer_audio_in = (test_mode) ? {test_signal_reg, test_signal_reg} : m_axis_tdata;
-assign audio_data_out      = /*(locked) ?*/ /*counter*/ {counter[27:0], test_counter[31:0], test_counter[18:17], counter[24:23]};// : 'hdeadbeef_deadcafe;
+assign audio_data_out      = /*(locked) ?*/ /*bclk_counter*/ {bclk_counter[27:0], test_counter[31:0], test_counter[18:17], bclk_counter[24:23]};// : 'hdeadbeef_deadcafe;
 assign ac_muten            = 1'b1;
 assign fifo_data_valid     = (m_axis_tvalid | test_mode);
 ////////////////////////////////////
@@ -114,13 +119,32 @@ assign fifo_data_valid     = (m_axis_tvalid | test_mode);
 
 
   // Counter for a heartbeat signal to make sure that the clock from the CODEC is running
-  reg [63:0] counter;
+  reg [63:0] bclk_counter;
+  reg [63:0] lrclk_counter;
+  reg [63:0] rec_lrclk_counter;
+
+  assign heartbeat = {axi_fifo_rd_counter[17], rec_lrclk_counter[16], lrclk_counter[16], bclk_counter[23]};
 
   always @ (posedge ac_bclk or negedge locked) begin
-    if (locked == 1'b0) counter <= 'hffffffff_cafecafe;
-    else counter <= counter + 1;
+    if (locked == 1'b0) begin
+      bclk_counter      <= 'hffffffff_cafecafe;
+      lrclk_counter     <= 'h0;
+      rec_lrclk_counter <= 'h0;
+    end
+    else begin
+      bclk_counter      <= bclk_counter + 1;
+      lrclk_counter     <= lrclk_counter;
+      rec_lrclk_counter <= rec_lrclk_counter;
+      if (ac_pblrc)  lrclk_counter     <= lrclk_counter + 1;
+      if (ac_reclrc) rec_lrclk_counter <= rec_lrclk_counter + 1;
+    end
   end
 
+  reg [63:0] axi_fifo_rd_counter;
+
+  always @(posedge axis_aclk or negedge axis_aresetn) 
+    if (axis_aresetn == 1'b0) axi_fifo_rd_counter <= 'h0;
+    else axi_fifo_rd_counter <= (m_axis_tready) ? axi_fifo_rd_counter + 1 : axi_fifo_rd_counter;
   
 
   // Test Tone Generator
@@ -174,9 +198,9 @@ assign fifo_data_valid     = (m_axis_tvalid | test_mode);
     // Data
     .m_axis_tdata  (audio_data_OUT_data),
 
-    ///////////*//////////////////
+    //////////////////////////////
     //// Output Data Signals  ////
-    //////////*///////////////////
+    //////////////////////////////
 
     // Ready
     .s_axis_tready (audio_data_IN_ready),
