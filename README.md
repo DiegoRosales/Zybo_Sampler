@@ -9,7 +9,7 @@ You can find more about the board over at https://reference.digilentinc.com/refe
 Note that this board has been discontinued and replaced with the Zybo Z7 which is contains a larger FPGA from the same family as the regular Zybo
 
 ---
-## Milestones
+# Milestones
 
 [**DONE**] Created the git repo
 
@@ -23,11 +23,21 @@ Note that this board has been discontinued and replaced with the Zybo Z7 which i
 
 [**DONE**] I2S Serializer + test tone
 
-[**IN PROGRESS**] I2S HW Control Registers
+[**DONE**] I2S HW Control Registers
 
-[**IN PROGRESS**] DMA Interface between the ARM core and the I2S controller
+[**DONE**] DMA Interface between the ARM core and the I2S controller
+
+[**IN PROGRESS**] Tone Generator
+
+[**NOT STARTED**] Square Wave Synthesizer
+
+[**NOT STARTED**] Sine Wave Synthesizer
+
+[**NOT STARTED**] Sawtooth Wave Synthesizer
 
 [**NOT WELL DEFINED**] FW Application to playback audio using FreeRTOS
+
+[**NOT STARTED**] Enabled the full system in the verification environment
 
 ---
 # Setup instructions
