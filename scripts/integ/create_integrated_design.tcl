@@ -64,6 +64,13 @@ if { $skip_project_gen == 0 } {
         ### Launch Synthesis and PAR Jobs
         ## Synthesis
         synth_design -top $top_module
+        write_checkpoint -force ${integrated_ip_project_path}/post_synth.dcp
+
+        if { [file exists ${integrated_ip_project_path}/post_route.dcp] != 0} { 
+            puts "Found checkpoint. Running incrementally"
+            read_checkpoint -incremental ${integrated_ip_project_path}/post_route.dcp
+        }
+
         ## Opt Desgin
         opt_design
         ## Place Desgin
@@ -72,6 +79,7 @@ if { $skip_project_gen == 0 } {
         phys_opt_design
         ## Route design
         route_design
+        write_checkpoint -force ${integrated_ip_project_path}/post_route.dcp
         
         ### Write the bitstream
         write_bitstream -force ${integrated_ip_project_path}/${integrated_ip_project_name}.bit
