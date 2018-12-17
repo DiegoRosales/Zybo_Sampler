@@ -9,8 +9,8 @@
 
 #include "xaxidma.h"
 
-#define __AUDIO_SECTION__ __attribute__((section (".audio_section")))
-
+//#define __AUDIO_SECTION__ __attribute__((section (".audio_section")))
+#define __ALIGNED_64__ __attribute__((aligned (64)))
 
 // Base address of the DDR RAM memory
 #define DDR_BASE_ADDR XPAR_PS7_DDR_0_S_AXI_BASEADDR
@@ -22,13 +22,18 @@
 #define DMA_DOWNSTREAM_INT_ID XPAR_FABRIC_AXIDMA_0_MM2S_INTROUT_VEC_ID
 #define DMA_UPSTREAM_INT_ID XPAR_FABRIC_AXIDMA_0_S2MM_INTROUT_VEC_ID
 
+#define NUMBER_OF_DESCRIPTORS 3
+
+#define DOWNSTREAM 0 // Downstream
+#define UPSTREAM   1 // Upstream
+
 //////////////////////////////////////////////////////////////
 // INPUT STREAM
 //////////////////////////////////////////////////////////////
 
 // Size of the memory region of the input stream in "samples"
 // The lower the buffer size, the lower the latency, but performance requirements increase
-#define INPUT_STREAM_SAMPLE_BUFFER_SIZE 512 // 512 Samples
+#define INPUT_STREAM_SAMPLE_BUFFER_SIZE 2048 // 512 Samples
 
 
 //////////////////////////////////////////////////////////////
@@ -37,7 +42,7 @@
 
 // Size of the memory region of the output stream in "samples"
 // The lower the buffer size, the lower the latency, but performance requirements increase
-#define OUTPUT_STREAM_SAMPLE_BUFFER_SIZE 512 // 512 Samples
+#define OUTPUT_STREAM_SAMPLE_BUFFER_SIZE 1024 // 512 Samples
 
 // Audio Data structure
 typedef struct {
@@ -46,7 +51,7 @@ typedef struct {
 } audio_data_t;
 
 // Descriptor data structure
-typedef struct {
+typedef struct __ALIGNED_64__ {
     uint32_t NXTDESC;            // 0x00 // Next Descriptor Pointer
     uint32_t NXTDESC_MSB;        // 0x04 // Upper 32 bits of Next Descriptor Pointer
     uint32_t BUFFER_ADDRESS;     // 0x08 // Buffer Address
@@ -60,9 +65,9 @@ typedef struct {
     uint32_t APP2;               // 0x28 // User Application Field 2
     uint32_t APP3;               // 0x2c // User Application Field 3
     uint32_t APP4;               // 0x30 // User Application Field 4
-    uint32_t RESERVED_3;         // 0x34 // Filler to allign 16-dw
-    uint32_t RESERVED_4;         // 0x38 // Filler to allign 16-dw
-    uint32_t RESERVED_5;         // 0x3c // Filler to allign 16-dw
+   // uint32_t RESERVED_3;         // 0x34 // Filler to allign 16-dw
+   // uint32_t RESERVED_4;         // 0x38 // Filler to allign 16-dw
+   // uint32_t RESERVED_5;         // 0x3c // Filler to allign 16-dw
 } dma_descriptor_t;
 
 typedef struct {
@@ -83,7 +88,9 @@ typedef struct {
 
 
 int InitDMA_engine(XAxiDma *dma_engine, XAxiDma_Config *dma_engine_configuration);
-void StartDMA(uint32_t buffer_stream_addr, uint32_t burst_size, dma_descriptor_t *dma_descriptor, XAxiDma *dma_engine, int direction);
-void DMA_interrupt_handler(void * IntParams);
+void StartDMA(dma_descriptor_t *dma_descriptor, XAxiDma *dma_engine, int direction);
+void StartSimpleDMA(uint32_t audio_data_addr, uint32_t dma_length, XAxiDma *dma_engine, int direction);
+void DMA_downstream_interrupt_handler(void * IntParams);
+void DMA_upstream_interrupt_handler(void * IntParams);
 
 #endif // DMA_UTILS_H
