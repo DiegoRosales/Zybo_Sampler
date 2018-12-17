@@ -80,7 +80,8 @@ module sampler_top #(
   // Master Interface Signals (CODEC -> DMA) //
   input  wire          m_axis_tready,  // Ready (RD)
   output wire          m_axis_tvalid,  // Data Valid
-  output wire [63 : 0] m_axis_tdata    // Data
+  output wire [63 : 0] m_axis_tdata,   // Data
+  output wire          m_axis_tlast
 
   ////////////////////////////////////////////
 );
@@ -115,6 +116,8 @@ assign led[0] = (sw[0] == 1) ? init_done      : led_status[0];
 assign led[1] = (sw[0] == 1) ? init_error     : led_status[1];
 assign led[2] = (sw[0] == 1) ? missed_ack     : led_status[2];
 assign led[3] = (sw[0] == 1) ? controller_busy: led_status[3];
+
+//assign m_axis_tlast = ~m_axis_tvalid;
 
 codec_unit_top #(
   .C_S00_AXI_DATA_WIDTH(C_S00_AXI_DATA_WIDTH),
@@ -231,7 +234,8 @@ codec_unit_top #(
   // Master Interface Signals (CODEC -> DMA) //
   .m_axis_tready , // Ready (RD)
   .m_axis_tvalid , // Data Valid
-  .m_axis_tdata    // Data
+  .m_axis_tdata  , // Data
+  .m_axis_tlast
 
   );
 

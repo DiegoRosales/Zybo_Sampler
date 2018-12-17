@@ -95,7 +95,16 @@
     input  wire [31:0] codec_i2c_rd_data,
     input  wire        update_codec_i2c_rd_data,
 		output wire        controller_reset,
-		input  wire [63:0] audio_data_out
+		input  wire [63:0] audio_data_out,
+		/////////////////////////
+  	//// Counter Signals ////
+  	/////////////////////////
+  	// AXI CLK //
+  	input wire [31:0] DOWNSTREAM_axis_wr_data_count,
+  	input wire [31:0] UPSTREAM_axis_rd_data_count,
+  	// Audio CLK //
+  	input wire [31:0] DOWNSTREAM_axis_rd_data_count,
+  	input wire [31:0] UPSTREAM_axis_wr_data_count		
 
 	);
 

@@ -136,7 +136,8 @@ module codec_unit_top #(
   // Master Interface Signals (CODEC -> DMA) //
   input  wire          m_axis_tready,  // Ready (RD)
   output wire          m_axis_tvalid,  // Data Valid
-  output wire [63 : 0] m_axis_tdata    // Data
+  output wire [63 : 0] m_axis_tdata,   // Data
+  output wire          m_axis_tlast
 
 );
 
@@ -193,6 +194,11 @@ wire        sw_reset;
 ///////////////////////////
 wire [63:0] audio_data_out;
 wire [3:0]  heartbeat;
+///////////////////////////
+wire [31:0] DOWNSTREAM_axis_wr_data_count;
+wire [31:0] UPSTREAM_axis_rd_data_count;
+wire [31:0] DOWNSTREAM_axis_rd_data_count;
+wire [31:0] UPSTREAM_axis_wr_data_count;
 
 assign codec_init_done  = init_done | init_error;
 assign controller_reset = sw_reset | reset;
@@ -282,15 +288,19 @@ audio_unit_top audio_unit_top (
   .m_axis_tready , // Ready (RD)
   .m_axis_tvalid , // Data Valid
   .m_axis_tdata  , // Data
+  .m_axis_tlast  ,
 
   .heartbeat,
-
-  ////////////////////////////////////////////////////
-  //////////////// Input Data Signals ////////////////
-  .audio_data_in(),
-  .audio_data_wr(),
-  .audio_buffer_full(),
-  .audio_data_out
+  
+  /////////////////////////
+  //// Counter Signals ////
+  /////////////////////////
+  // AXI CLK //
+  .DOWNSTREAM_axis_wr_data_count,
+  .UPSTREAM_axis_rd_data_count,
+  // Audio CLK //
+  .DOWNSTREAM_axis_rd_data_count,
+  .UPSTREAM_axis_wr_data_count
 );
 
 
@@ -319,6 +329,15 @@ register_unit #(
   .update_codec_i2c_rd_data,
   .controller_reset(sw_reset),
   .audio_data_out(audio_data_out),
+  /////////////////////////
+  //// Counter Signals ////
+  /////////////////////////
+  // AXI CLK //
+  .DOWNSTREAM_axis_wr_data_count,
+  .UPSTREAM_axis_rd_data_count,
+  // Audio CLK //
+  .DOWNSTREAM_axis_rd_data_count,
+  .UPSTREAM_axis_wr_data_count,
   
   //---- AXI Clock Domain ----//
   .s00_axi_aclk,

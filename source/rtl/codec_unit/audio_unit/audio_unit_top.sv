@@ -56,21 +56,22 @@ module audio_unit_top(
   input  wire          m_axis_tready,  // Ready (RD)
   output wire          m_axis_tvalid,  // Data Valid
   output wire [63 : 0] m_axis_tdata,   // Data
+  output wire          m_axis_tlast,
 
   //////////////////////
   //// Misc Signals ////
   //////////////////////
   output wire [3:0]    heartbeat,
 
-  /////////////////////////////
-  //// Input Data Signals  ////
-  /////////////////////////////
-
-  input  wire [63:0] audio_data_in,
-  input  wire        audio_data_wr,
-  output wire [63:0] audio_data_out,
-  input  wire        audio_data_rd,
-  output wire        audio_buffer_full
+  /////////////////////////
+  //// Counter Signals ////
+  /////////////////////////
+  // AXI CLK //
+  output wire [31:0] DOWNSTREAM_axis_wr_data_count,
+  output wire [31:0] UPSTREAM_axis_rd_data_count,
+  // Audio CLK //
+  output wire [31:0] DOWNSTREAM_axis_rd_data_count,
+  output wire [31:0] UPSTREAM_axis_wr_data_count
 
 );
 
@@ -93,16 +94,15 @@ wire [63:0] audio_data_IN_data;
 /////////////////////////
 wire        audio_data_OUT_ready;
 wire        audio_data_OUT_valid;
+wire        audio_data_OUT_valid2;
 wire [63:0] audio_data_OUT_data;
 
-
-wire fifo_data_valid;
-
+assign m_axis_tlast = (UPSTREAM_axis_rd_data_count <= 'h3) ? 1'b1 : 1'b0;
 ////////////////////////////////////
 assign serializer_audio_in = (test_mode) ? {test_signal_reg, test_signal_reg} : m_axis_tdata;
 assign audio_data_out      = /*(locked) ?*/ /*bclk_counter*/ {bclk_counter[27:0], test_counter[31:0], test_counter[18:17], bclk_counter[24:23]};// : 'hdeadbeef_deadcafe;
 assign ac_muten            = 1'b1;
-assign fifo_data_valid     = (m_axis_tvalid | test_mode);
+assign audio_data_OUT_valid2 = audio_data_OUT_valid | test_mode;
 ////////////////////////////////////
 // Audio Clock Generator
 ////////////////////////////////////
@@ -117,13 +117,25 @@ assign fifo_data_valid     = (m_axis_tvalid | test_mode);
 
     );      // input clock_in_125
 
+  // Counter for the AXI FIFO Reset
+  reg [4:0] reset_counter;
+  wire      axi_fifo_reset_n;
+
+  assign axi_fifo_reset_n = &reset_counter;
+
+  always @(posedge ac_bclk or negedge locked)
+    if (locked == 1'b0) reset_counter <= 5'h0;
+    else reset_counter <= (axi_fifo_reset_n == 1'b0) ? reset_counter + 1'b1 : reset_counter;
+
 
   // Counter for a heartbeat signal to make sure that the clock from the CODEC is running
   reg [63:0] bclk_counter;
   reg [63:0] lrclk_counter;
   reg [63:0] rec_lrclk_counter;
 
-  assign heartbeat = {axi_fifo_rd_counter[17], rec_lrclk_counter[16], lrclk_counter[16], bclk_counter[23]};
+  //assign heartbeat = {axi_fifo_rd_counter[13], rec_lrclk_counter[13], lrclk_counter[13], bclk_counter[23]};
+  //assign heartbeat = {axi_fifo_wr_counter[13], axi_fifo_rd_counter[13], rec_lrclk_counter[13], lrclk_counter[13]};
+  assign heartbeat = {axi_fifo_rd_counter[17], serializer_fifo_wr_counter[13], axi_fifo_wr_counter[23], serializer_fifo_rd_counter[13]};
 
   always @ (posedge ac_bclk or negedge locked) begin
     if (locked == 1'b0) begin
@@ -145,6 +157,26 @@ assign fifo_data_valid     = (m_axis_tvalid | test_mode);
   always @(posedge axis_aclk or negedge axis_aresetn) 
     if (axis_aresetn == 1'b0) axi_fifo_rd_counter <= 'h0;
     else axi_fifo_rd_counter <= (m_axis_tready) ? axi_fifo_rd_counter + 1 : axi_fifo_rd_counter;
+
+  reg [63:0] axi_fifo_wr_counter;
+
+  always @(posedge axis_aclk or negedge axis_aresetn) 
+    if (axis_aresetn == 1'b0) axi_fifo_wr_counter <= 'h0;
+    else axi_fifo_wr_counter <= (s_axis_tvalid) ? axi_fifo_wr_counter + 1 : axi_fifo_wr_counter;    
+
+/////////////////////////////    
+
+  reg [63:0] serializer_fifo_rd_counter;
+
+  always @(posedge ac_bclk or negedge locked) 
+    if (locked == 1'b0) serializer_fifo_rd_counter <= 'h0;
+    else serializer_fifo_rd_counter <= (audio_data_OUT_ready) ? serializer_fifo_rd_counter + 1 : serializer_fifo_rd_counter;
+
+  reg [63:0] serializer_fifo_wr_counter;
+
+  always @(posedge ac_bclk or negedge locked) 
+    if (locked == 1'b0) serializer_fifo_wr_counter <= 'h0;
+    else serializer_fifo_wr_counter <= (audio_data_IN_valid) ? serializer_fifo_wr_counter + 1 : serializer_fifo_wr_counter;     
   
 
   // Test Tone Generator
@@ -194,7 +226,7 @@ assign fifo_data_valid     = (m_axis_tvalid | test_mode);
     // Ready (RD)
     .m_axis_tready (audio_data_OUT_ready),
     // Data Valid
-    .m_axis_tvalid (audio_data_OUT_valid),
+    .m_axis_tvalid (audio_data_OUT_valid2),
     // Data
     .m_axis_tdata  (audio_data_OUT_data),
 
@@ -222,7 +254,7 @@ assign fifo_data_valid     = (m_axis_tvalid | test_mode);
   // Clock
   .m_axis_aclk    (ac_bclk),              // input wire m_axis_aclk
   // Reset
-  .m_axis_aresetn (reset),                // input wire m_axis_aresetn
+  .m_axis_aresetn (axi_fifo_reset_n),               // input wire m_axis_aresetn
   // Ready (RD)
   .m_axis_tready  (audio_data_OUT_ready), // input wire m_axis_tready
   // Data Valid
@@ -246,8 +278,8 @@ assign fifo_data_valid     = (m_axis_tvalid | test_mode);
 
   /// MISC
   .axis_data_count    ( ), // output wire [31 : 0] axis_data_count
-  .axis_wr_data_count ( ), // output wire [31 : 0] axis_wr_data_count
-  .axis_rd_data_count ( )  // output wire [31 : 0] axis_rd_data_count
+  .axis_wr_data_count ( DOWNSTREAM_axis_wr_data_count ), // output wire [31 : 0] axis_wr_data_count
+  .axis_rd_data_count ( DOWNSTREAM_axis_rd_data_count )  // output wire [31 : 0] axis_rd_data_count
   );
     
   //////////////////////////////////////////////
@@ -275,7 +307,7 @@ assign fifo_data_valid     = (m_axis_tvalid | test_mode);
   // Clock
   .s_axis_aclk    (ac_bclk),             // input wire s_axis_aclk
   // Reset
-  .s_axis_aresetn (reset ),              // input wire s_axis_aresetn
+  .s_axis_aresetn (axi_fifo_reset_n ),             // input wire s_axis_aresetn
   // Ready
   .s_axis_tready  (audio_data_IN_ready), // output wire s_axis_tready
   // Data Valid (WR)
@@ -285,8 +317,8 @@ assign fifo_data_valid     = (m_axis_tvalid | test_mode);
 
   /// MISC
   .axis_data_count    ( ), // output wire [31 : 0] axis_data_count
-  .axis_wr_data_count ( ), // output wire [31 : 0] axis_wr_data_count
-  .axis_rd_data_count ( )  // output wire [31 : 0] axis_rd_data_count
+  .axis_wr_data_count ( UPSTREAM_axis_wr_data_count ), // output wire [31 : 0] axis_wr_data_count
+  .axis_rd_data_count ( UPSTREAM_axis_rd_data_count )  // output wire [31 : 0] axis_rd_data_count
   );
 
 endmodule

@@ -49,6 +49,9 @@ IOBUF sda_iobuf (
 pullup(i2c_sda);
 pullup(i2c_scl);
 
+wire s_trdy;
+wire m_trdy;
+
 sampler_top sampler_top (
   .board_clk(clk_125),
   .reset(reset),
@@ -72,12 +75,31 @@ sampler_top sampler_top (
   .ac_muten(),
   .ac_pbdat(),
   .ac_pblrc(lr_clk),
-  .ac_recdat(),
-  .ac_reclrc(),
+  .ac_recdat(1'b1),
+  .ac_reclrc(lr_clk),
 
   // CODEC I2C Control Signals
   .i2c_scl,
-  .i2c_sda
+  .i2c_sda,
+
+  ////////////////////////////////////////////////
+  ///////////// AXI4 Stream Signals //////////////
+  // Clock and Reset
+  .s_axis_aclk(clk_125),
+  .s_axis_aresetn(reset_n),
+  // Clock and Reset
+  .m_axis_aclk(clk_125),
+  .m_axis_aresetn(reset_n),  
+
+  // Slave Interface Signals (DMA -> CODEC) //
+  .s_axis_tready(s_trdy),       // Ready
+  .s_axis_tvalid(s_trdy),  // Data Valid (WR)
+  .s_axis_tdata(64'hcafecafe_deadbeef),   // Data
+
+  // Master Interface Signals (CODEC -> DMA) //
+  .m_axis_tready(1'b0),  // Ready (RD)
+  .m_axis_tvalid(m_trdy),  // Data Valid
+  .m_axis_tdata()    // Data
 );
 
 

@@ -28,21 +28,32 @@ module codec_registers (
     input  wire [31:0] codec_i2c_rd_data,
     input  wire        update_codec_i2c_rd_data,
 	output wire        controller_reset,
-	input  wire [63:0] audio_data_out
-
+	input  wire [63:0] audio_data_out,
+	/////////////////////////
+  	//// Counter Signals ////
+  	/////////////////////////
+  	// AXI CLK //
+  	input wire [31:0] DOWNSTREAM_axis_wr_data_count,
+  	input wire [31:0] UPSTREAM_axis_rd_data_count,
+  	// Audio CLK //
+  	input wire [31:0] DOWNSTREAM_axis_rd_data_count,
+  	input wire [31:0] UPSTREAM_axis_wr_data_count
 
 );
 
 `include "register_params.svh"
 
-`define CODEC_I2C_CTRL_REG_ADDR    6'h00
-`define CODEC_I2C_ADDR_REG_ADDR    6'h01
-`define CODEC_I2C_WR_DATA_REG_ADDR 6'h02
-`define CODEC_I2C_RD_DATA_REG_ADDR 6'h03
-`define MISC_DATA_0_REG_ADDR       6'h04
-`define MISC_DATA_1_REG_ADDR       6'h05
-`define MISC_DATA_2_REG_ADDR       6'h06
-
+`define CODEC_I2C_CTRL_REG_ADDR                6'h00
+`define CODEC_I2C_ADDR_REG_ADDR                6'h01
+`define CODEC_I2C_WR_DATA_REG_ADDR             6'h02
+`define CODEC_I2C_RD_DATA_REG_ADDR             6'h03
+`define MISC_DATA_0_REG_ADDR                   6'h04
+`define MISC_DATA_1_REG_ADDR                   6'h05
+`define MISC_DATA_2_REG_ADDR                   6'h06
+`define DOWNSTREAM_AXIS_WR_DATA_COUNT_REG_ADDR 6'h08
+`define UPSTREAM_AXIS_RD_DATA_COUNT_REG_ADDR   6'h09
+`define DOWNSTREAM_AXIS_RD_DATA_COUNT_REG_ADDR 6'h0a
+`define UPSTREAM_AXIS_WR_DATA_COUNT_REG_ADDR   6'h0b
 
 logic [31:0] reg_data_out;
 
@@ -245,6 +256,49 @@ reg   [31:0] misc_data_2;
 `GEN_REG_SW_RW(axi_clk, axi_reset, 0, misc_data_2_wr_en, data_in, misc_data_2)
 
 
+///////////////////////////////////////
+// Address 7
+// DOWNSTREAM_axis_wr_data_count
+///////////////////////////////////////
+reg [31:0] DOWNSTREAM_axis_wr_data_count_reg;
+`GEN_REG_SW_RO_HW_WO(axi_clk, axi_reset,                   // Clock and Reset
+						32'hcafecafe,                      // Reset Value
+						1'b1,                              // Write Enable
+						DOWNSTREAM_axis_wr_data_count,     // Data In
+						DOWNSTREAM_axis_wr_data_count_reg) // Register
+
+///////////////////////////////////////
+// Address 8
+// UPSTREAM_axis_rd_data_count
+///////////////////////////////////////
+reg [31:0] UPSTREAM_axis_rd_data_count_reg;
+`GEN_REG_SW_RO_HW_WO(axi_clk, axi_reset,                  // Clock and Reset
+						32'hcafecafe,                     // Reset Value
+						1'b1,                             // Write Enable
+						UPSTREAM_axis_rd_data_count,      // Data In
+						UPSTREAM_axis_rd_data_count_reg)  // Register
+
+///////////////////////////////////////
+// Address 9
+// DOWNSTREAM_axis_rd_data_count
+///////////////////////////////////////
+reg [31:0] DOWNSTREAM_axis_rd_data_count_reg;
+`GEN_REG_SW_RO_HW_WO(axi_clk, axi_reset,                   // Clock and Reset
+						32'hcafecafe,                      // Reset Value
+						1'b1,                              // Write Enable
+						DOWNSTREAM_axis_rd_data_count,     // Data In
+						DOWNSTREAM_axis_rd_data_count_reg) // Register
+
+///////////////////////////////////////
+// Address 10
+// UPSTREAM_axis_wr_data_count
+///////////////////////////////////////
+reg [31:0] UPSTREAM_axis_wr_data_count_reg;
+`GEN_REG_SW_RO_HW_WO(axi_clk, axi_reset,                  // Clock and Reset
+						32'hcafecafe,                     // Reset Value
+						1'b1,                             // Write Enable
+						UPSTREAM_axis_wr_data_count,      // Data In
+						UPSTREAM_axis_wr_data_count_reg)  // Register
 
 ////////////////////////////////////////
 // Data Read Logic
@@ -255,13 +309,17 @@ always_comb
 	begin
 	      // Address decoding for reading registers
 	      case ( reg_addr_rd )
-	        `CODEC_I2C_CTRL_REG_ADDR     : reg_data_out = codec_i2c_ctrl_reg;
-	        `CODEC_I2C_ADDR_REG_ADDR    : reg_data_out = codec_i2c_addr_reg;
-	        `CODEC_I2C_WR_DATA_REG_ADDR : reg_data_out = codec_i2c_wr_data_reg;
-	        `CODEC_I2C_RD_DATA_REG_ADDR : reg_data_out = codec_i2c_rd_data_reg;
-	        `MISC_DATA_0_REG_ADDR       : reg_data_out = misc_data_0;
-	        `MISC_DATA_1_REG_ADDR       : reg_data_out = misc_data_1;
-	        `MISC_DATA_2_REG_ADDR       : reg_data_out = misc_data_2;
+	        `CODEC_I2C_CTRL_REG_ADDR                : reg_data_out = codec_i2c_ctrl_reg;
+	        `CODEC_I2C_ADDR_REG_ADDR                : reg_data_out = codec_i2c_addr_reg;
+	        `CODEC_I2C_WR_DATA_REG_ADDR             : reg_data_out = codec_i2c_wr_data_reg;
+	        `CODEC_I2C_RD_DATA_REG_ADDR             : reg_data_out = codec_i2c_rd_data_reg;
+	        `MISC_DATA_0_REG_ADDR                   : reg_data_out = misc_data_0;
+	        `MISC_DATA_1_REG_ADDR                   : reg_data_out = misc_data_1;
+	        `MISC_DATA_2_REG_ADDR                   : reg_data_out = misc_data_2;
+			`DOWNSTREAM_AXIS_WR_DATA_COUNT_REG_ADDR : reg_data_out = DOWNSTREAM_axis_wr_data_count_reg;
+			`UPSTREAM_AXIS_RD_DATA_COUNT_REG_ADDR   : reg_data_out = UPSTREAM_axis_rd_data_count_reg;
+			`DOWNSTREAM_AXIS_RD_DATA_COUNT_REG_ADDR : reg_data_out = DOWNSTREAM_axis_rd_data_count_reg;
+			`UPSTREAM_AXIS_WR_DATA_COUNT_REG_ADDR   : reg_data_out = UPSTREAM_axis_wr_data_count_reg;
 	        default : reg_data_out = 32'hdeadbeef;
 	      endcase
 	end

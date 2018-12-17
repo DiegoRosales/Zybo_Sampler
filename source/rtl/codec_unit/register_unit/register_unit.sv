@@ -30,6 +30,15 @@ module register_unit #(
     input  wire        update_codec_i2c_rd_data,
 	output wire        controller_reset,
 	input  wire [63:0] audio_data_out,
+	/////////////////////////
+  	//// Counter Signals ////
+  	/////////////////////////
+  	// AXI CLK //
+  	input wire [31:0] DOWNSTREAM_axis_wr_data_count,
+  	input wire [31:0] UPSTREAM_axis_rd_data_count,
+  	// Audio CLK //
+  	input wire [31:0] DOWNSTREAM_axis_rd_data_count,
+  	input wire [31:0] UPSTREAM_axis_wr_data_count,
 
     //---- AXI Clock Domain ----//
     // Ports of Axi Slave Bus Interface S00_AXI
@@ -83,7 +92,10 @@ wire [31:0] codec_i2c_rd_data_sync;
 wire        update_codec_i2c_rd_data_sync;
 wire        controller_reset_sync;
 wire [63:0] audio_data_out_sync;
-
+wire [31:0] DOWNSTREAM_axis_wr_data_count_sync;
+wire [31:0] UPSTREAM_axis_rd_data_count_sync;
+wire [31:0] DOWNSTREAM_axis_rd_data_count_sync;
+wire [31:0] UPSTREAM_axis_wr_data_count_sync;
 
 // Instantiation of Axi Bus Interface S00_AXI
 	axi_slave_controller # ( 
@@ -125,7 +137,16 @@ wire [63:0] audio_data_out_sync;
 		.codec_i2c_rd_data        (codec_i2c_rd_data_sync       ),
 		.update_codec_i2c_rd_data (update_codec_i2c_rd_data_sync),
 		.controller_reset         (controller_reset_sync        ),
-		.audio_data_out           (audio_data_out_sync          )
+		.audio_data_out           (audio_data_out_sync          ),
+		/////////////////////////
+  		//// Counter Signals ////
+  		/////////////////////////
+  		// AXI CLK //
+  		.DOWNSTREAM_axis_wr_data_count,
+  		.UPSTREAM_axis_rd_data_count,
+  		// Audio CLK //
+  		.DOWNSTREAM_axis_rd_data_count(DOWNSTREAM_axis_rd_data_count_sync),
+  		.UPSTREAM_axis_wr_data_count  (UPSTREAM_axis_wr_data_count_sync  )
 
 	);
 
@@ -152,7 +173,9 @@ pulse_synchronizer                    BOARD_2_AXI_codec_init_done_pulse_sync    
 pulse_synchronizer                    BOARD_2_AXI_update_codec_i2c_rd_data_pulse_sync (.clk_in(board_clk),  .clk_out(s00_axi_aclk), .data_in(update_codec_i2c_rd_data),  .data_out(update_codec_i2c_rd_data_sync));
 
 // CODEC Clock -> AXI
-synchronizer       #(.DATA_WIDTH(64)) CODEC_2_AXI_audio_data_out_sync                 (.clk_in(ac_bclk),  .clk_out(s00_axi_aclk), .data_in(audio_data_out ),  .data_out(audio_data_out_sync ));
+synchronizer       #(.DATA_WIDTH(64)) CODEC_2_AXI_audio_data_out_sync                 (.clk_in(ac_bclk),  .clk_out(s00_axi_aclk), .data_in(audio_data_out                ),  .data_out(audio_data_out_sync                ));
+synchronizer       #(.DATA_WIDTH(32)) CODEC_2_AXI_DOWNSTREAM_axis_rd_data_count       (.clk_in(ac_bclk),  .clk_out(s00_axi_aclk), .data_in(DOWNSTREAM_axis_rd_data_count ),  .data_out(DOWNSTREAM_axis_rd_data_count_sync ));
+synchronizer       #(.DATA_WIDTH(32)) CODEC_2_AXI_UPSTREAM_axis_wr_data_count         (.clk_in(ac_bclk),  .clk_out(s00_axi_aclk), .data_in(UPSTREAM_axis_wr_data_count   ),  .data_out(UPSTREAM_axis_wr_data_count_sync   ));
 
 
 endmodule
