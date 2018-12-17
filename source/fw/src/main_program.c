@@ -5,6 +5,7 @@
 //send data over UART
 #include "main_program.h"
 
+#define DMA_TRIGGER_TYPE 0x3
 // Global Variables
 const audio_structure_t audio_structure;
 // Interrupt Controller
@@ -17,25 +18,25 @@ const ivt_t ivt[] = {
 	(ivt_t) {
 		GPIO_INT_ID, //u8 id;
 		(XInterruptHandler)gpio_interrupt_handler,  //XInterruptHandler handler;
-		&IntParams,//void *pvCallbackRef;
+		&audio_structure,//void *pvCallbackRef;
 		0x0,//u8 priority; //not used for microblaze, set to 0
 		0x3//0x3//u8 trigType; //not used for microblaze, set to 0
 	},
 	// DMA Interrupt
 	(ivt_t) {
 		DMA_DOWNSTREAM_INT_ID, //u8 id;
-		(XInterruptHandler)DMA_interrupt_handler,  //XInterruptHandler handler;
-		&IntParams,//void *pvCallbackRef;
+		(XInterruptHandler)DMA_downstream_interrupt_handler,  //XInterruptHandler handler;
+		&audio_structure,//void *pvCallbackRef;
 		0x0,//u8 priority; //not used for microblaze, set to 0
-		0x3//0x3//u8 trigType; //not used for microblaze, set to 0
+		DMA_TRIGGER_TYPE//0x3//u8 trigType; //not used for microblaze, set to 0
 	},
 	// DMA Interrupt
 	(ivt_t) {
 		DMA_UPSTREAM_INT_ID, //u8 id;
-		(XInterruptHandler)DMA_interrupt_handler,  //XInterruptHandler handler;
-		&IntParams,//void *pvCallbackRef;
+		(XInterruptHandler)DMA_upstream_interrupt_handler,  //XInterruptHandler handler;
+		&audio_structure,//void *pvCallbackRef;
 		0x0,//u8 priority; //not used for microblaze, set to 0
-		0x3//0x3//u8 trigType; //not used for microblaze, set to 0
+		DMA_TRIGGER_TYPE//0x3//u8 trigType; //not used for microblaze, set to 0
 	}		
 };
 
@@ -55,8 +56,10 @@ int main_program()
 	XGpio_InterruptGlobalEnable(&gpio);
 	CodecInit(0);
 	InitDMA_engine(audio_structure.audio_dma_engine_addr, audio_structure.audio_dma_engine_cfg_addr);
-	StartDMA(audio_structure.input_stream_buffer_addr,  128, audio_structure.input_stream_dma_desc_addr,  audio_structure.audio_dma_engine_addr, 1); // Start upstream DMA
-	StartDMA(audio_structure.output_stream_buffer_addr, 128, audio_structure.output_stream_dma_desc_addr, audio_structure.audio_dma_engine_addr, 0); // Start downstream DMA
+	StartSimpleDMA(audio_structure.input_stream_buffer_addr,  10384, audio_structure.audio_dma_engine_addr, UPSTREAM); // Start upstream DMA
+	//StartSimpleDMA(audio_structure.output_stream_buffer_addr,  128, audio_structure.audio_dma_engine_addr, DOWNSTREAM); // Start downstream DMA
+
+	//StartDMA(audio_structure.output_stream_buffer_addr, 128, audio_structure.output_stream_dma_desc_addr, audio_structure.audio_dma_engine_addr, 0); // Start downstream DMA
 
 	while (1)
 	{
@@ -70,6 +73,18 @@ void gpio_interrupt_handler(void *IntParams){
 	int button    = 0;
 	int sw        = 0;
 
+	audio_structure_t *audio_structure = (audio_structure_t *) IntParams;
+	XAxiDma *engine_ptr = audio_structure->audio_dma_engine_addr;
+	UINTPTR engine_downstream_base_addr = engine_ptr->RegBase;
+	UINTPTR engine_upstream_base_addr   = engine_ptr->RegBase + 0x30;
+	xil_printf("Downstream Status  = %x\n\r", XAxiDma_ReadReg(engine_downstream_base_addr, 0x4));
+	xil_printf("Downstream Control = %x\n\r", XAxiDma_ReadReg(engine_downstream_base_addr, 0x0));
+	xil_printf("Upstream Status  = %x\n\r", XAxiDma_ReadReg(engine_upstream_base_addr, 0x4));
+	xil_printf("Upstream Control = %x\n\r", XAxiDma_ReadReg(engine_upstream_base_addr, 0x0));
+	xil_printf("Upstream Read Count    = %x\n\r", CONTROL_REGISTER_ACCESS->UPSTREAM_AXIS_RD_DATA_COUNT_REG);
+	xil_printf("Upstream Write Count   = %x\n\r", CONTROL_REGISTER_ACCESS->UPSTREAM_AXIS_WR_DATA_COUNT_REG);
+	xil_printf("Downstream Read Count  = %x\n\r", CONTROL_REGISTER_ACCESS->DOWNSTREAM_AXIS_RD_DATA_COUNT_REG);
+	xil_printf("Downstream Write Count = %x\n\r", CONTROL_REGISTER_ACCESS->DOWNSTREAM_AXIS_WR_DATA_COUNT_REG);
 	status    = XGpio_InterruptGetStatus(&gpio);
 	chan1_int = status & 0x1;        // Bit 0
 	chan2_int = (status >> 1) & 0x1; // Bit 1
