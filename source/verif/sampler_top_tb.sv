@@ -51,6 +51,10 @@ pullup(i2c_scl);
 
 wire s_trdy;
 wire m_trdy;
+wire m_tvalid;
+wire m_tlast;
+
+assign m_trdy = 1'b0;//m_tvalid;
 
 sampler_top sampler_top (
   .board_clk(clk_125),
@@ -97,9 +101,10 @@ sampler_top sampler_top (
   .s_axis_tdata(64'hcafecafe_deadbeef),   // Data
 
   // Master Interface Signals (CODEC -> DMA) //
-  .m_axis_tready(1'b0),  // Ready (RD)
-  .m_axis_tvalid(m_trdy),  // Data Valid
-  .m_axis_tdata()    // Data
+  .m_axis_tready(m_trdy),    // Ready (RD)
+  .m_axis_tvalid(m_tvalid),  // Data Valid
+  .m_axis_tdata(),         // Data
+  .m_axis_tlast(m_tlast)
 );
 
 
