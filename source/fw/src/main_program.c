@@ -37,6 +37,14 @@ const ivt_t ivt[] = {
 		&audio_structure,//void *pvCallbackRef;
 		0x0,//u8 priority; //not used for microblaze, set to 0
 		DMA_TRIGGER_TYPE//0x3//u8 trigType; //not used for microblaze, set to 0
+	},
+	// Downstream Almost Empty
+	(ivt_t) {
+		DOWNSTREAM_ALMOST_EMPTY_INT_ID, //u8 id;
+		(XInterruptHandler)downstream_almost_empty_interrupt_handler,  //XInterruptHandler handler;
+		&audio_structure,//void *pvCallbackRef;
+		0x0,//u8 priority; //not used for microblaze, set to 0
+		DMA_TRIGGER_TYPE//0x3//u8 trigType; //not used for microblaze, set to 0
 	}		
 };
 
@@ -56,8 +64,19 @@ int main_program()
 	XGpio_InterruptGlobalEnable(&gpio);
 	CodecInit(0);
 	InitDMA_engine(audio_structure.audio_dma_engine_addr, audio_structure.audio_dma_engine_cfg_addr);
-	StartSimpleDMA(audio_structure.input_stream_buffer_addr,  10384, audio_structure.audio_dma_engine_addr, UPSTREAM); // Start upstream DMA
-	//StartSimpleDMA(audio_structure.output_stream_buffer_addr,  128, audio_structure.audio_dma_engine_addr, DOWNSTREAM); // Start downstream DMA
+
+	audio_data_t *audio_data_ptr = (audio_data_t *)audio_structure.output_stream_buffer_addr;
+
+	for(int i = 0; i < 256; i++) {
+		*audio_data_ptr = (audio_data_t){0x0f, 0x0f};
+		audio_data_ptr++;
+	}
+	for(int i = 256; i < 512; i++) {
+		*audio_data_ptr =  (audio_data_t){0x0, 0x0};
+		audio_data_ptr++;
+	}	
+	//StartSimpleDMA(audio_structure.input_stream_buffer_addr,  10384, audio_structure.audio_dma_engine_addr, UPSTREAM); // Start upstream DMA
+	StartSimpleDMA(audio_structure.output_stream_buffer_addr,  512, audio_structure.audio_dma_engine_addr, DOWNSTREAM); // Start downstream DMA
 
 	//StartDMA(audio_structure.output_stream_buffer_addr, 128, audio_structure.output_stream_dma_desc_addr, audio_structure.audio_dma_engine_addr, 0); // Start downstream DMA
 

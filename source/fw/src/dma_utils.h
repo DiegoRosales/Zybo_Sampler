@@ -21,6 +21,7 @@
 // Interrupt ID
 #define DMA_DOWNSTREAM_INT_ID XPAR_FABRIC_AXIDMA_0_MM2S_INTROUT_VEC_ID
 #define DMA_UPSTREAM_INT_ID XPAR_FABRIC_AXIDMA_0_S2MM_INTROUT_VEC_ID
+#define DOWNSTREAM_ALMOST_EMPTY_INT_ID XPAR_FABRIC_AUDIO_SAMPLER_INST_DOWNSTREAM_ALMOST_EMPTY_INTR
 
 #define NUMBER_OF_DESCRIPTORS 3
 
@@ -92,5 +93,6 @@ void StartDMA(dma_descriptor_t *dma_descriptor, XAxiDma *dma_engine, int directi
 void StartSimpleDMA(uint32_t audio_data_addr, uint32_t dma_length, XAxiDma *dma_engine, int direction);
 void DMA_downstream_interrupt_handler(void * IntParams);
 void DMA_upstream_interrupt_handler(void * IntParams);
+void downstream_almost_empty_interrupt_handler(void * IntParams);
 
 #endif // DMA_UTILS_H

@@ -290,7 +290,7 @@ void CodecInit(int debug) {
 	// Analog Audio Path Settings
 	codec_registers.ANALOG_AUDIO_PATH.value        = 0;   // Initialize
 	codec_registers.ANALOG_AUDIO_PATH.field.DACSEL = 0x1; // Select the DAC as the output
-	codec_registers.ANALOG_AUDIO_PATH.field.Bypass = 0x1; // Mix the input with the output
+	codec_registers.ANALOG_AUDIO_PATH.field.Bypass = 0x0; // Mix the input with the output
 
 	check = CodecWr(ANALOG_AUDIO_PATH_REG_ADDR, codec_registers.ANALOG_AUDIO_PATH.value, 1, 0, debug);
 	if (check) {
@@ -329,7 +329,7 @@ void CodecInit(int debug) {
 	///////////////////////////////////
 	xil_printf("Setting the output volume...\n\r");
 
-	check = SetOutputVolume(-15);
+	check = SetOutputVolume(-40);
 
 	if (check) {
 		xil_printf("[ERROR] Setting the output volume...\n\n\r");

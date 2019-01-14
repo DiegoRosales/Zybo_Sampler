@@ -146,17 +146,17 @@ void StartSimpleDMA(uint32_t audio_data_addr, uint32_t dma_length, XAxiDma *dma_
         // Downstream (MM2S)
         engine_base_addr = dma_engine->RegBase;
     }
-/*
-    xil_printf("\n\r==========================\n\r");
-    xil_printf("Starting Simple DMA!!\n\r");
-    xil_printf("DMA Transfer Length = %d\n\r", dma_length);
-    xil_printf("Audio Data Address = %d\n\r", audio_data_addr);
-    if (direction) {
-        xil_printf("Direction = Upstream\n\r");
-    } else {
-        xil_printf("Direction = Downstream\n\r");
-    }
-*/
+
+    //xil_printf("\n\r==========================\n\r");
+    //xil_printf("Starting Simple DMA!!\n\r");
+    //xil_printf("DMA Transfer Length = %d\n\r", dma_length);
+    //xil_printf("Audio Data Address = %d\n\r", audio_data_addr);
+    //if (direction) {
+    //    xil_printf("Direction = Upstream\n\r");
+    //} else {
+    //    xil_printf("Direction = Downstream\n\r");
+    //}
+
 
     /////////
     // Configure the DMA registers
@@ -215,7 +215,7 @@ void DMA_downstream_interrupt_handler(void * IntParams) {
     status =  XAxiDma_ReadReg(engine_base_addr, 0x4);
     //xil_printf("Status = %x\n\r", status);
     // Start the Upstream DMA
-    StartSimpleDMA(audio_structure->output_stream_buffer_addr,  256, audio_structure->audio_dma_engine_addr, DOWNSTREAM);
+    //StartSimpleDMA(audio_structure->output_stream_buffer_addr,  256, audio_structure->audio_dma_engine_addr, DOWNSTREAM);
 }
 
 void DMA_upstream_interrupt_handler(void * IntParams) {
@@ -225,8 +225,8 @@ void DMA_upstream_interrupt_handler(void * IntParams) {
     xil_printf("\n\r==========================\n\r");
     xil_printf("UPSTREAM DMA Interrupt!!\n\r");
     xil_printf("==========================\n\r");
-  	xil_printf("Upstream Read Count    = %x\n\r", CONTROL_REGISTER_ACCESS->UPSTREAM_AXIS_RD_DATA_COUNT_REG);
-	xil_printf("Upstream Write Count   = %x\n\r", CONTROL_REGISTER_ACCESS->UPSTREAM_AXIS_WR_DATA_COUNT_REG);
+  	xil_printf("Upstream Read Count    = %d Samples\n\r", XAxiDma_ReadReg(engine_base_addr, 0x28)/8);
+	//xil_printf("Upstream Write Count   = %x\n\r", CONTROL_REGISTER_ACCESS->UPSTREAM_AXIS_WR_DATA_COUNT_REG);
 
 
     int status = XAxiDma_ReadReg(engine_base_addr, 0x4);
@@ -238,5 +238,25 @@ void DMA_upstream_interrupt_handler(void * IntParams) {
     xil_printf("Status = %x\n\r", status);
 
     // Start the Downstream DMA
-    StartSimpleDMA(audio_structure->output_stream_buffer_addr,  10384, audio_structure->audio_dma_engine_addr, UPSTREAM);    
+    //StartSimpleDMA(audio_structure->output_stream_buffer_addr,  10384, audio_structure->audio_dma_engine_addr, UPSTREAM);    
+}
+
+void downstream_almost_empty_interrupt_handler(void * IntParams) {
+    audio_structure_t *audio_structure = (audio_structure_t *) IntParams;
+    XAxiDma *dma_engine = audio_structure->audio_dma_engine_addr;
+    UINTPTR engine_base_addr = dma_engine->RegBase;    
+
+    //xil_printf("\n\r==========================\n\r");
+    //xil_printf("Almost empty!!\n\r");
+    //xil_printf("==========================\n\r");
+
+    int status = XAxiDma_ReadReg(engine_base_addr, 0x4);
+    //xil_printf("Status = %x\n\r", status);
+
+    XAxiDma_WriteReg(engine_base_addr, 0x4, (status & 0x7000));
+
+    status =  XAxiDma_ReadReg(engine_base_addr, 0x4);
+    //xil_printf("Status = %x\n\r", status);
+    // Start the Upstream DMA
+    StartSimpleDMA(audio_structure->output_stream_buffer_addr,  512, audio_structure->audio_dma_engine_addr, DOWNSTREAM);
 }
