@@ -137,7 +137,12 @@ module codec_unit_top #(
   input  wire          m_axis_tready,  // Ready (RD)
   output wire          m_axis_tvalid,  // Data Valid
   output wire [63 : 0] m_axis_tdata,   // Data
-  output wire          m_axis_tlast
+  output wire          m_axis_tlast,
+
+  ///////////////////////////
+  //// Interrupt Signals ////
+  ///////////////////////////
+  output wire DOWNSTREAM_almost_empty  
 
 );
 
@@ -300,7 +305,12 @@ audio_unit_top audio_unit_top (
   .UPSTREAM_axis_rd_data_count,
   // Audio CLK //
   .DOWNSTREAM_axis_rd_data_count,
-  .UPSTREAM_axis_wr_data_count
+  .UPSTREAM_axis_wr_data_count,
+
+  ///////////////////////////
+  //// Interrupt Signals ////
+  ///////////////////////////
+  .DOWNSTREAM_almost_empty
 );
 
 

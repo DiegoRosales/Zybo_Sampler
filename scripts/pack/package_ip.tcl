@@ -66,6 +66,11 @@ create_gpio_interface ${sw_gpio_interface_name} sw monitor gpio_sw gpio_sw TRI_I
 create_gpio_interface ${btn_gpio_interface_name} btn monitor gpio_btn gpio_btn TRI_I [ipx::current_core]
 ##########################################
 
+##########################################
+## Configure the interrupt pins
+ipx::infer_bus_interface DOWNSTREAM_almost_empty xilinx.com:signal:interrupt_rtl:1.0 [ipx::current_core]
+##########################################
+
 ##########################
 ######### STEP 5 #########
 ##########################

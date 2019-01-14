@@ -71,7 +71,12 @@ module audio_unit_top(
   output wire [31:0] UPSTREAM_axis_rd_data_count,
   // Audio CLK //
   output wire [31:0] DOWNSTREAM_axis_rd_data_count,
-  output wire [31:0] UPSTREAM_axis_wr_data_count
+  output wire [31:0] UPSTREAM_axis_wr_data_count,
+
+  ///////////////////////////
+  //// Interrupt Signals ////
+  ///////////////////////////
+  output wire DOWNSTREAM_almost_empty
 
 );
 
@@ -88,6 +93,7 @@ reg  [31:0] test_counter;
 wire        audio_data_IN_ready;
 wire        audio_data_IN_valid;
 wire [63:0] audio_data_IN_data;
+wire        audio_data_IN_last;
 
 /////////////////////////
 // Output FIFO Signals  //
@@ -97,9 +103,11 @@ wire        audio_data_OUT_valid;
 wire        audio_data_OUT_valid2;
 wire [63:0] audio_data_OUT_data;
 
-assign m_axis_tlast = (UPSTREAM_axis_rd_data_count <= 'h3) ? 1'b1 : 1'b0;
+//assign m_axis_tlast = (UPSTREAM_axis_rd_data_count <= 3) ? 1'b1 : 1'b0;
+assign audio_data_IN_last      = serializer_fifo_wr_counter[7:0] == 8'h10;
+assign DOWNSTREAM_almost_empty = DOWNSTREAM_axis_rd_data_count < 20;
 ////////////////////////////////////
-assign serializer_audio_in = (test_mode) ? {test_signal_reg, test_signal_reg} : m_axis_tdata;
+assign serializer_audio_in = (test_mode) ? {test_signal_reg, test_signal_reg} : audio_data_OUT_data;
 assign audio_data_out      = /*(locked) ?*/ /*bclk_counter*/ {bclk_counter[27:0], test_counter[31:0], test_counter[18:17], bclk_counter[24:23]};// : 'hdeadbeef_deadcafe;
 assign ac_muten            = 1'b1;
 assign audio_data_OUT_valid2 = audio_data_OUT_valid | test_mode;
@@ -135,7 +143,7 @@ assign audio_data_OUT_valid2 = audio_data_OUT_valid | test_mode;
 
   //assign heartbeat = {axi_fifo_rd_counter[13], rec_lrclk_counter[13], lrclk_counter[13], bclk_counter[23]};
   //assign heartbeat = {axi_fifo_wr_counter[13], axi_fifo_rd_counter[13], rec_lrclk_counter[13], lrclk_counter[13]};
-  assign heartbeat = {axi_fifo_rd_counter[17], serializer_fifo_wr_counter[13], axi_fifo_wr_counter[23], serializer_fifo_rd_counter[13]};
+  assign heartbeat = {axi_fifo_rd_counter[17], serializer_fifo_wr_counter[13], axi_fifo_wr_counter[14], serializer_fifo_rd_counter[13]};
 
   always @ (posedge ac_bclk or negedge locked) begin
     if (locked == 1'b0) begin
@@ -152,32 +160,34 @@ assign audio_data_OUT_valid2 = audio_data_OUT_valid | test_mode;
     end
   end
 
-  reg [63:0] axi_fifo_rd_counter;
+
+/////////////////////////////////////////
+////////////// COUNTERS /////////////////
+  reg [63:0] axi_fifo_rd_counter;        // Read from the DMA
+  reg [63:0] serializer_fifo_wr_counter; // Write from the Serializer
+  reg [63:0] axi_fifo_wr_counter;        // Write from the DMA
+  reg [63:0] serializer_fifo_rd_counter; // Read from the Serializer
 
   always @(posedge axis_aclk or negedge axis_aresetn) 
     if (axis_aresetn == 1'b0) axi_fifo_rd_counter <= 'h0;
     else axi_fifo_rd_counter <= (m_axis_tready) ? axi_fifo_rd_counter + 1 : axi_fifo_rd_counter;
 
-  reg [63:0] axi_fifo_wr_counter;
 
   always @(posedge axis_aclk or negedge axis_aresetn) 
     if (axis_aresetn == 1'b0) axi_fifo_wr_counter <= 'h0;
     else axi_fifo_wr_counter <= (s_axis_tvalid) ? axi_fifo_wr_counter + 1 : axi_fifo_wr_counter;    
 
-/////////////////////////////    
-
-  reg [63:0] serializer_fifo_rd_counter;
 
   always @(posedge ac_bclk or negedge locked) 
     if (locked == 1'b0) serializer_fifo_rd_counter <= 'h0;
     else serializer_fifo_rd_counter <= (audio_data_OUT_ready) ? serializer_fifo_rd_counter + 1 : serializer_fifo_rd_counter;
 
-  reg [63:0] serializer_fifo_wr_counter;
 
   always @(posedge ac_bclk or negedge locked) 
     if (locked == 1'b0) serializer_fifo_wr_counter <= 'h0;
     else serializer_fifo_wr_counter <= (audio_data_IN_valid) ? serializer_fifo_wr_counter + 1 : serializer_fifo_wr_counter;     
   
+////////////////////////////////////////
 
   // Test Tone Generator
   // Generates a 440Hz Square Wave
@@ -190,7 +200,7 @@ assign audio_data_OUT_valid2 = audio_data_OUT_valid | test_mode;
       test_counter <= test_counter;
       if (m_axis_tready) begin
         test_counter <= test_counter + 1'b1;
-        if (test_counter[6] == 0) begin
+        if (test_counter[7] == 0) begin
           test_signal_reg <= TEST_SIGNAL_1;
         end 
         else begin
@@ -228,7 +238,7 @@ assign audio_data_OUT_valid2 = audio_data_OUT_valid | test_mode;
     // Data Valid
     .m_axis_tvalid (audio_data_OUT_valid2),
     // Data
-    .m_axis_tdata  (audio_data_OUT_data),
+    .m_axis_tdata  (serializer_audio_in),
 
     //////////////////////////////
     //// Output Data Signals  ////
@@ -261,6 +271,8 @@ assign audio_data_OUT_valid2 = audio_data_OUT_valid | test_mode;
   .m_axis_tvalid  (audio_data_OUT_valid), // output wire m_axis_tvalid
   // Data
   .m_axis_tdata   (audio_data_OUT_data),  // output wire [63 : 0] m_axis_tdata
+  // Last
+  .m_axis_tlast (),  
 
   /////////////////////////////////////////
   // Master Clock Domain (Zynq Processor)
@@ -275,6 +287,8 @@ assign audio_data_OUT_valid2 = audio_data_OUT_valid | test_mode;
   .s_axis_tvalid , // input wire s_axis_tvalid
   // Data
   .s_axis_tdata  , // input wire [63 : 0] s_axis_tdata
+  // Last
+  .s_axis_tlast (),
 
   /// MISC
   .axis_data_count    ( ), // output wire [31 : 0] axis_data_count
@@ -300,6 +314,8 @@ assign audio_data_OUT_valid2 = audio_data_OUT_valid | test_mode;
   .m_axis_tvalid, // output wire m_axis_tvalid
   // Data
   .m_axis_tdata,  // output wire [63 : 0] m_axis_tdata
+  // Last (only used for the upstream)
+  .m_axis_tlast,  //
 
   /////////////////////////////////////////
   // Master Clock Domain (I2S Codec)
@@ -314,6 +330,8 @@ assign audio_data_OUT_valid2 = audio_data_OUT_valid | test_mode;
   .s_axis_tvalid  (audio_data_IN_valid), // input wire s_axis_tvalid
   // Data
   .s_axis_tdata   (audio_data_IN_data),  // input wire [63 : 0] s_axis_tdata
+  // Last
+  .s_axis_tlast   (audio_data_IN_last),
 
   /// MISC
   .axis_data_count    ( ), // output wire [31 : 0] axis_data_count

@@ -58,6 +58,7 @@ set audio_data_fifo_ip_version     1.1
 ## FIFO Settings
 set audio_data_fifo_configuration_parameters [list \
                                                 CONFIG.TDATA_NUM_BYTES {8} \
+                                                CONFIG.HAS_TLAST       {1} \
                                                 CONFIG.IS_ACLK_ASYNC   {1} \
                                                 CONFIG.Component_Name ${audio_data_fifo_component_name}\
                                             ]

@@ -71,7 +71,7 @@ set_property -dict ${dma_configuration} [get_bd_cells axi_dma_0]
 
 #### Add the Concat module to concatenate multiple interrupts from different sources
 set concatenator_block_properties [list \
-                                        CONFIG.NUM_PORTS {3} \
+                                        CONFIG.NUM_PORTS {4} \
                                   ]
 create_bd_cell -type ip -vlnv xilinx.com:ip:xlconcat:2.1 xlconcat_0
 
@@ -176,5 +176,7 @@ connect_bd_net [get_bd_pins xlconcat_0/In0] [get_bd_pins axi_gpio_0/ip2intc_irpt
 connect_bd_net [get_bd_pins xlconcat_0/In1] [get_bd_pins axi_dma_0/mm2s_introut]
 # DMA to input 2 of the concatenator block
 connect_bd_net [get_bd_pins xlconcat_0/In2] [get_bd_pins axi_dma_0/s2mm_introut]
+# I2S Serializer interrupts
+connect_bd_net [get_bd_pins xlconcat_0/In3] [get_bd_pins ${packaged_ip_inst_name}/DOWNSTREAM_almost_empty]
 # Concatenator block to the CPU
 connect_bd_net [get_bd_pins xlconcat_0/dout] [get_bd_pins processing_system7_0/IRQ_F2P]
