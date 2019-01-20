@@ -139,6 +139,7 @@ codec_unit_top #(
   // Misc
   .led_status,
   .test_mode(sw[3]),
+  .justification(sw[2]),
 
   /////////////////////////////////////////////////
   ///////////// CODEC SIGNALS (Audio) ///////////// 

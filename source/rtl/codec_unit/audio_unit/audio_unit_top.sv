@@ -62,6 +62,7 @@ module audio_unit_top(
   //// Misc Signals ////
   //////////////////////
   output wire [3:0]    heartbeat,
+  input  wire          justification,
 
   /////////////////////////
   //// Counter Signals ////
@@ -103,9 +104,11 @@ wire        audio_data_OUT_valid;
 wire        audio_data_OUT_valid2;
 wire [63:0] audio_data_OUT_data;
 
+wire DOWNSTREAM_missed;
+
 //assign m_axis_tlast = (UPSTREAM_axis_rd_data_count <= 3) ? 1'b1 : 1'b0;
 assign audio_data_IN_last      = serializer_fifo_wr_counter[7:0] == 8'h10;
-assign DOWNSTREAM_almost_empty = DOWNSTREAM_axis_rd_data_count < 20;
+assign DOWNSTREAM_almost_empty = DOWNSTREAM_axis_rd_data_count < 30;
 ////////////////////////////////////
 assign serializer_audio_in = (test_mode) ? {test_signal_reg, test_signal_reg} : audio_data_OUT_data;
 assign audio_data_out      = /*(locked) ?*/ /*bclk_counter*/ {bclk_counter[27:0], test_counter[31:0], test_counter[18:17], bclk_counter[24:23]};// : 'hdeadbeef_deadcafe;
@@ -143,7 +146,8 @@ assign audio_data_OUT_valid2 = audio_data_OUT_valid | test_mode;
 
   //assign heartbeat = {axi_fifo_rd_counter[13], rec_lrclk_counter[13], lrclk_counter[13], bclk_counter[23]};
   //assign heartbeat = {axi_fifo_wr_counter[13], axi_fifo_rd_counter[13], rec_lrclk_counter[13], lrclk_counter[13]};
-  assign heartbeat = {axi_fifo_rd_counter[17], serializer_fifo_wr_counter[13], axi_fifo_wr_counter[14], serializer_fifo_rd_counter[13]};
+  //assign heartbeat = {axi_fifo_rd_counter[17], serializer_fifo_wr_counter[13], axi_fifo_wr_counter[14], serializer_fifo_rd_counter[13]};
+  assign heartbeat = {DOWNSTREAM_missed_counter[5], DOWNSTREAM_missed_counter[4], axi_fifo_wr_counter[14], serializer_fifo_rd_counter[13]};
 
   always @ (posedge ac_bclk or negedge locked) begin
     if (locked == 1'b0) begin
@@ -167,6 +171,7 @@ assign audio_data_OUT_valid2 = audio_data_OUT_valid | test_mode;
   reg [63:0] serializer_fifo_wr_counter; // Write from the Serializer
   reg [63:0] axi_fifo_wr_counter;        // Write from the DMA
   reg [63:0] serializer_fifo_rd_counter; // Read from the Serializer
+  reg [63:0] DOWNSTREAM_missed_counter;  // Downstream missed packet counter
 
   always @(posedge axis_aclk or negedge axis_aresetn) 
     if (axis_aresetn == 1'b0) axi_fifo_rd_counter <= 'h0;
@@ -187,6 +192,10 @@ assign audio_data_OUT_valid2 = audio_data_OUT_valid | test_mode;
     if (locked == 1'b0) serializer_fifo_wr_counter <= 'h0;
     else serializer_fifo_wr_counter <= (audio_data_IN_valid) ? serializer_fifo_wr_counter + 1 : serializer_fifo_wr_counter;     
   
+  always @(posedge ac_bclk or negedge locked)
+    if (locked == 1'b0) DOWNSTREAM_missed_counter <= 'h0;
+    else DOWNSTREAM_missed_counter <= (ac_pblrc && DOWNSTREAM_missed) ? DOWNSTREAM_missed_counter + 1 : DOWNSTREAM_missed_counter;
+
 ////////////////////////////////////////
 
   // Test Tone Generator
@@ -249,7 +258,14 @@ assign audio_data_OUT_valid2 = audio_data_OUT_valid | test_mode;
     // Data Valid (WR)
     .s_axis_tvalid (audio_data_IN_valid),
     // Data
-    .s_axis_tdata  (audio_data_IN_data)
+    .s_axis_tdata  (audio_data_IN_data),
+
+  ////////////////////////////
+  //// Misc Data Signals  ////
+  ////////////////////////////
+
+    .DOWNSTREAM_missed,
+    .justification
 
   );
 

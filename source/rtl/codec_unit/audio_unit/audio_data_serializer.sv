@@ -43,7 +43,14 @@ module audio_data_serializer(
 
   input  wire          s_axis_tready,
   output wire          s_axis_tvalid,
-  output wire [63 : 0] s_axis_tdata
+  output wire [63 : 0] s_axis_tdata,
+
+  ////////////////////////////
+  //// Misc Data Signals  ////
+  ////////////////////////////
+
+  output wire DOWNSTREAM_missed,
+  input  wire justification
 );
 
 // Data out
@@ -57,15 +64,19 @@ reg data_rd_reg;
 // Write the data to the FIFO
 reg audio_data_in_wr;
 
+reg DOWNSTREAM_missed_reg;
+reg justification_sampled;
+
 // Data to be serialized
 wire [63:0] audio_data_in;
-wire [63:0] audio_data_out_pre;
+logic [63:0] audio_data_out_pre;
 
 // Input data for the FIFO
 wire [63:0] audio_data_in_pre;
 
 // Ouptut serial data
-assign ac_pbdat = audio_data_out_shift_reg[63];
+//assign ac_pbdat = audio_data_out_shift_reg[0];
+assign ac_pbdat = (justification) ? audio_data_out_shift_reg[0] : audio_data_out_shift_reg[63];
 // Output Data Read
 assign m_axis_tready = data_rd_reg;
 
@@ -75,15 +86,48 @@ assign s_axis_tdata  = audio_data_in_to_fifo;
 
 assign audio_data_in = m_axis_tdata;
 
+assign DOWNSTREAM_missed = DOWNSTREAM_missed_reg;
+
 // Select the data based on the word length
-// All modes shift out MSB first
+// All modes shift out LSB first
 // The least significant bits are the Left channel
 // The most significant bits are the Right channel
-assign audio_data_out_pre = (word_length == 2'b00) ? {audio_data_in[15:0], audio_data_in[47:32], {32{1'b0}}} : // 16-bit
-                            (word_length == 2'b01) ? {audio_data_in[19:0], audio_data_in[51:32], {24{1'b0}}} : // 20-bit
-                            (word_length == 2'b10) ? {audio_data_in[23:0], audio_data_in[55:32], {16{1'b0}}} : // 24-bit
-                            (word_length == 2'b11) ? {audio_data_in[31:0], audio_data_in[63:32]}             : // 32-bit
-                            'h0;
+
+always_comb begin
+  if(justification_sampled == 1'b0) begin
+    // Left Justified
+    case(word_length)
+      2'b00:   audio_data_out_pre = {audio_data_in[15:0], audio_data_in[47:32], {32{1'b0}}} ; // 16-bit
+      2'b01:   audio_data_out_pre = {audio_data_in[19:0], audio_data_in[51:32], {24{1'b0}}} ; // 20-bit
+      2'b10:   audio_data_out_pre = {audio_data_in[23:0], audio_data_in[55:32], {16{1'b0}}} ; // 24-bit
+      2'b11:   audio_data_out_pre = {audio_data_in[31:0], audio_data_in[63:32]}             ; // 32-bit
+      default: audio_data_out_pre = 'h0;
+    endcase
+  end 
+  else begin
+    // Right Justified
+    case(word_length)
+      2'b00:   audio_data_out_pre = {{32{1'b0}}, audio_data_in[47:32], audio_data_in[15:0]} ; // 16-bit
+      2'b01:   audio_data_out_pre = {{24{1'b0}}, audio_data_in[51:32], audio_data_in[19:0]} ; // 20-bit
+      2'b10:   audio_data_out_pre = {{16{1'b0}}, audio_data_in[55:32], audio_data_in[23:0]} ; // 24-bit
+      2'b11:   audio_data_out_pre = {audio_data_in[63:32], audio_data_in[31:0]}             ; // 32-bit
+      default: audio_data_out_pre = 'h0;
+    endcase
+  end
+end
+
+//assign audio_data_out_pre = (word_length == 2'b00) ? {audio_data_in[15:0], audio_data_in[47:32], {32{1'b0}}} : // 16-bit
+//                            (word_length == 2'b01) ? {audio_data_in[19:0], audio_data_in[51:32], {24{1'b0}}} : // 20-bit
+//                            (word_length == 2'b10) ? {audio_data_in[23:0], audio_data_in[55:32], {16{1'b0}}} : // 24-bit
+//                            (word_length == 2'b11) ? {audio_data_in[31:0], audio_data_in[63:32]}             : // 32-bit
+//                            'h0;
+
+//assign audio_data_out_pre = (word_length == 2'b00) ? {{32{1'b0}}, audio_data_in[47:32], audio_data_in[15:0]} : // 16-bit
+//                            (word_length == 2'b01) ? {{24{1'b0}}, audio_data_in[51:32], audio_data_in[19:0]} : // 20-bit
+//                            (word_length == 2'b10) ? {{16{1'b0}}, audio_data_in[55:32], audio_data_in[23:0]} : // 24-bit
+//                            (word_length == 2'b11) ? {audio_data_in[63:32], audio_data_in[31:0]}             : // 32-bit
+//                            'h0;
+
 
 // Shift Register for the output data
 always_ff @(posedge ac_bclk) begin
@@ -96,10 +140,21 @@ always_ff @(posedge ac_bclk) begin
   // Shift the data
   else begin
     // Output Data
-    audio_data_out_shift_reg <= { audio_data_out_shift_reg[62:0], audio_data_out_shift_reg[63] };
+    if(justification == 1'b0) audio_data_out_shift_reg <= { audio_data_out_shift_reg[62:0], audio_data_out_shift_reg[63]   };
+    else                      audio_data_out_shift_reg <= { audio_data_out_shift_reg[0]   , audio_data_out_shift_reg[63:1] };
+    //audio_data_out_shift_reg <= { audio_data_out_shift_reg[0], audio_data_out_shift_reg[63:1] };
+    //audio_data_out_shift_reg <= { audio_data_out_shift_reg[62:0], audio_data_out_shift_reg[63] };
   end
 end
 
+always_ff @(posedge ac_bclk) begin
+  if (ac_pblrc && ~m_axis_tvalid) begin
+    DOWNSTREAM_missed_reg <= 1'b1;
+  end
+  else if ( ac_pblrc && m_axis_tvalid ) begin
+    DOWNSTREAM_missed_reg <= 1'b0;
+  end
+end
 
 // Select the data based on the word length
 // All modes shift in MSB first
@@ -126,5 +181,8 @@ always_ff @(posedge ac_bclk) begin
     audio_data_in_shift_reg  <= { ac_recdat, audio_data_in_shift_reg[63:1]};
   end
 end
+
+always_ff @(posedge ac_bclk) justification_sampled <= justification;
+
 
 endmodule

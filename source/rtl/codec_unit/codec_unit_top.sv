@@ -142,7 +142,8 @@ module codec_unit_top #(
   ///////////////////////////
   //// Interrupt Signals ////
   ///////////////////////////
-  output wire DOWNSTREAM_almost_empty  
+  output wire DOWNSTREAM_almost_empty,
+  input  wire justification
 
 );
 
@@ -277,6 +278,7 @@ audio_unit_top audio_unit_top (
   ///////////////////////////////////////////////////
   ///////////// Control Signals (Audio) ///////////// 
   .test_mode,
+  .justification,
 
   ////////////////////////////////////////////////
   ///////////// AXI4 Stream Signals //////////////
