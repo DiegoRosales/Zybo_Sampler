@@ -86,7 +86,13 @@ typedef struct {
     
 } audio_structure_t;
 
-
+typedef struct nco_struct {
+    audio_structure_t * audio_structure;
+    uint32_t target_memory_size;
+    uint32_t accumulator;
+    float frequency;
+    uint32_t phase;
+} nco_t;
 
 int InitDMA_engine(XAxiDma *dma_engine, XAxiDma_Config *dma_engine_configuration);
 void StartDMA(dma_descriptor_t *dma_descriptor, XAxiDma *dma_engine, int direction);

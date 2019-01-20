@@ -329,7 +329,7 @@ void CodecInit(int debug) {
 	///////////////////////////////////
 	xil_printf("Setting the output volume...\n\r");
 
-	check = SetOutputVolume(-40);
+	check = SetOutputVolume(0);
 
 	if (check) {
 		xil_printf("[ERROR] Setting the output volume...\n\n\r");

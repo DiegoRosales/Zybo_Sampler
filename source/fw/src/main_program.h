@@ -20,6 +20,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "FreeRTOS_MemAlloc.h"
+#include "nco.h"
 
 // Interrupt ID of the GPIO
 // This parameter is taken from the "xparameters.h" 

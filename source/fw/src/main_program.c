@@ -8,10 +8,20 @@
 #define DMA_TRIGGER_TYPE 0x3
 // Global Variables
 const audio_structure_t audio_structure;
+const uint32_t sine[512];
 // Interrupt Controller
 INTC intc;
 const int IntParams = 0;
 XGpio gpio;
+
+const nco_t nco = {
+	&audio_structure,
+	512,
+	0,
+	0,
+	0
+};
+
 // Interrupt Vector Table
 const ivt_t ivt[] = {
 	// GPIO Interrupt
@@ -26,7 +36,7 @@ const ivt_t ivt[] = {
 	(ivt_t) {
 		DMA_DOWNSTREAM_INT_ID, //u8 id;
 		(XInterruptHandler)DMA_downstream_interrupt_handler,  //XInterruptHandler handler;
-		&audio_structure,//void *pvCallbackRef;
+		&nco,//void *pvCallbackRef;
 		0x0,//u8 priority; //not used for microblaze, set to 0
 		DMA_TRIGGER_TYPE//0x3//u8 trigType; //not used for microblaze, set to 0
 	},
@@ -42,11 +52,13 @@ const ivt_t ivt[] = {
 	(ivt_t) {
 		DOWNSTREAM_ALMOST_EMPTY_INT_ID, //u8 id;
 		(XInterruptHandler)downstream_almost_empty_interrupt_handler,  //XInterruptHandler handler;
-		&audio_structure,//void *pvCallbackRef;
+		&nco,//void *pvCallbackRef;
 		0x0,//u8 priority; //not used for microblaze, set to 0
 		DMA_TRIGGER_TYPE//0x3//u8 trigType; //not used for microblaze, set to 0
 	}		
 };
+
+
 
 int main_program()
 {
@@ -67,16 +79,25 @@ int main_program()
 
 	audio_data_t *audio_data_ptr = (audio_data_t *)audio_structure.output_stream_buffer_addr;
 
-	for(int i = 0; i < 256; i++) {
-		*audio_data_ptr = (audio_data_t){0x0f, 0x0f};
-		audio_data_ptr++;
-	}
-	for(int i = 256; i < 512; i++) {
-		*audio_data_ptr =  (audio_data_t){0x0, 0x0};
-		audio_data_ptr++;
-	}	
+	uint32_t audio_data;
+
+	nco_init(&nco, 480, 48000);
+	nco_load_sine_to_mem(&nco);
+
+	//for(int i = 0; i < 1024; i+=2) {
+	//	//*audio_data_ptr = (audio_data_t){((sine[i] >> 6) & 0xffff), ((sine[i] >> 6) & 0xffff)};
+	//	audio_data = sine[(i & 0x1ff)] >> 1;
+	//	*audio_data_ptr = (audio_data_t){audio_data, audio_data};
+	//	audio_data_ptr++;
+	//	//audio_data_ptr++;
+	//	//audio_data_ptr++;
+	//	//audio_data_ptr++;
+	//}
+
+	Xil_DCacheFlushRange(audio_structure.output_stream_buffer_addr, 4096);
+
 	//StartSimpleDMA(audio_structure.input_stream_buffer_addr,  10384, audio_structure.audio_dma_engine_addr, UPSTREAM); // Start upstream DMA
-	StartSimpleDMA(audio_structure.output_stream_buffer_addr,  512, audio_structure.audio_dma_engine_addr, DOWNSTREAM); // Start downstream DMA
+	StartSimpleDMA(audio_structure.output_stream_buffer_addr,  4096, audio_structure.audio_dma_engine_addr, DOWNSTREAM); // Start downstream DMA
 
 	//StartDMA(audio_structure.output_stream_buffer_addr, 128, audio_structure.output_stream_dma_desc_addr, audio_structure.audio_dma_engine_addr, 0); // Start downstream DMA
 
