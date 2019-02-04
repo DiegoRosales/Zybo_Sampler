@@ -22,7 +22,7 @@
 #include "zybo_uart_driver.h"
 
 /* Const messages output by the command console. */
-static const char * const pcWelcomeMessage = "Welcome to the Zybo Sampler!.\r\nType Help to view a list of registered commands.\r\n\r\n>> ";
+static const char * const pcWelcomeMessage = "Welcome to the Zybo Sampler!.\r\nType help to view a list of registered commands.\r\n\r\n>> ";
 static const char * const pcEndOfOutputMessage = "\r\n[Press ENTER to execute the previous command again]\r\n>> ";
 static const char * const pcNewLine = "\r\n";
 
@@ -48,8 +48,11 @@ static void prvUARTCommandConsoleTask( void *pvParameters )
     char           *pcOutputString;                       // Pointer to the buffer that will be used to store the CLI application output
     BaseType_t     xReturned;                             // This will hold the exit state of the CLI command (pdFALSE == Command is done generating output strings)
     xComPortHandle xPort;                                 // UART Port
+    char           *clear_screen;
 
 	( void ) pvParameters; // We are not using the pvParameters right now. Using this to avoid warnings.
+
+    sprintf( clear_screen, "%c[2J\n\r",27 );
 
 	/* Obtain the address of the output buffer.  Note there is no mutual
 	exclusion on this buffer as it is assumed only one command console interface
@@ -60,6 +63,7 @@ static void prvUARTCommandConsoleTask( void *pvParameters )
 	xPort = xSerialPortInitMinimal( configCLI_BAUD_RATE, cmdQUEUE_LENGTH );
 
 	/* Send the welcome message. */
+	vSerialPutString( xPort, ( signed char * ) clear_screen, ( unsigned short ) strlen( clear_screen ) );
 	vSerialPutString( xPort, ( signed char * ) pcWelcomeMessage, ( unsigned short ) strlen( pcWelcomeMessage ) );
 
 	for( ;; )
@@ -78,8 +82,7 @@ static void prvUARTCommandConsoleTask( void *pvParameters )
 			/* Was it the end of the line? */
 			if( cRxedChar == '\n' || cRxedChar == '\r' )
 			{
-				/* Just to space the output from the input. */
-				vSerialPutString( xPort, ( signed char * ) pcNewLine, ( unsigned short ) strlen( pcNewLine ) );
+				
 
 				/* See if the command is empty, indicating that the last command
 				is to be executed again. */
@@ -87,7 +90,12 @@ static void prvUARTCommandConsoleTask( void *pvParameters )
 				{
 					/* Copy the last command back into the input string. */
 					strcpy( cInputString, cLastInputString );
-				}
+                    // Printout the command
+                    vSerialPutString( xPort, ( signed char * ) cInputString, ( unsigned short ) strlen( cInputString ) );
+				} 
+
+                /* Just to space the output from the input. */
+				vSerialPutString( xPort, ( signed char * ) pcNewLine, ( unsigned short ) strlen( pcNewLine ) );
 
 				/* Pass the received command to the command interpreter.  The
 				command interpreter is called repeatedly until it returns
