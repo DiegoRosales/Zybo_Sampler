@@ -23,7 +23,7 @@ if {[file exists "${worskpace_project_path}/${hw_project_name}"] == 0} {
 
 ## Step 3 - Create the application
 if {[file exists "${worskpace_project_path}/${sdk_project_name}"] == 0} {
-    createapp -name ${sdk_project_name} -hwproject ${hw_project_name} -bsp ${sdk_project_name}_bsp -proc ${processor} -os standalone -lang C -app {Empty Application}
+    createapp -name ${sdk_project_name} -hwproject ${hw_project_name} -bsp ${sdk_project_name}_bsp -proc ${processor} -os freertos10_xilinx -lang C -app {Empty Application}
 }
 
 ## Step 4 - Build the project

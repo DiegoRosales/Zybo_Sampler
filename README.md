@@ -27,6 +27,8 @@ Note that this board has been discontinued and replaced with the Zybo Z7 which i
 
 [**DONE**] DMA Interface between the ARM core and the I2S controller
 
+[**IN PROGRESS**] CLI Interface over UART to the PS
+
 [**IN PROGRESS**] Tone Generator
 
 [**NOT STARTED**] Square Wave Synthesizer
@@ -75,7 +77,6 @@ To add the source code to the SDK Workspace, right clic on `src` and select `New
 Once it has been added, Right click on the project and go to `C/C++ Build Settings`. Then go to `Directories` in the compiler section and add the following directories
 
 ```tcl
-"${workspace_loc:/${ProjName}/src/fw/FreeRTOS/include}"
-"${workspace_loc:/${ProjName}/src/fw/FreeRTOS/extras}"
-"${workspace_loc:/${ProjName}/src/fw/FreeRTOS/portable/GCC/ARM_CA9}"
+"${workspace_loc:/${ProjName}/src/fw/FreeRTOS-Plus-CLI}"
+"${workspace_loc:/${ProjName}/src/fw/ZyboCLI}"
 ```
