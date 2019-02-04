@@ -198,7 +198,7 @@ static BaseType_t sampler_read_command( char *pcWriteBuffer, size_t xWriteBuffer
 
 			/* Return the parameter string. */
 			memset( pcWriteBuffer, 0x00, xWriteBufferLen );
-			sprintf( pcWriteBuffer, "[SAMPLER] 0x%x = 0x%x", addr_int, reg_output );
+			sprintf( pcWriteBuffer, "SAMPLER[0x%x] = 0x%x", addr_int, reg_output );
 			//strncat( pcWriteBuffer, ( char * ) pcParameter, ( size_t ) xParameterStringLength );
 			strncat( pcWriteBuffer, "\r\n", strlen( "\r\n" ) );
 
@@ -269,7 +269,7 @@ static BaseType_t codec_read_command( char *pcWriteBuffer, size_t xWriteBufferLe
 
 			/* Return the parameter string. */
 			memset( pcWriteBuffer, 0x00, xWriteBufferLen );
-			sprintf( pcWriteBuffer, "[CODEC] 0x%x = 0x%x", addr_int, reg_output );
+			sprintf( pcWriteBuffer, "CODEC[0x%x] = 0x%x", addr_int, reg_output );
 			//strncat( pcWriteBuffer, ( char * ) pcParameter, ( size_t ) xParameterStringLength );
 			strncat( pcWriteBuffer, "\r\n", strlen( "\r\n" ) );
 
