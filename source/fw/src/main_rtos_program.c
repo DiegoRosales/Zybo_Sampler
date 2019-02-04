@@ -22,7 +22,12 @@
 // CLI Applications
 #include "codec_CLI_apps.h"
 
+// Other
+#include "codec_utils.h"
+
 void main_rtos_program() {
+
+    sampler_init();
 
     vUARTCommandConsoleStart( mainUART_COMMAND_CONSOLE_STACK_SIZE, mainUART_COMMAND_CONSOLE_TASK_PRIORITY );
 
@@ -40,28 +45,30 @@ void main_rtos_program() {
 /////////////////////////////////
 // System Initialization Task  //
 /////////////////////////////////
-static void sys_init_task(void *p) {
-    XGpio gpio;
+void sampler_init( void ) {
+    xil_printf("Initializing the system...\n\r");
+    ////////
+    // CODEC Configuration
+    ////////
+    CodecInit(0);
 
-    while(1){
-        ////////
-        // GPIO Configuration
-        ////////
-        xil_printf("Initializing the GPIO...\n\r");
-        // Initialize the GPIO IP
-        XGpio_Initialize(&gpio, 0);
-        // Enable the GPIO Interrupts
-	    enable_gpio_interrupts();
-	    XGpio_InterruptClear(&gpio, 0xffffffff);
-	    XGpio_InterruptEnable(&gpio, 0xffffffff);
-	    XGpio_InterruptGlobalEnable(&gpio);
+//    ////////
+//    // GPIO Configuration
+//    ////////
+//    xil_printf("Initializing the GPIO...\n\r");
+//    // Initialize the GPIO IP
+//    XGpio_Initialize(&gpio, 0);
+//    // Enable the GPIO Interrupts
+//    enable_gpio_interrupts();
+//    XGpio_InterruptClear(&gpio, 0xffffffff);
+//    XGpio_InterruptEnable(&gpio, 0xffffffff);
+//    XGpio_InterruptGlobalEnable(&gpio);
+//
+//    ////////
+//    // DMA Configuration
+//    ////////
+//    xil_printf("Initializing the DMA Engine...\n\r");
+    xil_printf("Done!\n\r");
 
-        ////////
-        // DMA Configuration
-        ////////
-        xil_printf("Initializing the DMA Engine...\n\r");
-    }
-
-    // Delete the task according to the FreeRTOS instructions
-    vTaskDelete(NULL);
+    for(int i=0; i<100; i++); // Small delay
 }
