@@ -2,11 +2,16 @@
 ![Zybo](https://reference.digilentinc.com/_media/reference/programmable-logic/zybo/zybo-0.png)
 
 ----
-This is an **Audio Sampler** and (maybe) **Syntheziser** project created for the **Digilent Zybo** board. The idea is to recreate the audio engine of the Keyboard Workstations of the mid-late 2000's (like the **Fantom X series** from **Roland**) to create an open source **Hardware** sampler powerful enough to recreate any sound from the last decade... Let's see if this FPGA can do it.
+This is an **Audio Sampler** and (maybe) a **Syntheziser** project created for the **Digilent Zybo** board. The idea is to recreate the audio engine of the Keyboard Workstations of the mid-late 2000's (like the **Fantom X series** from **Roland**) to create an open source **Hardware** sampler powerful enough to recreate any sound from the last decade... Let's see if this FPGA can do it.
+
+I am basing this design on the architectures used in Roland and Korg keyboard, where the CPU is used to handle basic tasks like managing the display, lights, buttons, etc. and a dedicated sound engine is used to load the samples and perform DSP. From the processor speed and memory perspective, this board and FPGA should outperform the hardware present in those keyboards. However it is difficult to tell if the same will be true for the DSP and DMA capabilities present in those keyboards ASICs. Note that the idea is to end up with a user-friendly UI with a display and buttons and knobs and whatnot.
+
+![FantomX](https://i.imgur.com/VdELW5Z.png)
+
+
+**Note** that this Zybo board has been discontinued and replaced by the Zybo Z7-10 and the Z7-20. The upgrades include more ram, faster clocks, a MIPI connector, a second HDMI port and (in the case of the Z7-20) a larger FPGA. This project will continue targeting the old Zybo because I'm not a Rockefeller.
 
 You can find more about the board over at https://reference.digilentinc.com/reference/programmable-logic/zybo/start
-
-Note that this board has been discontinued and replaced with the Zybo Z7 which is contains a larger FPGA from the same family as the regular Zybo
 
 ---
 # Milestones
@@ -50,8 +55,6 @@ Note that this board has been discontinued and replaced with the Zybo Z7 which i
 [**NOT STARTED**] Sine Wave Synthesizer
 
 [**NOT STARTED**] Sawtooth Wave Synthesizer
-
-[**NOT WELL DEFINED**] FW Application to playback audio using FreeRTOS
 
 ## Phase 4 [**Not Started**]: TBD
 
