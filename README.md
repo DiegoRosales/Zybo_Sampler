@@ -11,6 +11,8 @@ Note that this board has been discontinued and replaced with the Zybo Z7 which i
 ---
 # Milestones
 
+## Phase 1 [**DONE**]: Enable and test basic IO 
+
 [**DONE**] Created the git repo
 
 [**DONE**] CODEC control module (I2C)
@@ -27,9 +29,21 @@ Note that this board has been discontinued and replaced with the Zybo Z7 which i
 
 [**DONE**] DMA Interface between the ARM core and the I2S controller
 
-[**IN PROGRESS**] CLI Interface over UART to the PS
+[**DONE**] FW Test Sine Wave Tone Generator (Using DDS)
 
-[**IN PROGRESS**] Tone Generator
+[**DONE**] FreeRTOS CLI Interface over UART to the PS
+
+## Phase 2 [**IN PROGRESS**]: Enable and test advanced IO
+
+[**NOT STARTED**] Custom DMA engine to support up to 88 different DMA regions (88 keys in a piano)
+
+[**NOT STARTED**] Enable FreeRTOS+FAT to download samples to memory from an SD Card
+
+[**NOT STARTED**] Enable a MIDI bridge using UART
+
+## Phase 3 [**Not Started**]: Sound Playback
+
+[**NOT STARTED**] Playback samples from the FamtomX libary
 
 [**NOT STARTED**] Square Wave Synthesizer
 
@@ -38,6 +52,8 @@ Note that this board has been discontinued and replaced with the Zybo Z7 which i
 [**NOT STARTED**] Sawtooth Wave Synthesizer
 
 [**NOT WELL DEFINED**] FW Application to playback audio using FreeRTOS
+
+## Phase 4 [**Not Started**]: TBD
 
 [**NOT STARTED**] Enabled the full system in the verification environment
 
@@ -60,11 +76,11 @@ To build the project, you need to execute 1 script using Vivado: `run_design.tcl
 ```bash
 ## Run the complete flow from scratch and burn the bitfile once it is done
 [CMD]>> vivado -mode batch -source scripts\run_design.tcl -tclargs all
-## Run only the Design Integration
+## Run only the Design Integration (optional)
 [CMD]>> vivado -mode batch -source scripts\run_design.tcl -tclargs integ
-## To update the RTL
+## To update the RTL (optional)
 [CMD]>> vivado -mode batch -source scripts\run_design.tcl -tclargs all_update
-## Only burn the bitfile
+## Only burn the bitfile (optional)
 [CMD]>> vivado -mode batch -source scripts\run_design.tcl -tclargs burn_only
 
 ## To create the SDK Workspace
