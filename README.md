@@ -40,13 +40,13 @@ You can find more about the board over at https://reference.digilentinc.com/refe
 
 ## Phase 2 [**IN PROGRESS**]: Enable and test advanced IO
 
-[**NOT STARTED**] Custom DMA engine to support up to 88 different DMA regions (88 keys in a piano)
+[**IN PROGRESS**] Custom DMA engine to support up to 88 different DMA regions (88 keys in a piano)
 
 [**NOT STARTED**] Enable FreeRTOS+FAT to download samples to memory from an SD Card
 
 [**NOT STARTED**] Enable a MIDI bridge using UART
 
-## Phase 3 [**Not Started**]: Sound Playback
+## Phase 3 [**NOT STARTED**]: Sound Playback
 
 [**NOT STARTED**] Playback samples from the FamtomX libary
 
@@ -56,7 +56,7 @@ You can find more about the board over at https://reference.digilentinc.com/refe
 
 [**NOT STARTED**] Sawtooth Wave Synthesizer
 
-## Phase 4 [**Not Started**]: TBD
+## Phase 4 [**NOT PLANNED**]: TBD
 
 [**NOT STARTED**] Enabled the full system in the verification environment
 
