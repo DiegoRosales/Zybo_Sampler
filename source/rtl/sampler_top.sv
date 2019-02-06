@@ -129,8 +129,8 @@ module sampler_top #(
   input  wire                                       axi_dma_master_init_axi_txn ,
   output wire                                       axi_dma_master_txn_done     ,
   output wire                                       axi_dma_master_error        ,
-  //input  wire                                       axi_dma_master_aclk         ,
-  //input  wire                                       axi_dma_master_aresetn      ,
+  input  wire                                       axi_dma_master_aclk         ,
+  input  wire                                       axi_dma_master_aresetn      ,
   output wire [C_AXI_DMA_MASTER_ID_WIDTH-1 : 0]     axi_dma_master_awid         ,
   output wire [C_AXI_DMA_MASTER_ADDR_WIDTH-1 : 0]   axi_dma_master_awaddr       ,
   output wire [7 : 0]                               axi_dma_master_awlen        ,
@@ -177,19 +177,19 @@ module sampler_top #(
   ///////////////////////////////////////////////////////////
   // Ports of Axi Master Bus Interface AXI_STREAM_MASTER
   ///////////////////////////////////////////////////////////
-//  input  wire                                             axi_stream_master_aclk    ,
-//  input  wire                                             axi_stream_master_aresetn ,
-  output wire                                             axi_stream_master_tvalid  ,
-  output wire [C_AXI_STREAM_MASTER_TDATA_WIDTH-1 : 0]     axi_stream_master_tdata   ,
-  output wire [(C_AXI_STREAM_MASTER_TDATA_WIDTH/8)-1 : 0] axi_stream_master_tstrb   ,
-  output wire                                             axi_stream_master_tlast   ,
-  input  wire                                             axi_stream_master_tready  ,
+  // Not needed ATM // input  wire                                             axi_stream_master_aclk    ,
+  // Not needed ATM // input  wire                                             axi_stream_master_aresetn ,
+  // Not needed ATM // output wire                                             axi_stream_master_tvalid  ,
+  // Not needed ATM // output wire [C_AXI_STREAM_MASTER_TDATA_WIDTH-1 : 0]     axi_stream_master_tdata   ,
+  // Not needed ATM // output wire [(C_AXI_STREAM_MASTER_TDATA_WIDTH/8)-1 : 0] axi_stream_master_tstrb   ,
+  // Not needed ATM // output wire                                             axi_stream_master_tlast   ,
+  // Not needed ATM // input  wire                                             axi_stream_master_tready  ,
 
   ///////////////////////////////////////////////////////////
   // Ports of Axi Slave Bus Interface AXI_LITE_SLAVE
   ///////////////////////////////////////////////////////////
-//  input  wire                                         axi_lite_slave_aclk    ,
-//  input  wire                                         axi_lite_slave_aresetn ,
+  input  wire                                         axi_lite_slave_aclk    ,
+  input  wire                                         axi_lite_slave_aresetn ,
   input  wire [C_AXI_LITE_SLAVE_ADDR_WIDTH-1 : 0]     axi_lite_slave_awaddr  ,
   input  wire [2 : 0]                                 axi_lite_slave_awprot  ,
   input  wire                                         axi_lite_slave_awvalid ,
@@ -213,8 +213,8 @@ module sampler_top #(
   ///////////////////////////////////////////////////////////
   // Ports of Axi Slave Bus Interface S_AXI_INTR
   ///////////////////////////////////////////////////////////
-//  input  wire                                     s_axi_intr_aclk    ,
-//  input  wire                                     s_axi_intr_aresetn ,
+  input  wire                                     s_axi_intr_aclk    ,
+  input  wire                                     s_axi_intr_aresetn ,
   input  wire [C_S_AXI_INTR_ADDR_WIDTH-1 : 0]     s_axi_intr_awaddr  ,
   input  wire [2 : 0]                             s_axi_intr_awprot  ,
   input  wire                                     s_axi_intr_awvalid ,
@@ -238,21 +238,21 @@ module sampler_top #(
 
 );
 
-/////////////////////////////////////////
-// AXI Clock and Reset Signals
-// They all come from the same clock and reset
-/////////////////////////////////////////
-// Clocks
-wire axi_dma_master_aclk       = s00_axi_aclk;
-wire axi_stream_master_aclk    = s00_axi_aclk;
-wire axi_lite_slave_aclk       = s00_axi_aclk;
-wire s_axi_intr_aclk           = s00_axi_aclk;
-// Resets
-wire axi_dma_master_aresetn    = s00_axi_aresetn;
-wire axi_stream_master_aresetn = s00_axi_aresetn;
-wire axi_lite_slave_aresetn    = s00_axi_aresetn;
-wire s_axi_intr_aresetn        = s00_axi_aresetn;
-////////////////////////////////////////
+///////////////////////////////////////////
+//// AXI Clock and Reset Signals
+//// They all come from the same clock and reset
+///////////////////////////////////////////
+//// Clocks
+//wire axi_dma_master_aclk       = s00_axi_aclk;
+//wire axi_stream_master_aclk    = s00_axi_aclk;
+//wire axi_lite_slave_aclk       = s00_axi_aclk;
+//wire s_axi_intr_aclk           = s00_axi_aclk;
+//// Resets
+//wire axi_dma_master_aresetn    = s00_axi_aresetn;
+//wire axi_stream_master_aresetn = s00_axi_aresetn;
+//wire axi_lite_slave_aresetn    = s00_axi_aresetn;
+//wire s_axi_intr_aresetn        = s00_axi_aresetn;
+//////////////////////////////////////////
 
 wire       output_en    = 0;
 wire [4:0] frequency    = 0;
@@ -499,13 +499,13 @@ codec_unit_top #(
     ///////////////////////////////////////////////////////////
     // Ports of Axi Master Bus Interface AXI_STREAM_MASTER
     ///////////////////////////////////////////////////////////
-   .axi_stream_master_aclk    (axi_stream_master_aclk    ) ,
-   .axi_stream_master_aresetn (axi_stream_master_aresetn ) ,
-   .axi_stream_master_tvalid  (axi_stream_master_tvalid  ) ,
-   .axi_stream_master_tdata   (axi_stream_master_tdata   ) ,
-   .axi_stream_master_tstrb   (axi_stream_master_tstrb   ) ,
-   .axi_stream_master_tlast   (axi_stream_master_tlast   ) ,
-   .axi_stream_master_tready  (axi_stream_master_tready  ) ,
+   .axi_stream_master_aclk    ( ), // Not needed ATM // ( axi_stream_master_aclk    ) ,
+   .axi_stream_master_aresetn ( ), // Not needed ATM // ( axi_stream_master_aresetn ) ,
+   .axi_stream_master_tvalid  ( ), // Not needed ATM // ( axi_stream_master_tvalid  ) ,
+   .axi_stream_master_tdata   ( ), // Not needed ATM // ( axi_stream_master_tdata   ) ,
+   .axi_stream_master_tstrb   ( ), // Not needed ATM // ( axi_stream_master_tstrb   ) ,
+   .axi_stream_master_tlast   ( ), // Not needed ATM // ( axi_stream_master_tlast   ) ,
+   .axi_stream_master_tready  ( ), // Not needed ATM // ( axi_stream_master_tready  ) ,
 
     ///////////////////////////////////////////////////////////
     // Ports of Axi Slave Bus Interface AXI_LITE_SLAVE
