@@ -127,9 +127,18 @@ create_bd_intf_port -mode Master -vlnv xilinx.com:interface:gpio_rtl:1.0 LED
 ## Zynq
 apply_bd_automation -rule xilinx.com:bd_rule:processing_system7 -config {make_external "FIXED_IO, DDR" apply_board_preset "1" Master "Disable" Slave "Disable" } [get_bd_cells processing_system7_0]
 
-## Sampler
-# AXI Interface
-apply_bd_automation -rule xilinx.com:bd_rule:axi4               -config {Master "/processing_system7_0/M_AXI_GP0" intc_ip "New AXI Interconnect" Clk_xbar "Auto" Clk_master "Auto" Clk_slave "Auto" }  [get_bd_intf_pins ${packaged_ip_inst_name}/s00_axi]
+## Sampler IP
+# AXI Lite Interface for the general registers
+apply_bd_automation -rule xilinx.com:bd_rule:axi4 -config {Master "/processing_system7_0/M_AXI_GP0" intc_ip "New AXI Interconnect" Clk_xbar "Auto" Clk_master "Auto" Clk_slave "Auto" }  [get_bd_intf_pins ${packaged_ip_inst_name}/s00_axi]
+# AXI Lite for the DMA Configuration
+apply_bd_automation -rule xilinx.com:bd_rule:axi4 -config { Clk_master {/processing_system7_0/FCLK_CLK0 (100 MHz)} Clk_slave {Auto} Clk_xbar {/processing_system7_0/FCLK_CLK0 (100 MHz)} Master {/processing_system7_0/M_AXI_GP0} Slave {/${packaged_ip_inst_name}/axi_lite_slave} intc_ip {/ps7_0_axi_periph} master_apm {0}}  [get_bd_intf_pins ${packaged_ip_inst_name}/axi_lite_slave]
+# AXI Full for the custom DMA (Note, this also creates the AXI interconnect for the HP0 (/axi_smc))
+#apply_bd_automation -rule xilinx.com:bd_rule:axi4 -config { Clk_master {Auto} Clk_slave {/processing_system7_0/FCLK_CLK0 (100 MHz)} Clk_xbar {/processing_system7_0/FCLK_CLK0 (100 MHz)} Master {/audio_sampler_inst/axi_dma_master} Slave {/processing_system7_0/S_AXI_HP0} intc_ip {/axi_smc} master_apm {0}}  [get_bd_intf_pins audio_sampler_inst/axi_dma_master]
+apply_bd_automation -rule xilinx.com:bd_rule:axi4 -config {Master "/audio_sampler_inst/axi_dma_master" intc_ip "Auto" Clk_xbar "Auto" Clk_master "Auto" Clk_slave "Auto" }  [get_bd_intf_pins processing_system7_0/S_AXI_HP0]
+# AXI Interrupt
+apply_bd_automation -rule xilinx.com:bd_rule:axi4 -config { Clk_master {/processing_system7_0/FCLK_CLK0 (100 MHz)} Clk_slave {Auto} Clk_xbar {/processing_system7_0/FCLK_CLK0 (100 MHz)} Master {/processing_system7_0/M_AXI_GP0} Slave {/audio_sampler_inst/s_axi_intr} intc_ip {/ps7_0_axi_periph} master_apm {0}}  [get_bd_intf_pins ${packaged_ip_inst_name}/s_axi_intr]
+
+
 # GPIO
 connect_bd_intf_net [get_bd_intf_pins ${packaged_ip_inst_name}/LED]  [get_bd_intf_ports LED ]
 connect_bd_intf_net [get_bd_intf_pins ${packaged_ip_inst_name}/SW ]  [get_bd_intf_ports SW  ] 
@@ -160,7 +169,7 @@ apply_bd_automation -rule xilinx.com:bd_rule:clkrst -config {Clk "/processing_sy
 apply_bd_automation -rule xilinx.com:bd_rule:clkrst -config {Clk "/processing_system7_0/FCLK_CLK0 (100 MHz)" }  [get_bd_pins ${packaged_ip_inst_name}/m_axis_aclk]
 
 # AXI DMA to the Zynq Processor
-apply_bd_automation -rule xilinx.com:bd_rule:axi4 -config {Master "/axi_dma_0/M_AXI_MM2S" intc_ip "Auto" Clk_xbar "Auto" Clk_master "Auto" Clk_slave "Auto" }  [get_bd_intf_pins processing_system7_0/S_AXI_HP0]
+apply_bd_automation -rule xilinx.com:bd_rule:axi4 -config {Master "/axi_dma_0/M_AXI_MM2S" intc_ip "/axi_smc" Clk_xbar "Auto" Clk_master "Auto" Clk_slave "Auto" }  [get_bd_intf_pins processing_system7_0/S_AXI_HP0]
 apply_bd_automation -rule xilinx.com:bd_rule:axi4 -config { Clk_master {/processing_system7_0/FCLK_CLK0 (100 MHz)} Clk_slave {/processing_system7_0/FCLK_CLK0 (100 MHz)} Clk_xbar {/processing_system7_0/FCLK_CLK0 (100 MHz)} Master {/axi_dma_0/M_AXI_S2MM} Slave {/processing_system7_0/S_AXI_HP0} intc_ip {/axi_smc} master_apm {0}}  [get_bd_intf_pins axi_dma_0/M_AXI_S2MM]
 if {${enable_sg} == 1} {
     apply_bd_automation -rule xilinx.com:bd_rule:axi4 -config { Clk_master {Auto} Clk_slave {/processing_system7_0/FCLK_CLK0 (100 MHz)} Clk_xbar {/processing_system7_0/FCLK_CLK0 (100 MHz)} Master {/axi_dma_0/M_AXI_SG} Slave {/processing_system7_0/S_AXI_HP0} intc_ip {/axi_smc} master_apm {0}}  [get_bd_intf_pins axi_dma_0/M_AXI_SG]
