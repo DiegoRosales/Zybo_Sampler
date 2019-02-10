@@ -46,6 +46,7 @@ if { $skip_project_gen == 0 } {
     make_wrapper -files [get_files ${bd_output_dirname}/${block_design_name}.bd] -top
     add_files -norecurse ${bd_output_dirname}/hdl/${block_design_name}_wrapper.v
 
+
     ## Add the constraints
     source ${constraints_file_list}
     foreach file $constraints_file_list {
