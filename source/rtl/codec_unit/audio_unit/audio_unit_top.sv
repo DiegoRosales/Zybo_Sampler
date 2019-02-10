@@ -274,42 +274,42 @@ assign audio_data_OUT_valid2 = audio_data_OUT_valid | test_mode;
   //////////////////////////////////////////////
   // DMA ---> FIFO ---> CODEC
   audio_data_fifo audio_data_OUT_fifo_inst (
-  /////////////////////////////////////
-  // Slave Clock Domain (I2S Codec)
-  /////////////////////////////////////
-  // Clock
-  .m_axis_aclk    (ac_bclk),              // input wire m_axis_aclk
-  // Reset
-  .m_axis_aresetn (axi_fifo_reset_n),               // input wire m_axis_aresetn
-  // Ready (RD)
-  .m_axis_tready  (audio_data_OUT_ready), // input wire m_axis_tready
-  // Data Valid
-  .m_axis_tvalid  (audio_data_OUT_valid), // output wire m_axis_tvalid
-  // Data
-  .m_axis_tdata   (audio_data_OUT_data),  // output wire [63 : 0] m_axis_tdata
-  // Last
-  .m_axis_tlast (),  
+    /////////////////////////////////////
+    // Slave Clock Domain (I2S Codec)
+    /////////////////////////////////////
+    // Clock
+    .m_axis_aclk    (ac_bclk),              // input wire m_axis_aclk
+    // Reset
+    .m_axis_aresetn (axi_fifo_reset_n),               // input wire m_axis_aresetn
+    // Ready (RD)
+    .m_axis_tready  (audio_data_OUT_ready), // input wire m_axis_tready
+    // Data Valid
+    .m_axis_tvalid  (audio_data_OUT_valid), // output wire m_axis_tvalid
+    // Data
+    .m_axis_tdata   (audio_data_OUT_data),  // output wire [63 : 0] m_axis_tdata
+    // Last
+    .m_axis_tlast (),  
 
-  /////////////////////////////////////////
-  // Master Clock Domain (Zynq Processor)
-  /////////////////////////////////////////
-  // Clock
-  .s_axis_aclk    (axis_aclk),    // input wire s_axis_aclk
-  // Reset
-  .s_axis_aresetn (axis_aresetn), // input wire s_axis_aresetn
-  // Ready
-  .s_axis_tready , // output wire s_axis_tready
-  // Data Valid (WR)
-  .s_axis_tvalid , // input wire s_axis_tvalid
-  // Data
-  .s_axis_tdata  , // input wire [63 : 0] s_axis_tdata
-  // Last
-  .s_axis_tlast (),
+    /////////////////////////////////////////
+    // Master Clock Domain (Zynq Processor)
+    /////////////////////////////////////////
+    // Clock
+    .s_axis_aclk    (axis_aclk),    // input wire s_axis_aclk
+    // Reset
+    .s_axis_aresetn (axis_aresetn), // input wire s_axis_aresetn
+    // Ready
+    .s_axis_tready , // output wire s_axis_tready
+    // Data Valid (WR)
+    .s_axis_tvalid , // input wire s_axis_tvalid
+    // Data
+    .s_axis_tdata  , // input wire [63 : 0] s_axis_tdata
+    // Last
+    .s_axis_tlast (),
 
-  /// MISC
-  .axis_data_count    ( ), // output wire [31 : 0] axis_data_count
-  .axis_wr_data_count ( DOWNSTREAM_axis_wr_data_count ), // output wire [31 : 0] axis_wr_data_count
-  .axis_rd_data_count ( DOWNSTREAM_axis_rd_data_count )  // output wire [31 : 0] axis_rd_data_count
+    /// MISC
+    .axis_data_count    ( ), // output wire [31 : 0] axis_data_count
+    .axis_wr_data_count ( DOWNSTREAM_axis_wr_data_count ), // output wire [31 : 0] axis_wr_data_count
+    .axis_rd_data_count ( DOWNSTREAM_axis_rd_data_count )  // output wire [31 : 0] axis_rd_data_count
   );
     
   //////////////////////////////////////////////
@@ -317,42 +317,42 @@ assign audio_data_OUT_valid2 = audio_data_OUT_valid | test_mode;
   //////////////////////////////////////////////
   // CODEC ---> FIFO ---> DMA
   audio_data_fifo audio_data_IN_fifo_inst (
-  /////////////////////////////////////
-  // Slave Clock Domain (Zynq Processor)
-  /////////////////////////////////////
-  // Clock
-  .m_axis_aclk    (axis_aclk),    // input wire m_axis_aclk
-  // Reset
-  .m_axis_aresetn (axis_aresetn), // input wire m_axis_aresetn
-  // Ready (RD)
-  .m_axis_tready, // input wire m_axis_tready
-  // Data Valid
-  .m_axis_tvalid, // output wire m_axis_tvalid
-  // Data
-  .m_axis_tdata,  // output wire [63 : 0] m_axis_tdata
-  // Last (only used for the upstream)
-  .m_axis_tlast,  //
+    /////////////////////////////////////
+    // Slave Clock Domain (Zynq Processor)
+    /////////////////////////////////////
+    // Clock
+    .m_axis_aclk    (axis_aclk),    // input wire m_axis_aclk
+    // Reset
+    .m_axis_aresetn (axis_aresetn), // input wire m_axis_aresetn
+    // Ready (RD)
+    .m_axis_tready, // input wire m_axis_tready
+    // Data Valid
+    .m_axis_tvalid, // output wire m_axis_tvalid
+    // Data
+    .m_axis_tdata,  // output wire [63 : 0] m_axis_tdata
+    // Last (only used for the upstream)
+    .m_axis_tlast,  //
 
-  /////////////////////////////////////////
-  // Master Clock Domain (I2S Codec)
-  /////////////////////////////////////////
-  // Clock
-  .s_axis_aclk    (ac_bclk),             // input wire s_axis_aclk
-  // Reset
-  .s_axis_aresetn (axi_fifo_reset_n ),             // input wire s_axis_aresetn
-  // Ready
-  .s_axis_tready  (audio_data_IN_ready), // output wire s_axis_tready
-  // Data Valid (WR)
-  .s_axis_tvalid  (audio_data_IN_valid), // input wire s_axis_tvalid
-  // Data
-  .s_axis_tdata   (audio_data_IN_data),  // input wire [63 : 0] s_axis_tdata
-  // Last
-  .s_axis_tlast   (audio_data_IN_last),
+    /////////////////////////////////////////
+    // Master Clock Domain (I2S Codec)
+    /////////////////////////////////////////
+    // Clock
+    .s_axis_aclk    (ac_bclk),             // input wire s_axis_aclk
+    // Reset
+    .s_axis_aresetn (axi_fifo_reset_n ),             // input wire s_axis_aresetn
+    // Ready
+    .s_axis_tready  (audio_data_IN_ready), // output wire s_axis_tready
+    // Data Valid (WR)
+    .s_axis_tvalid  (audio_data_IN_valid), // input wire s_axis_tvalid
+    // Data
+    .s_axis_tdata   (audio_data_IN_data),  // input wire [63 : 0] s_axis_tdata
+    // Last
+    .s_axis_tlast   (audio_data_IN_last),
 
-  /// MISC
-  .axis_data_count    ( ), // output wire [31 : 0] axis_data_count
-  .axis_wr_data_count ( UPSTREAM_axis_wr_data_count ), // output wire [31 : 0] axis_wr_data_count
-  .axis_rd_data_count ( UPSTREAM_axis_rd_data_count )  // output wire [31 : 0] axis_rd_data_count
+    /// MISC
+    .axis_data_count    ( ), // output wire [31 : 0] axis_data_count
+    .axis_wr_data_count ( UPSTREAM_axis_wr_data_count ), // output wire [31 : 0] axis_wr_data_count
+    .axis_rd_data_count ( UPSTREAM_axis_rd_data_count )  // output wire [31 : 0] axis_rd_data_count
   );
 
 endmodule

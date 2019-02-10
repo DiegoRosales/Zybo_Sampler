@@ -4,7 +4,7 @@
 	module sampler_dma_v1_0_AXI_LITE_SLAVE #
 	(
 		// Users to add parameters here
-
+		parameter MAX_VOICES = 4,
 		// User parameters ends
 		// Do not modify the parameters beyond this line
 
@@ -15,7 +15,8 @@
 	)
 	(
 		// Users to add ports here
-
+		output wire [ 31 : 0 ] dma_control[ MAX_VOICES - 1 : 0 ],
+		output wire [ 31 : 0 ] dma_base_addr[ MAX_VOICES - 1 : 0 ],
 		// User ports ends
 		// Do not modify the ports beyond this line
 
@@ -216,57 +217,6 @@
 	// and the slave is ready to accept the write address and write data.
 	assign slv_reg_wren = axi_wready && S_AXI_WVALID && axi_awready && S_AXI_AWVALID;
 
-	always @( posedge S_AXI_ACLK )
-	begin
-	  if ( S_AXI_ARESETN == 1'b0 )
-	    begin
-	      slv_reg0 <= 0;
-	      slv_reg1 <= 0;
-	      slv_reg2 <= 0;
-	      slv_reg3 <= 0;
-	    end 
-	  else begin
-	    if (slv_reg_wren)
-	      begin
-	        case ( axi_awaddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] )
-	          2'h0:
-	            for ( byte_index = 0; byte_index <= (C_S_AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
-	              if ( S_AXI_WSTRB[byte_index] == 1 ) begin
-	                // Respective byte enables are asserted as per write strobes 
-	                // Slave register 0
-	                slv_reg0[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
-	              end  
-	          2'h1:
-	            for ( byte_index = 0; byte_index <= (C_S_AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
-	              if ( S_AXI_WSTRB[byte_index] == 1 ) begin
-	                // Respective byte enables are asserted as per write strobes 
-	                // Slave register 1
-	                slv_reg1[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
-	              end  
-	          2'h2:
-	            for ( byte_index = 0; byte_index <= (C_S_AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
-	              if ( S_AXI_WSTRB[byte_index] == 1 ) begin
-	                // Respective byte enables are asserted as per write strobes 
-	                // Slave register 2
-	                slv_reg2[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
-	              end  
-	          2'h3:
-	            for ( byte_index = 0; byte_index <= (C_S_AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
-	              if ( S_AXI_WSTRB[byte_index] == 1 ) begin
-	                // Respective byte enables are asserted as per write strobes 
-	                // Slave register 3
-	                slv_reg3[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
-	              end  
-	          default : begin
-	                      slv_reg0 <= slv_reg0;
-	                      slv_reg1 <= slv_reg1;
-	                      slv_reg2 <= slv_reg2;
-	                      slv_reg3 <= slv_reg3;
-	                    end
-	        endcase
-	      end
-	  end
-	end    
 
 	// Implement write response logic generation
 	// The write response and response valid signals are asserted by the slave 
@@ -366,17 +316,6 @@
 	// Slave register read enable is asserted when valid address is available
 	// and the slave is ready to accept the read address.
 	assign slv_reg_rden = axi_arready & S_AXI_ARVALID & ~axi_rvalid;
-	always @(*)
-	begin
-	      // Address decoding for reading registers
-	      case ( axi_araddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] )
-	        2'h0   : reg_data_out <= slv_reg0;
-	        2'h1   : reg_data_out <= slv_reg1;
-	        2'h2   : reg_data_out <= slv_reg2;
-	        2'h3   : reg_data_out <= slv_reg3;
-	        default : reg_data_out <= 0;
-	      endcase
-	end
 
 	// Output register or memory read data
 	always @( posedge S_AXI_ACLK )
@@ -398,7 +337,25 @@
 	end    
 
 	// Add user logic here
+	sampler_dma_registers #(
+		.MAX_VOICES( MAX_VOICES )
+	)
+	sampler_dma_registers (
+		// Clock and Reset
+		.axi_clk  ( S_AXI_ACLK    ),
+		.axi_reset( S_AXI_ARESETN ),
 
+		// Rd/Wr Signals
+		.data_in     ( S_AXI_WDATA                                     ),
+		.data_out    ( reg_data_out                                    ),
+		.reg_addr_wr ( axi_awaddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] ),
+		.reg_addr_rd ( axi_araddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] ),
+		.data_wren   ( slv_reg_wren                                    ),
+		.byte_enable ( 4'h0                                            ),
+
+		// User Signals
+		.*
+	);
 	// User logic ends
 
 	endmodule

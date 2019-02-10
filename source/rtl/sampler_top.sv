@@ -1,12 +1,15 @@
 //// Sampler Top
 module sampler_top #(
+  // Max Voices
+  parameter MAX_VOICES = 4,
+  ///////////////////////
   parameter C_S00_AXI_DATA_WIDTH = 32,
   parameter C_S00_AXI_ADDR_WIDTH = 8,
 
   // Parameters of Axi Master Bus Interface AXI_DMA_MASTER
   parameter  C_AXI_DMA_MASTER_TARGET_SLAVE_BASE_ADDR = 32'h40000000,
   parameter integer C_AXI_DMA_MASTER_BURST_LEN       = 16,
-  parameter integer C_AXI_DMA_MASTER_ID_WIDTH        = 1,
+  parameter integer C_AXI_DMA_MASTER_ID_WIDTH        = 6,
   parameter integer C_AXI_DMA_MASTER_ADDR_WIDTH      = 32,
   parameter integer C_AXI_DMA_MASTER_DATA_WIDTH      = 32,
   parameter integer C_AXI_DMA_MASTER_AWUSER_WIDTH    = 0,
@@ -208,33 +211,33 @@ module sampler_top #(
   output wire [C_AXI_LITE_SLAVE_DATA_WIDTH-1 : 0]     axi_lite_slave_rdata   ,
   output wire [1 : 0]                                 axi_lite_slave_rresp   ,
   output wire                                         axi_lite_slave_rvalid  ,
-  input  wire                                         axi_lite_slave_rready  ,
+  input  wire                                         axi_lite_slave_rready  
 
   ///////////////////////////////////////////////////////////
   // Ports of Axi Slave Bus Interface S_AXI_INTR
   ///////////////////////////////////////////////////////////
-  input  wire                                     s_axi_intr_aclk    ,
-  input  wire                                     s_axi_intr_aresetn ,
-  input  wire [C_S_AXI_INTR_ADDR_WIDTH-1 : 0]     s_axi_intr_awaddr  ,
-  input  wire [2 : 0]                             s_axi_intr_awprot  ,
-  input  wire                                     s_axi_intr_awvalid ,
-  output wire                                     s_axi_intr_awready ,
-  input  wire [C_S_AXI_INTR_DATA_WIDTH-1 : 0]     s_axi_intr_wdata   ,
-  input  wire [(C_S_AXI_INTR_DATA_WIDTH/8)-1 : 0] s_axi_intr_wstrb   ,
-  input  wire                                     s_axi_intr_wvalid  ,
-  output wire                                     s_axi_intr_wready  ,
-  output wire [1 : 0]                             s_axi_intr_bresp   ,
-  output wire                                     s_axi_intr_bvalid  ,
-  input  wire                                     s_axi_intr_bready  ,
-  input  wire [C_S_AXI_INTR_ADDR_WIDTH-1 : 0]     s_axi_intr_araddr  ,
-  input  wire [2 : 0]                             s_axi_intr_arprot  ,
-  input  wire                                     s_axi_intr_arvalid ,
-  output wire                                     s_axi_intr_arready ,
-  output wire [C_S_AXI_INTR_DATA_WIDTH-1 : 0]     s_axi_intr_rdata   ,
-  output wire [1 : 0]                             s_axi_intr_rresp   ,
-  output wire                                     s_axi_intr_rvalid  ,
-  input  wire                                     s_axi_intr_rready  ,
-  output wire                                     irq
+// Not needed ATM //  input  wire                                     s_axi_intr_aclk    ,
+// Not needed ATM //  input  wire                                     s_axi_intr_aresetn ,
+// Not needed ATM //  input  wire [C_S_AXI_INTR_ADDR_WIDTH-1 : 0]     s_axi_intr_awaddr  ,
+// Not needed ATM //  input  wire [2 : 0]                             s_axi_intr_awprot  ,
+// Not needed ATM //  input  wire                                     s_axi_intr_awvalid ,
+// Not needed ATM //  output wire                                     s_axi_intr_awready ,
+// Not needed ATM //  input  wire [C_S_AXI_INTR_DATA_WIDTH-1 : 0]     s_axi_intr_wdata   ,
+// Not needed ATM //  input  wire [(C_S_AXI_INTR_DATA_WIDTH/8)-1 : 0] s_axi_intr_wstrb   ,
+// Not needed ATM //  input  wire                                     s_axi_intr_wvalid  ,
+// Not needed ATM //  output wire                                     s_axi_intr_wready  ,
+// Not needed ATM //  output wire [1 : 0]                             s_axi_intr_bresp   ,
+// Not needed ATM //  output wire                                     s_axi_intr_bvalid  ,
+// Not needed ATM //  input  wire                                     s_axi_intr_bready  ,
+// Not needed ATM //  input  wire [C_S_AXI_INTR_ADDR_WIDTH-1 : 0]     s_axi_intr_araddr  ,
+// Not needed ATM //  input  wire [2 : 0]                             s_axi_intr_arprot  ,
+// Not needed ATM //  input  wire                                     s_axi_intr_arvalid ,
+// Not needed ATM //  output wire                                     s_axi_intr_arready ,
+// Not needed ATM //  output wire [C_S_AXI_INTR_DATA_WIDTH-1 : 0]     s_axi_intr_rdata   ,
+// Not needed ATM //  output wire [1 : 0]                             s_axi_intr_rresp   ,
+// Not needed ATM //  output wire                                     s_axi_intr_rvalid  ,
+// Not needed ATM //  input  wire                                     s_axi_intr_rready  ,
+// Not needed ATM //  output wire                                     irq
 
 );
 
@@ -254,30 +257,26 @@ module sampler_top #(
 //wire s_axi_intr_aresetn        = s00_axi_aresetn;
 //////////////////////////////////////////
 
-wire       output_en    = 0;
-wire [4:0] frequency    = 0;
-wire       apply_config = 0;
 
-wire       codec_rd_en     = 0;
-wire       codec_wr_en     = 0;
-wire       codec_reg_addr  = 0;
-wire [7:0] codec_data_in   = 0;
-wire [7:0] codec_data_out;
-wire       controller_busy;
-
-wire       i2c_ctrl_rd   = 0;
-wire [2:0] i2c_ctrl_addr = 0;
-wire [7:0] i2c_ctrl_data;
-
-wire [47:0] data_in      = 0;
-wire        data_wr      = 0;
-
-wire        init_done;
-wire        init_error;
-wire        missed_ack;
-wire        pll_locked;
+wire controller_busy;
+wire init_done;
+wire init_error;
+wire missed_ack;
+wire pll_locked;
 
 wire [3:0]  led_status;
+
+///////////////////////////////////
+// Signals between the DMA FIFO and output FIFO
+///////////////////////////////////
+// Internal AXIS signals
+wire [ 63 : 0 ] s_axis_tdata_int;
+wire            s_axis_tready_int;
+wire            s_axis_tvalid_int;
+// DMA FIFO Read Signals
+wire [ C_AXI_DMA_MASTER_DATA_WIDTH - 1 : 0 ] fifo_data_out;
+wire                                         fifo_data_available;
+wire                                         fifo_data_read;
 
 
 assign led[0] = (sw[0] == 1) ? init_done      : led_status[0];
@@ -332,25 +331,7 @@ codec_unit_top #(
   .axi_clk(clk_125),
 
   ///////////////////////////////////////////////
-  //////////// CODEC CONTROL SIGNALS ////////////
-  .output_en,    // CODEC Output Enable
-
-  .frequency,    // Sample Frequency Select
-  .apply_config, // Apply Configuration
-
-  ///////////////////////////////////////////////
-  /////////// CODEC REGISTER SIGNALS ////////////
-  .codec_rd_en,
-  .codec_wr_en,
-  .codec_reg_addr,
-  .codec_data_in,
-  .codec_data_out,
-
-  ///////////////////////////////////////////////
   /////////// I2C CONTROLLER SIGNALS ////////////
-  .i2c_ctrl_rd,
-  .i2c_ctrl_addr,
-  .i2c_ctrl_data,
   .controller_busy,
   .init_done,
   .init_error,
@@ -358,8 +339,6 @@ codec_unit_top #(
   
   ///////////////////////////////////////////////
   ///////////// CODEC DATA SIGNALS //////////////    
-  .data_in, // Audio Data
-  .data_wr, // Data Write to the data FIFO
 
   ///////////////////////////////////////////////
   ////////// CODEC UNIT STATUS SIGNALS ////////// 
@@ -396,9 +375,9 @@ codec_unit_top #(
   .axis_aresetn (s_axis_aresetn), // input wire s_axis_aresetn
 
   // Slave Interface Signals (DMA -> CODEC) //
-  .s_axis_tready , // Ready
-  .s_axis_tvalid , // Data Valid (WR)
-  .s_axis_tdata  , // Data
+  .s_axis_tready ( s_axis_tready_int ), // Ready
+  .s_axis_tvalid ( s_axis_tvalid_int ), // Data Valid (WR)
+  .s_axis_tdata  ( s_axis_tdata_int  ), // Data
 
   // Master Interface Signals (CODEC -> DMA) //
   .m_axis_tready , // Ready (RD)
@@ -417,37 +396,48 @@ codec_unit_top #(
   //////////////////////////////////////////////////////////////////////////////
   //////////////////////////// Sampler DMA Signals /////////////////////////////
 
+  // Glue logic for the AXIS FIFO in the CODEC interface
+  assign fifo_data_read    = s_axis_tready_int;
+  assign s_axis_tvalid_int = fifo_data_available;
+  assign s_axis_tdata_int  = {16'h0, fifo_data_out[31:16], 16'h0, fifo_data_out[15:0]}; // 16 bit audio support at the moment
+
   sampler_dma_top #(
-      // Parameters of Axi Master Bus Interface AXI_DMA_MASTER
-  .C_AXI_DMA_MASTER_TARGET_SLAVE_BASE_ADDR (C_AXI_DMA_MASTER_TARGET_SLAVE_BASE_ADDR),
-  .C_AXI_DMA_MASTER_BURST_LEN              (C_AXI_DMA_MASTER_BURST_LEN             ),
-  .C_AXI_DMA_MASTER_ID_WIDTH               (C_AXI_DMA_MASTER_ID_WIDTH              ),
-  .C_AXI_DMA_MASTER_ADDR_WIDTH             (C_AXI_DMA_MASTER_ADDR_WIDTH            ),
-  .C_AXI_DMA_MASTER_DATA_WIDTH             (C_AXI_DMA_MASTER_DATA_WIDTH            ),
-  .C_AXI_DMA_MASTER_AWUSER_WIDTH           (C_AXI_DMA_MASTER_AWUSER_WIDTH          ),
-  .C_AXI_DMA_MASTER_ARUSER_WIDTH           (C_AXI_DMA_MASTER_ARUSER_WIDTH          ),
-  .C_AXI_DMA_MASTER_WUSER_WIDTH            (C_AXI_DMA_MASTER_WUSER_WIDTH           ),
-  .C_AXI_DMA_MASTER_RUSER_WIDTH            (C_AXI_DMA_MASTER_RUSER_WIDTH           ),
-  .C_AXI_DMA_MASTER_BUSER_WIDTH            (C_AXI_DMA_MASTER_BUSER_WIDTH           ),
+    .MAX_VOICES ( MAX_VOICES ),
+    // Parameters of Axi Master Bus Interface AXI_DMA_MASTER
+    .C_AXI_DMA_MASTER_TARGET_SLAVE_BASE_ADDR (C_AXI_DMA_MASTER_TARGET_SLAVE_BASE_ADDR),
+    .C_AXI_DMA_MASTER_BURST_LEN              (C_AXI_DMA_MASTER_BURST_LEN             ),
+    .C_AXI_DMA_MASTER_ID_WIDTH               (C_AXI_DMA_MASTER_ID_WIDTH              ),
+    .C_AXI_DMA_MASTER_ADDR_WIDTH             (C_AXI_DMA_MASTER_ADDR_WIDTH            ),
+    .C_AXI_DMA_MASTER_DATA_WIDTH             (C_AXI_DMA_MASTER_DATA_WIDTH            ),
+    .C_AXI_DMA_MASTER_AWUSER_WIDTH           (C_AXI_DMA_MASTER_AWUSER_WIDTH          ),
+    .C_AXI_DMA_MASTER_ARUSER_WIDTH           (C_AXI_DMA_MASTER_ARUSER_WIDTH          ),
+    .C_AXI_DMA_MASTER_WUSER_WIDTH            (C_AXI_DMA_MASTER_WUSER_WIDTH           ),
+    .C_AXI_DMA_MASTER_RUSER_WIDTH            (C_AXI_DMA_MASTER_RUSER_WIDTH           ),
+    .C_AXI_DMA_MASTER_BUSER_WIDTH            (C_AXI_DMA_MASTER_BUSER_WIDTH           ),
 
-  // Parameters of Axi Master Bus Interface AXI_STREAM_MASTER
-  .C_AXI_STREAM_MASTER_TDATA_WIDTH(C_AXI_STREAM_MASTER_TDATA_WIDTH),
-  .C_AXI_STREAM_MASTER_START_COUNT(C_AXI_STREAM_MASTER_START_COUNT),
+    // Parameters of Axi Master Bus Interface AXI_STREAM_MASTER
+    .C_AXI_STREAM_MASTER_TDATA_WIDTH(C_AXI_STREAM_MASTER_TDATA_WIDTH),
+    .C_AXI_STREAM_MASTER_START_COUNT(C_AXI_STREAM_MASTER_START_COUNT),
 
-  // Parameters of Axi Slave Bus Interface AXI_LITE_SLAVE
-  .C_AXI_LITE_SLAVE_DATA_WIDTH (C_AXI_LITE_SLAVE_DATA_WIDTH),
-  .C_AXI_LITE_SLAVE_ADDR_WIDTH (C_AXI_LITE_SLAVE_ADDR_WIDTH),
+    // Parameters of Axi Slave Bus Interface AXI_LITE_SLAVE
+    .C_AXI_LITE_SLAVE_DATA_WIDTH (C_AXI_LITE_SLAVE_DATA_WIDTH),
+    .C_AXI_LITE_SLAVE_ADDR_WIDTH (C_AXI_LITE_SLAVE_ADDR_WIDTH),
 
-  // Parameters of Axi Slave Bus Interface S_AXI_INTR
-  .C_S_AXI_INTR_DATA_WIDTH (C_S_AXI_INTR_DATA_WIDTH),
-  .C_S_AXI_INTR_ADDR_WIDTH (C_S_AXI_INTR_ADDR_WIDTH),
-  .C_NUM_OF_INTR           (C_NUM_OF_INTR          ),
-  .C_INTR_SENSITIVITY      (C_INTR_SENSITIVITY     ),
-  .C_INTR_ACTIVE_STATE     (C_INTR_ACTIVE_STATE    ),
-  .C_IRQ_SENSITIVITY       (C_IRQ_SENSITIVITY      ),
-  .C_IRQ_ACTIVE_STATE      (C_IRQ_ACTIVE_STATE     )
+    // Parameters of Axi Slave Bus Interface S_AXI_INTR
+    .C_S_AXI_INTR_DATA_WIDTH (C_S_AXI_INTR_DATA_WIDTH),
+    .C_S_AXI_INTR_ADDR_WIDTH (C_S_AXI_INTR_ADDR_WIDTH),
+    .C_NUM_OF_INTR           (C_NUM_OF_INTR          ),
+    .C_INTR_SENSITIVITY      (C_INTR_SENSITIVITY     ),
+    .C_INTR_ACTIVE_STATE     (C_INTR_ACTIVE_STATE    ),
+    .C_IRQ_SENSITIVITY       (C_IRQ_SENSITIVITY      ),
+    .C_IRQ_ACTIVE_STATE      (C_IRQ_ACTIVE_STATE     )
 
   ) sampler_dma_top (
+    // Output FIFO Read signals
+    .fifo_data_out       ( fifo_data_out       ),
+    .fifo_data_available ( fifo_data_available ),
+    .fifo_data_read      ( fifo_data_read      ),
+    // AXI Signals
     .axi_dma_master_init_axi_txn (axi_dma_master_init_axi_txn) ,
     .axi_dma_master_txn_done     (axi_dma_master_txn_done    ) ,
     .axi_dma_master_error        (axi_dma_master_error       ) ,
@@ -530,33 +520,33 @@ codec_unit_top #(
     .axi_lite_slave_rdata   (axi_lite_slave_rdata   ),
     .axi_lite_slave_rresp   (axi_lite_slave_rresp   ),
     .axi_lite_slave_rvalid  (axi_lite_slave_rvalid  ),
-    .axi_lite_slave_rready  (axi_lite_slave_rready  ),
+    .axi_lite_slave_rready  (axi_lite_slave_rready  )
 
     ///////////////////////////////////////////////////////////
     // Ports of Axi Slave Bus Interface S_AXI_INTR
     ///////////////////////////////////////////////////////////
-    .s_axi_intr_aclk    (s_axi_intr_aclk    ),
-    .s_axi_intr_aresetn (s_axi_intr_aresetn ),
-    .s_axi_intr_awaddr  (s_axi_intr_awaddr  ),
-    .s_axi_intr_awprot  (s_axi_intr_awprot  ),
-    .s_axi_intr_awvalid (s_axi_intr_awvalid ),
-    .s_axi_intr_awready (s_axi_intr_awready ),
-    .s_axi_intr_wdata   (s_axi_intr_wdata   ),
-    .s_axi_intr_wstrb   (s_axi_intr_wstrb   ),
-    .s_axi_intr_wvalid  (s_axi_intr_wvalid  ),
-    .s_axi_intr_wready  (s_axi_intr_wready  ),
-    .s_axi_intr_bresp   (s_axi_intr_bresp   ),
-    .s_axi_intr_bvalid  (s_axi_intr_bvalid  ),
-    .s_axi_intr_bready  (s_axi_intr_bready  ),
-    .s_axi_intr_araddr  (s_axi_intr_araddr  ),
-    .s_axi_intr_arprot  (s_axi_intr_arprot  ),
-    .s_axi_intr_arvalid (s_axi_intr_arvalid ),
-    .s_axi_intr_arready (s_axi_intr_arready ),
-    .s_axi_intr_rdata   (s_axi_intr_rdata   ),
-    .s_axi_intr_rresp   (s_axi_intr_rresp   ),
-    .s_axi_intr_rvalid  (s_axi_intr_rvalid  ),
-    .s_axi_intr_rready  (s_axi_intr_rready  ),
-    .irq                (irq                ) 
+//    .s_axi_intr_aclk    (s_axi_intr_aclk    ),
+//    .s_axi_intr_aresetn (s_axi_intr_aresetn ),
+//    .s_axi_intr_awaddr  (s_axi_intr_awaddr  ),
+//    .s_axi_intr_awprot  (s_axi_intr_awprot  ),
+//    .s_axi_intr_awvalid (s_axi_intr_awvalid ),
+//    .s_axi_intr_awready (s_axi_intr_awready ),
+//    .s_axi_intr_wdata   (s_axi_intr_wdata   ),
+//    .s_axi_intr_wstrb   (s_axi_intr_wstrb   ),
+//    .s_axi_intr_wvalid  (s_axi_intr_wvalid  ),
+//    .s_axi_intr_wready  (s_axi_intr_wready  ),
+//    .s_axi_intr_bresp   (s_axi_intr_bresp   ),
+//    .s_axi_intr_bvalid  (s_axi_intr_bvalid  ),
+//    .s_axi_intr_bready  (s_axi_intr_bready  ),
+//    .s_axi_intr_araddr  (s_axi_intr_araddr  ),
+//    .s_axi_intr_arprot  (s_axi_intr_arprot  ),
+//    .s_axi_intr_arvalid (s_axi_intr_arvalid ),
+//    .s_axi_intr_arready (s_axi_intr_arready ),
+//    .s_axi_intr_rdata   (s_axi_intr_rdata   ),
+//    .s_axi_intr_rresp   (s_axi_intr_rresp   ),
+//    .s_axi_intr_rvalid  (s_axi_intr_rvalid  ),
+//    .s_axi_intr_rready  (s_axi_intr_rready  ),
+//    .irq                (irq                ) 
   );
 
 

@@ -58,35 +58,11 @@ module codec_unit_top #(
   input wire axi_clk,
 
   ///////////////////////////////////////////////
-  //////////// CODEC CONTROL SIGNALS ////////////
-  input wire       output_en,    // CODEC Output Enable
-
-  input wire [2:0] frequency,    // Sample Frequency Select
-  input wire       apply_config, // Apply Configuration
-
-  ///////////////////////////////////////////////
-  /////////// CODEC REGISTER SIGNALS ////////////
-  input  wire       codec_rd_en,
-  input  wire       codec_wr_en,
-  input  wire [7:0] codec_reg_addr,
-  input  wire [7:0] codec_data_in,
-  output wire [7:0] codec_data_out,
-  output wire       codec_data_out_valid,
-
-  ///////////////////////////////////////////////
   /////////// I2C CONTROLLER SIGNALS ////////////
-  input  wire       i2c_ctrl_rd,
-  input  wire [2:0] i2c_ctrl_addr,
-  output wire [7:0] i2c_ctrl_data,
   output wire       controller_busy,
   output wire       init_done,
   output wire       init_error,
   output wire       missed_ack,
-  
-  ///////////////////////////////////////////////
-  ///////////// CODEC DATA SIGNALS //////////////    
-  input wire [47:0] data_in, // Audio Data
-  input wire        data_wr, // Data Write to the data FIFO
 
   ///////////////////////////////////////////////
   ////////// CODEC UNIT STATUS SIGNALS ////////// 
