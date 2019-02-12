@@ -71,10 +71,10 @@ wire stream_req_sent;
 //////////////////////////////////
 // Information request and data signals
 //////////////////////////////////
-reg  [ C_M_AXI_ADDR_WIDTH - 1 : 0 ]                   voice_info_addr;
-reg                                                   voice_info_req;
-reg  [ MAX_INFO_COUNT - 1 : 0 ]                       info_count;
-reg  [ VOICE_INFO_DATA_STRUCTURE_SIZE : 0 ][ 31 : 0 ] voice_information_reg;
+reg  [ C_M_AXI_ADDR_WIDTH - 1 : 0 ] voice_info_addr;
+reg                                 voice_info_req;
+reg  [ MAX_INFO_COUNT - 1 : 0 ]     info_count;
+reg  [ 31 : 0 ]                     voice_information_reg[ VOICE_INFO_DATA_STRUCTURE_SIZE - 1 : 0 ];
 // Information signals
 wire [ 31 : 0 ] voice_start_addr;
 wire [ 31 : 0 ] voice_end_addr;
@@ -82,9 +82,9 @@ wire [ 31 : 0 ] voice_end_addr;
 //////////////////////////////////
 // Voice Stream request and data signals
 //////////////////////////////////
-reg   [ C_M_AXI_ADDR_WIDTH - 1 : 0 ] voice_stream_addr;
-wire  [ C_M_AXI_ADDR_WIDTH - 1 : 0 ] voice_stream_addr_next;
-reg                                  voice_stream_req;
+(* keep = "true" *) reg   [ C_M_AXI_ADDR_WIDTH - 1 : 0 ] voice_stream_addr;
+(* keep = "true" *) wire  [ C_M_AXI_ADDR_WIDTH - 1 : 0 ] voice_stream_addr_next;
+(* keep = "true" *) reg                                  voice_stream_req;
 
 //////////////////////////////////
 // FIFO Signals
@@ -154,7 +154,7 @@ assign stop_stream         = stop_dma | ( voice_stream_addr > voice_end_addr );
 always_ff @(posedge clk, negedge reset_n) begin
     if (~reset_n) begin
         info_count            <= 'h0;
-        voice_information_reg <= {VOICE_INFO_DATA_STRUCTURE_SIZE{'h0}};
+        voice_information_reg <= '{VOICE_INFO_DATA_STRUCTURE_SIZE{'h0}};
         voice_info_addr       <= 'h0;
         voice_info_req        <= 1'b0;
         dma_done              <= 1'b0;

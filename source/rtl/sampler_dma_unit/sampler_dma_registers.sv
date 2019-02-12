@@ -34,6 +34,8 @@ generate;
 	for ( i = 0; i < MAX_VOICES; i = i + 2 ) begin: indv_voice_register
 		always_ff @(posedge axi_clk or negedge axi_reset) begin
 			if ( ~axi_reset ) begin
+				dma_base_addr_reg[i] <= 'h0;
+				dma_control_reg[i]   <= 'h0;
 			end
 			else begin
 				// 0, 2, 4, ...

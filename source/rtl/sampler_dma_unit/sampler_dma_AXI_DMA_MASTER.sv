@@ -259,9 +259,9 @@ wire [ 7 : 0 ]                      indv_dma_req_len[ MAX_VOICES - 1 : 0 ]; // B
 
 wire [ MAX_VOICES - 1 : 0 ] start_dma;
 
-wire [ C_M_AXI_DATA_WIDTH - 1 : 0 ] indiv_fifo_data[MAX_VOICES - 1 : 0];
-wire [ MAX_VOICES - 1 : 0 ] indiv_fifo_data_available;
-wire [ MAX_VOICES - 1 : 0 ] indiv_fifo_data_read;
+(* keep = "true" *) wire [ C_M_AXI_DATA_WIDTH - 1 : 0 ] indiv_fifo_data[MAX_VOICES - 1 : 0];
+(* keep = "true" *) wire [ MAX_VOICES - 1 : 0 ] indiv_fifo_data_available;
+(* keep = "true" *) wire [ MAX_VOICES - 1 : 0 ] indiv_fifo_data_read;
 
 // Arbiter SM
 reg   [ MAX_ARB_COUNT - 1 : 0 ] req_arbiter_count;
@@ -278,8 +278,8 @@ wire end_of_scan;
 ///////////////////////////////////////////////////////////////
 // Mixer Signals
 ///////////////////////////////////////////////////////////////
+(* keep = "true" *) reg [C_M_AXI_DATA_WIDTH - 1 : 0 ] sample_mix_data;
 reg [ MAX_ARB_COUNT - 1 : 0 ]     sampler_mixer_count;
-reg [C_M_AXI_DATA_WIDTH - 1 : 0 ] sample_mix_data;
 reg mix_fifo_wr;
 
 
