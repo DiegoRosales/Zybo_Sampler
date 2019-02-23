@@ -74,6 +74,32 @@ ipx::infer_bus_interface DOWNSTREAM_almost_empty xilinx.com:signal:interrupt_rtl
 ##########################
 ######### STEP 5 #########
 ##########################
+## Configure the AXI Slave parameters so that they can be exported to the XSDK
+
+##########################################
+## CODEC AXI
+set codec_axi_if_name s00_axi
+
+ipx::add_address_block_parameter OFFSET_BASE_PARAM [ipx::get_address_blocks reg0 -of_objects [ipx::get_memory_maps ${codec_axi_if_name} -of_objects [ipx::current_core]]]
+ipx::add_address_block_parameter OFFSET_HIGH_PARAM [ipx::get_address_blocks reg0 -of_objects [ipx::get_memory_maps ${codec_axi_if_name} -of_objects [ipx::current_core]]]
+set_property Value C_${codec_axi_if_name}_BASEADDR [ipx::get_address_block_parameters OFFSET_BASE_PARAM -of_objects [ipx::get_address_blocks reg0 -of_objects [ipx::get_memory_maps ${codec_axi_if_name} -of_objects [ipx::current_core]]]]
+set_property Value C_${codec_axi_if_name}_HIGHADDR [ipx::get_address_block_parameters OFFSET_HIGH_PARAM -of_objects [ipx::get_address_blocks reg0 -of_objects [ipx::get_memory_maps ${codec_axi_if_name} -of_objects [ipx::current_core]]]]
+##########################################
+
+##########################################
+## Sampler AXI
+set sampler_axi_if_name axi_lite_slave
+
+ipx::add_address_block_parameter OFFSET_BASE_PARAM [ipx::get_address_blocks reg0 -of_objects [ipx::get_memory_maps ${sampler_axi_if_name} -of_objects [ipx::current_core]]]
+ipx::add_address_block_parameter OFFSET_HIGH_PARAM [ipx::get_address_blocks reg0 -of_objects [ipx::get_memory_maps ${sampler_axi_if_name} -of_objects [ipx::current_core]]]
+set_property Value C_${sampler_axi_if_name}_BASEADDR [ipx::get_address_block_parameters OFFSET_BASE_PARAM -of_objects [ipx::get_address_blocks reg0 -of_objects [ipx::get_memory_maps ${sampler_axi_if_name} -of_objects [ipx::current_core]]]]
+set_property Value C_${sampler_axi_if_name}_HIGHADDR [ipx::get_address_block_parameters OFFSET_HIGH_PARAM -of_objects [ipx::get_address_blocks reg0 -of_objects [ipx::get_memory_maps ${sampler_axi_if_name} -of_objects [ipx::current_core]]]]
+##########################################
+
+
+##########################
+######### STEP 6 #########
+##########################
 ## Set the display name and version
 set_property name         ${packaged_ip_name}      [ipx::current_core]
 set_property version      ${packaged_ip_ver}       [ipx::current_core]
@@ -86,14 +112,14 @@ set_property core_revision ${revision} [ipx::current_core]
 
 
 ##########################
-######### STEP 6 #########
+######### STEP 7 #########
 ##########################
 ## Generate collaterals
 ipx::create_xgui_files [ipx::current_core]
 
 
 ##########################
-######### STEP 7 #########
+######### STEP 8 #########
 ##########################
 ## Update and save
 ipx::update_checksums  [ipx::current_core]
