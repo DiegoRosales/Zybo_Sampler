@@ -24,6 +24,12 @@
 
 // Other
 #include "codec_utils.h"
+#include "nco.h"
+
+#define NUM_OF_SINE_SAMPLES 0x100000
+
+nco_t sine_nco;
+static volatile audio_data_t output_stream_audio_data[ NUM_OF_SINE_SAMPLES ];
 
 void main_rtos_program() {
 
@@ -46,11 +52,20 @@ void main_rtos_program() {
 // System Initialization Task  //
 /////////////////////////////////
 void sampler_init( void ) {
+    xil_printf("==========================\n\r");
     xil_printf("Initializing the system...\n\r");
     ////////
     // CODEC Configuration
     ////////
+    xil_printf("Initializing the CODEC registers...\n\r");
     CodecInit(0);
+    xil_printf("Done!\n\r");
+
+    xil_printf("Initializing the Sine NCO memory...\n\r");
+    sine_nco.target_memory_size = NUM_OF_SINE_SAMPLES;
+    sine_nco.audio_data = &output_stream_audio_data;
+    xil_printf("Audio Data Address Start = 0x%x", sine_nco.audio_data);
+    xil_printf("Done!\n\r");    
 
 //    ////////
 //    // GPIO Configuration
@@ -69,6 +84,6 @@ void sampler_init( void ) {
 //    ////////
 //    xil_printf("Initializing the DMA Engine...\n\r");
     xil_printf("Done!\n\r");
-
-    for(int i=0; i<100; i++); // Small delay
+    xil_printf("==========================\n\r");
+    for(int i=0; i<100000; i++); // Small delay
 }
