@@ -10,8 +10,9 @@
 // is playing, it must fetch both of them and combine them in real time
 ////////////////////
 // Features
-// - 88 configurable memory regions (for 88 notes)
 // - 64 concurrent voices
+// -- DMA engine must support fetch and combination (sum) of 64 DMA regions
+// - There shouldn't be any perceptible delay/latency (target < 2ms)
 // - Simple trigger to play and release
 ///////////////////////////////////////////////////////////////
 
