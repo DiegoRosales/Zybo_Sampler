@@ -101,3 +101,23 @@ Once it has been added, Right click on the project and go to `C/C++ Build Settin
 "${workspace_loc:/${ProjName}/src/fw/nco}"
 "${workspace_loc:/${ProjName}/src/fw/sampler}"
 ```
+
+# Runtime instructions
+Right now the project has very (**VERY**) limited functionality, but here's what you can do
+
+## Launch the project
+To launch the project, simply power on the Zybo and go into the Xilinx SDK with the compiled project. Once you're there go to `Xilinx -> Program FPGA`. Select the bitfile from the `results/audio_sampler_integ` directory and click on `Program`
+
+Now that the bitfile has been downloaded, go to your Project Explorer and right click on the .elf file that is under `codec_fw -> Binaries -> codec_fw.elf`. On the menu, go to `Run As` and select `Run on Hardware (System Debugger)`.
+
+## Interact with the CLI
+To interact with the CLI, open a serial terminal (using a program like PuTTY) and configure the following settings
+
+- `Baud Rate: 115200`
+- `Data Bits: 8`
+- `Stop Bits: 1`
+- `Parity: None`
+
+Once the settings have been configured, open the serial connection. You should be greeted with a screen like this one. You can type `help` to see the commands available.
+
+![SerialHello](https://i.imgur.com/oDWW7r2.png)
