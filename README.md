@@ -40,7 +40,7 @@ You can find more about the board over at https://reference.digilentinc.com/refe
 
 ## Phase 2 [**IN PROGRESS**]: Enable and test advanced IO
 
-[**IN PROGRESS**] Custom DMA engine to support up to 88 different DMA regions (88 keys in a piano)
+[**IN PROGRESS**] Custom DMA engine to support up to 64 different DMA regions (64 voices)
 
 [**NOT STARTED**] Enable FreeRTOS+FAT to download samples to memory from an SD Card
 
@@ -98,4 +98,6 @@ Once it has been added, Right click on the project and go to `C/C++ Build Settin
 ```tcl
 "${workspace_loc:/${ProjName}/src/fw/FreeRTOS-Plus-CLI}"
 "${workspace_loc:/${ProjName}/src/fw/ZyboCLI}"
+"${workspace_loc:/${ProjName}/src/fw/nco}"
+"${workspace_loc:/${ProjName}/src/fw/sampler}"
 ```
