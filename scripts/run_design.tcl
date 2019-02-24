@@ -8,6 +8,7 @@ set burn_bitfile     0
 set skip_project_gen 0
 set export_ws        0
 set launch_sdk       0
+set enable_debug     0
 
 source scripts/common_variables.tcl
 
@@ -42,6 +43,12 @@ if { $argc > 0 } {
             set implement        1
             set burn_bitfile     0
         }        
+        all_update_debug {
+            set pack             1
+            set integ            1
+            set implement        1
+            set enable_debug     1
+        }          
         burn_only {
             set integ            1
             set skip_project_gen 1
@@ -59,6 +66,13 @@ if { $argc > 0 } {
         }
         default {
             puts "You didn't select any options"
+        }
+    }
+    if { $argc > 1 } { 
+        switch [lindex $argv 1] { 
+            debug {
+                set enable_debug 1
+            }
         }
     }
 }

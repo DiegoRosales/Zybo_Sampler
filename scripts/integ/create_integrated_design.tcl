@@ -67,6 +67,10 @@ if { $skip_project_gen == 0 } {
         synth_design -top $top_module
         write_checkpoint -force ${integrated_ip_project_path}/post_synth.dcp
 
+        if { ${enable_debug} == 1 } {
+            implement_debug_core
+        }
+
         if { [file exists ${integrated_ip_project_path}/post_route.dcp] != 0} { 
             puts "Found checkpoint. Running incrementally"
             read_checkpoint -incremental ${integrated_ip_project_path}/post_route.dcp
@@ -84,6 +88,10 @@ if { $skip_project_gen == 0 } {
         
         ### Write the bitstream
         write_bitstream -force ${integrated_ip_project_path}/${integrated_ip_project_name}.bit
+        ### Write the debug probes
+        if { ${enable_debug} == 1 } {
+            write_debug_probes -force ${integrated_ip_project_path}/${integrated_ip_project_name}.ltx
+        }
     }
     ###############################################
 }

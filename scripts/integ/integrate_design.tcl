@@ -208,3 +208,15 @@ if { ${enable_xilinx_dma} == 1 } {
 # Concatenator block to the CPU
 connect_bd_net [get_bd_pins xlconcat_0/dout] [get_bd_pins processing_system7_0/IRQ_F2P]
 
+#######################################################
+####### Step 4 (optional) - Insert Debug Core #########
+#######################################################
+if { ${enable_debug} == 1 } {
+    set_property HDL_ATTRIBUTE.DEBUG true [get_bd_intf_nets {ps7_0_axi_periph_M01_AXI }]
+    set_property HDL_ATTRIBUTE.DEBUG true [get_bd_intf_nets {audio_sampler_inst_axi_dma_master }]
+    apply_bd_automation -rule xilinx.com:bd_rule:debug -dict [list \
+                                                            [get_bd_intf_nets ps7_0_axi_periph_M01_AXI] {AXI_R_ADDRESS "Data and Trigger" AXI_R_DATA "Data and Trigger" AXI_W_ADDRESS "None" AXI_W_DATA "None" AXI_W_RESPONSE "None" CLK_SRC "/processing_system7_0/FCLK_CLK0" SYSTEM_ILA "Auto" APC_EN "0" } \
+                                                            [get_bd_intf_nets audio_sampler_inst_axi_dma_master] {AXI_R_ADDRESS "Data and Trigger" AXI_R_DATA "Data" AXI_W_ADDRESS "Data and Trigger" AXI_W_DATA "Data" AXI_W_RESPONSE "None" CLK_SRC "/processing_system7_0/FCLK_CLK0" SYSTEM_ILA "Auto" APC_EN "0" } \
+                                                            ]
+}
+
