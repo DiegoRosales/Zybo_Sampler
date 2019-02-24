@@ -1,3 +1,10 @@
+
+//send data over UART
+#include "xil_printf.h"
+
+//information about AXI peripherals
+#include "xparameters.h"
+#include "xil_io.h"
 #include "reg_utils.h"
 
 int RegWr(int addr, int value, int check, int display) {

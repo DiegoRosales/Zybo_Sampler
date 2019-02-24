@@ -2,15 +2,10 @@
 #ifndef REG_UTILS_H
 #define REG_UTILS_H
 
-//send data over UART
-#include "xil_printf.h"
 
-//information about AXI peripherals
-#include "xparameters.h"
-#include "xil_io.h"
 
 // Controller Registers
-#define REGISTERS_BAR                          XPAR_AUDIO_SAMPLER_INST_BASEADDR
+#define REGISTERS_BAR                          XPAR_AUDIO_SAMPLER_INST_S00_AXI_BASEADDR
 #define CODEC_I2C_CTRL_REG_ADDR                0x00
 #define CODEC_I2C_ADDR_REG_ADDR                0x01
 #define CODEC_I2C_WR_DATA_REG_ADDR             0x02
