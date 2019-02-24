@@ -10,7 +10,6 @@
 		parameter MAX_VOICES                     = 4,
 		parameter VOICE_INFO_DMA_BURST_SIZE      = 4, // Burst size of the information table of the voice
 		parameter VOICE_STREAM_DMA_BURST_SIZE    = 64, // Burst size of the information table of the voice
-		parameter VOICE_INFO_DATA_STRUCTURE_SIZE = 4,  // Number of registers of the voice data structure
 
 		// User parameters ends
 		// Do not modify the parameters beyond this line
@@ -577,8 +576,7 @@ generate
 
 		dma_voice_req_fsm #(
     	.VOICE_INFO_DMA_BURST_SIZE       ( VOICE_INFO_DMA_BURST_SIZE      ),
-    	.VOICE_INFO_DATA_STRUCTURE_SIZE  ( VOICE_INFO_DATA_STRUCTURE_SIZE ),
-			.VOICE_STREAM_DMA_BURST_SIZE ( VOICE_STREAM_DMA_BURST_SIZE    ),
+		.VOICE_STREAM_DMA_BURST_SIZE     ( VOICE_STREAM_DMA_BURST_SIZE    ),
     	.C_M_AXI_ADDR_WIDTH              ( C_M_AXI_ADDR_WIDTH             ),
     	.C_M_AXI_DATA_WIDTH              ( C_M_AXI_DATA_WIDTH             )
 		) dma_voice_req_fsm_inst (

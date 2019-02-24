@@ -10,7 +10,6 @@
 module dma_voice_req_fsm # (
     parameter VOICE_INFO_DMA_BURST_SIZE      = 4, // Burst size of the information table of the voice
     parameter VOICE_STREAM_DMA_BURST_SIZE    = 64, // Burst size of the information table of the voice
-    parameter VOICE_INFO_DATA_STRUCTURE_SIZE = 4,  // Number of registers of the voice data structure
     // Width of Address Bus
     parameter integer C_M_AXI_ADDR_WIDTH	= 32,
     // Width of Data Bus
@@ -51,8 +50,12 @@ function integer clogb2 (input integer bit_depth);
     end                                                           
 endfunction
 
-localparam integer MAX_INFO_COUNT = clogb2( VOICE_INFO_DATA_STRUCTURE_SIZE - 1 ); // Get how many bits are needed for the max count
+localparam VOICE_INFO_DATA_STRUCTURE_SIZE = 4; // Number of registers of the voice data structure
+localparam integer MAX_INFO_COUNT         = clogb2( VOICE_INFO_DATA_STRUCTURE_SIZE - 1 ); // Get how many bits are needed for the max count
+localparam DMA_STREAM_ADDR_INCR           = (VOICE_STREAM_DMA_BURST_SIZE << 2);
 
+
+// State Machine
 localparam VOICE_DMA_ST_IDLE                    = 4'h0;
 localparam VOICE_DMA_ST_SAMPLE_INFO_REQ         = 4'h1;
 localparam VOICE_DMA_ST_WAIT_FOR_SAMPLE_INFO    = 4'h2;
@@ -77,7 +80,8 @@ reg  [ MAX_INFO_COUNT - 1 : 0 ]     info_count;
 reg  [ 31 : 0 ]                     voice_information_reg[ VOICE_INFO_DATA_STRUCTURE_SIZE - 1 : 0 ];
 // Information signals
 wire [ 31 : 0 ] voice_start_addr;
-wire [ 31 : 0 ] voice_end_addr;
+wire [ 31 : 0 ] voice_stream_length;
+reg  [ 31 : 0 ] voice_stream_count;
 
 //////////////////////////////////
 // Voice Stream request and data signals
@@ -145,11 +149,21 @@ end
 /////////////////////////////////////////////////////////////////////////
 // This controls the initial information request
 /////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////
+// Voice Information Data Structure
+//////////////////////////////////////////
+// |--------------------------|
+// |       START ADDRESS      | [0]
+// |==========================|
+// |       STREAM LENGTH      | [1]
+// |--------------------------|
+// |<-------- 32-bit -------->|
+//////////////////////////////////////////
 assign voice_info_req_sent = ( voice_dma_sm_curr_st == VOICE_DMA_ST_SAMPLE_INFO_REQ )      ? voice_info_req : 1'b0;
 assign voice_info_received = ( voice_dma_sm_curr_st == VOICE_DMA_ST_WAIT_FOR_SAMPLE_INFO ) ? dma_done       : 1'b0;
 assign voice_start_addr    = voice_information_reg[ 0 ];
-assign voice_end_addr      = voice_information_reg[ 1 ];
-assign stop_stream         = stop_dma | ( voice_stream_addr > voice_end_addr );
+assign voice_stream_length = voice_information_reg[ 1 ];
+assign stop_stream         = stop_dma | ( voice_stream_count > voice_stream_length );
 
 always_ff @(posedge clk, negedge reset_n) begin
     if (~reset_n) begin
@@ -160,7 +174,7 @@ always_ff @(posedge clk, negedge reset_n) begin
         dma_done              <= 1'b0;
     end
     else begin
-        dma_done              <= dma_input_data_last;
+        dma_done              <= dma_input_data_last; // DMA is done when the last data has been received
         info_count            <= info_count;
         voice_information_reg <= voice_information_reg;
         voice_info_addr       <= voice_info_addr;
@@ -187,19 +201,26 @@ end
 
 assign stream_req_sent        = ( voice_dma_sm_curr_st == VOICE_DMA_ST_STREAM_REQ ) ? voice_stream_req : 1'b0;
 assign stream_received        = ( voice_dma_sm_curr_st == VOICE_DMA_ST_WAIT_FOR_STREAM ) ? dma_done : 1'b0;
-assign voice_stream_addr_next = ( ( voice_dma_sm_curr_st == VOICE_DMA_ST_WAIT_FOR_STREAM ) & (dma_input_data_valid == 1'b1)) ? ( voice_stream_addr + 'h4 ) : voice_stream_addr;
+assign voice_stream_addr_next = ( ( voice_dma_sm_curr_st == VOICE_DMA_ST_WAIT_FOR_STREAM ) & ( dma_input_data_valid == 1'b1 ) ) ? ( voice_stream_addr + 'h4 ) : voice_stream_addr;
 
 always_ff @(posedge clk, negedge reset_n) begin
     if (~reset_n) begin
-        voice_stream_addr <= 'h0;
-        voice_stream_req  <= 1'b0;
+        voice_stream_addr  <= 'h0;
+        voice_stream_req   <= 1'b0;
+        voice_stream_count <= 'h0;
     end
     else begin
         voice_stream_addr <= voice_stream_addr_next;
-        voice_stream_req  <= 1'b0;
+        voice_stream_req   <= 1'b0;
+        voice_stream_count <= voice_stream_count;
 
-        if (voice_info_received) begin
-            voice_stream_addr <= voice_start_addr; // Initialize the address when the information is received
+        if ( voice_info_received ) begin
+            voice_stream_addr  <= voice_start_addr; // Initialize the address when the information is received
+            voice_stream_count <= 'h0;              // Initialize the count
+        end
+
+        if ( stream_received ) begin // Increment the stream count
+            voice_stream_count <= voice_stream_count + 1;
         end
 
         // Check if the FIFO is completely empty to request a new DMA
