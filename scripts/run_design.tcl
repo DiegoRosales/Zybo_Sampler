@@ -40,7 +40,7 @@ if { $argc > 0 } {
             set pack             1
             set integ            1
             set implement        1
-            set burn_bitfile     1
+            set burn_bitfile     0
         }        
         burn_only {
             set integ            1
