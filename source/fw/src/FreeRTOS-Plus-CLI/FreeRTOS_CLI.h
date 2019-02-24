@@ -35,7 +35,7 @@ each implementation - which would waste RAM.  In this case, there is only one
 command interpreter running, and it has its own local output buffer, so the
 global buffer is just set to be one byte long as it is not used and should not
 take up unnecessary RAM. */
-#define configCOMMAND_INT_MAX_OUTPUT_SIZE 120 // 120 Characters. May need more if data corruption occurs due to overlapping buffers
+#define configCOMMAND_INT_MAX_OUTPUT_SIZE 500 // 120 Characters. May need more if data corruption occurs due to overlapping buffers
 
 /* The prototype to which callback functions used to process command line
 commands must comply.  pcWriteBuffer is a buffer into which the output from
