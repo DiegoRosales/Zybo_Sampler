@@ -157,7 +157,7 @@ BaseType_t xReturn;
 
 void vSerialPutString( xComPortHandle pxPort, const signed char * const pcString, unsigned short usStringLength )
 {
-const TickType_t xMaxWait = 200UL / portTICK_PERIOD_MS;
+	const TickType_t xMaxWait = 500UL / portTICK_PERIOD_MS;
 
 	/* Only a single port is supported. */
 	( void ) pxPort;
@@ -172,6 +172,10 @@ const TickType_t xMaxWait = 200UL / portTICK_PERIOD_MS;
 	/* Start the transmission.  The interrupt service routine will complete the
 	transmission if necessary. */
 	XUartPs_Send( &xUARTInstance, ( void * ) pcString, usStringLength );
+
+	// Take to avoid exiting this untill the buffer has been written
+	xSemaphoreTake( xTxCompleteSemaphore, xMaxWait );
+	xSemaphoreGive( xTxCompleteSemaphore );
 }
 /*-----------------------------------------------------------*/
 
