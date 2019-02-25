@@ -9,10 +9,10 @@
 
 #include "sampler.h"
 
-int SamplerRegWr(int addr, int value, int check) {
-	int readback  = 0;
-	int ok        = 0;
-	int full_addr = SAMPLER_BASE_ADDR + (addr*4);
+uint32_t SamplerRegWr(uint32_t addr, uint32_t value, uint32_t check) {
+	uint32_t readback  = 0;
+	uint32_t ok        = 0;
+	uint32_t full_addr = SAMPLER_BASE_ADDR + (addr*4);
 
 	Xil_Out32(full_addr, value);
 
@@ -24,11 +24,15 @@ int SamplerRegWr(int addr, int value, int check) {
 	return ok;
 }
 
-int SamplerRegRd(int addr) {
-	int readback  = 0;
-	int full_addr = SAMPLER_BASE_ADDR + (addr*4);
+uint32_t SamplerRegRd(uint32_t addr) {
+	uint32_t readback  = 0;
+	uint32_t full_addr = SAMPLER_BASE_ADDR + (addr*4);
 
 	readback = Xil_In32(full_addr);
 
 	return readback;
+}
+
+uint32_t get_sampler_version( void ) {
+	return SAMPLER_CONTROL_REGISTER_ACCESS->SAMPLER_VER_REG_REG.value;
 }
