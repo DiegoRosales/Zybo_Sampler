@@ -19,6 +19,8 @@
 // |--------------------------|
 ///////////////////////////////////////////////////////////////
 
+`define SAMPLER_VERSION 32'h0000_0001
+
 module sampler_dma_registers #(
 	parameter MAX_VOICES = 4
 ) (
@@ -108,7 +110,7 @@ assign rd_control_reg_num = reg_addr_rd[ NUM_OF_CONTROL_REG_BITS - 1 : 0 ];
 
 always_comb begin
 	case ( rd_control_reg_num )
-	0: control_reg_data_out = 0; // TODO: Create a version
+	0: control_reg_data_out = `SAMPLER_VERSION; // TODO: Create a version
 	1: control_reg_data_out = MAX_VOICES;
 	2: control_reg_data_out = DMA_START_ADDR;
 	default: control_reg_data_out = 32'hbeefdead;
