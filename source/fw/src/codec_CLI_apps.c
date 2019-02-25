@@ -72,6 +72,15 @@ static const CLI_Command_Definition_t load_sine_command_definition =
     1 /* The user can enter any number of commands. */
 };
 
+// Command to load a sine wave into memory
+static const CLI_Command_Definition_t get_sampler_version_command_definition =
+{
+    "get_sampler_version",
+    "\r\nget_sampler_version\r\n Returns the version of the Hardware Sampler\r\n",
+    get_sampler_version_command, /* The function to run. */
+    0 /* The user can enter any number of commands. */
+};
+
 ////////////////////////////////////////////////////////
 // Functions
 ////////////////////////////////////////////////////////
@@ -84,6 +93,7 @@ void register_codec_cli_commands( void ) {
     FreeRTOS_CLIRegisterCommand( &sampler_reg_command_definition ); // Sampler Read/Write Command	
     FreeRTOS_CLIRegisterCommand( &codec_reg_command_definition ); // Sampler Read Command
 	FreeRTOS_CLIRegisterCommand( &load_sine_command_definition ); // Load sine command
+	FreeRTOS_CLIRegisterCommand( &get_sampler_version_command_definition ); // Load sine command
 
 }
 
@@ -573,6 +583,56 @@ static BaseType_t load_sine_command( char *pcWriteBuffer, size_t xWriteBufferLen
 			uxParameterNumber = 0;
 		}
     }
+
+    return xReturn;
+}
+
+// This loads a section of memory with a sine wave of a give frequency
+static BaseType_t get_sampler_version_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString ) {
+    const char         *pcParameter;
+    BaseType_t         xParameterStringLength;
+    BaseType_t         xReturn;
+    static UBaseType_t uxParameterNumber = 0;
+
+	// Custom variables
+    uint32_t sampler_version;
+	uint32_t major_version;
+	uint32_t minor_version;
+	static BaseType_t command_done = pdFALSE;
+
+	/* Remove compile time warnings about unused parameters, and check the
+	write buffer is not NULL.  NOTE - for simplicity, this example assumes the
+	write buffer length is adequate, so does not check for buffer overflows. */
+	( void ) pcCommandString;
+	( void ) xWriteBufferLen;
+	configASSERT( pcWriteBuffer );
+
+
+	if ( command_done != pdTRUE ) {
+		sampler_version = get_sampler_version();
+		major_version   = ( sampler_version >> 16 ) & 0xffff;
+		minor_version   = sampler_version & 0xffff;
+
+
+		memset( pcWriteBuffer, 0x00, xWriteBufferLen ); // Initialize the buffer
+		sprintf( pcWriteBuffer, "Sampler Version %d.%d", major_version, minor_version );
+		APPEND_NEWLINE(pcWriteBuffer);
+
+		command_done = pdTRUE;
+		xReturn      = pdTRUE; // Come back to re-initialize the variables
+	} else {
+		/* No more parameters were found.  Make sure the write buffer does
+		not contain a valid string. */
+		pcWriteBuffer[ 0 ] = 0x00;
+
+		/* No more data to return. */
+		xReturn = pdFALSE;
+
+		/* Start over the next time this command is executed. */
+		uxParameterNumber = 0;
+
+		command_done = pdFALSE;
+	}
 
     return xReturn;
 }
