@@ -589,7 +589,7 @@ generate
 			.dma_base_addr ( dma_base_addr[i] ),
 
 			// DMA request signals
-			.address     ( indv_dma_addr[i]    ),
+			.dma_address ( indv_dma_addr[i]    ),
 			.dma_req     ( indv_dma_req[i]     ),
 			.dma_req_len ( indv_dma_req_len[i] ),
 
