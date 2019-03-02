@@ -705,10 +705,11 @@ static BaseType_t playback_sine_command( char *pcWriteBuffer, size_t xWriteBuffe
 
 			// Step 5 - Start the playback
 			voice_slot = start_voice_playback( sine_nco.audio_data, sine_nco.target_memory_size );
+			uint32_t addr = SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_addr.value;
 
 			/* Return the parameter string. */
 			memset( pcWriteBuffer, 0x00, xWriteBufferLen ); // Initialize the buffer
-			sprintf( pcWriteBuffer, "Sine wave of frequency %dHz loaded\n\rNumber of samples = %d\n\rStart address = 0x%x\n\rVoice Slot ID = ", frequency, sine_nco.target_memory_size, sine_nco.audio_data, voice_slot );
+			sprintf( pcWriteBuffer, "Sine wave of frequency %dHz loaded\n\rNumber of samples = %d\n\rStart address = 0x%x\n\rVoice Slot ID = %d\n\rWritten Address = 0x%x", frequency, sine_nco.target_memory_size, sine_nco.audio_data, voice_slot, addr );
 			APPEND_NEWLINE(pcWriteBuffer);
 
 			/* There might be more parameters to return after this one. */
