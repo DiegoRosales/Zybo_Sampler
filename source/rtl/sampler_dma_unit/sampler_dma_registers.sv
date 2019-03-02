@@ -80,7 +80,11 @@ reg   [ 31 : 0 ] control_reg[ NUM_OF_CONTROL_REG - 1 : 0 ];
 logic [ 31 : 0 ] control_reg_data_out;
 
 // Address Arbiter signals
+wire                                    wr_addr_is_control_reg;
+wire                                    rd_addr_is_control_reg;
+wire                                    wr_addr_is_dma_reg;
 wire                                    rd_addr_is_dma_reg;
+
 wire                                    rd_addr_is_base_addr_reg;
 wire                                    wr_addr_is_base_addr_reg;
 wire [ NUM_OF_DMA_REG_BITS - 1 : 0 ]    wr_dma_reg_num; // DMA
@@ -92,9 +96,14 @@ wire [ NUM_OF_CONTROL_REG_BITS - 1 : 0 ] rd_control_reg_num; // Control
 /////////////////////
 // Address Arbiter
 /////////////////////
-assign rd_addr_is_dma_reg = ( ( reg_addr_rd >= DMA_START_ADDR ) & ( reg_addr_rd <= DMA_END_ADDR ) );
-assign rd_addr_is_base_addr_reg = ( reg_addr_rd[0] == 1'b0 );
+// Write
+assign wr_addr_is_control_reg   = ( reg_addr_wr < DMA_START_ADDR);
+assign wr_addr_is_dma_reg       = ( ( reg_addr_wr >= DMA_START_ADDR ) & ( reg_addr_wr <= DMA_END_ADDR ) );
 assign wr_addr_is_base_addr_reg = ( reg_addr_wr[0] == 1'b0 );
+// Read
+assign rd_addr_is_control_reg   = ( reg_addr_rd < DMA_START_ADDR);
+assign rd_addr_is_dma_reg       = ( ( reg_addr_rd >= DMA_START_ADDR ) & ( reg_addr_rd <= DMA_END_ADDR ) );
+assign rd_addr_is_base_addr_reg = ( reg_addr_rd[0] == 1'b0 );
 
 // Get the register number
 assign wr_dma_reg_num = reg_addr_wr[ NUM_OF_DMA_REG_BITS : 1 ];
@@ -131,16 +140,20 @@ always_ff @(posedge axi_clk or negedge axi_reset) begin
 		dma_control_reg   <= '{default:0};
 	end
 	else begin
-		if ( rd_addr_is_dma_reg == 1'b1 ) begin
-			// 0, 2, 4, ...
-			if ( wr_addr_is_base_addr_reg == 1'b1 ) begin
-				dma_base_addr_reg[ wr_dma_reg_num ] <= data_in;
-			end
-			// 1, 3, 5, 7, ...
-			else begin
-				dma_control_reg[ wr_dma_reg_num ] <= data_in;
-			end			
-		end	
+		dma_base_addr_reg <= dma_base_addr_reg;
+		dma_control_reg   <= dma_control_reg;
+		if ( data_wren == 1'b1 ) begin
+			if ( wr_addr_is_dma_reg == 1'b1 ) begin
+				// 0, 2, 4, ...
+				if ( wr_addr_is_base_addr_reg == 1'b1 ) begin
+					dma_base_addr_reg[ wr_dma_reg_num ] <= data_in;
+				end
+				// 1, 3, 5, 7, ...
+				else begin
+					dma_control_reg[ wr_dma_reg_num ] <= data_in;
+				end			
+			end	
+		end
 	end
 end
 
@@ -149,7 +162,7 @@ end
 ////////////////////////////////////////
 // Data Read Logic
 ////////////////////////////////////////
-assign data_out = (rd_addr_is_dma_reg == 1'b1) ? dma_reg_data_out : control_reg_data_out;
+assign data_out = (rd_addr_is_dma_reg == 1'b1) ? dma_reg_data_out : ( rd_addr_is_control_reg == 1'b1 ) ? control_reg_data_out : 32'hdeaddead;
 
 
 endmodule
