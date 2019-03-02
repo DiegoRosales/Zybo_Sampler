@@ -13,6 +13,7 @@ static BaseType_t sampler_reg_command( char *pcWriteBuffer, size_t xWriteBufferL
 static BaseType_t codec_reg_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
 static BaseType_t load_sine_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
 static BaseType_t get_sampler_version_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
+static BaseType_t playback_sine_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
 
 
 #endif
