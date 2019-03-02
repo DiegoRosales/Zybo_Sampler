@@ -24,7 +24,7 @@ module dma_voice_req_fsm # (
     input wire [ C_M_AXI_ADDR_WIDTH - 1 : 0 ] dma_base_addr,
 
     // DMA request signals
-    output wire [ C_M_AXI_ADDR_WIDTH - 1 : 0 ] address,
+    output wire [ C_M_AXI_ADDR_WIDTH - 1 : 0 ] dma_address,
     output wire                                dma_req,
     output wire [7 : 0 ]                       dma_req_len,
 
@@ -74,14 +74,14 @@ wire stream_req_sent;
 //////////////////////////////////
 // Information request and data signals
 //////////////////////////////////
-reg  [ C_M_AXI_ADDR_WIDTH - 1 : 0 ] voice_info_addr;
-reg                                 voice_info_req;
-reg  [ MAX_INFO_COUNT - 1 : 0 ]     info_count;
-reg  [ 31 : 0 ]                     voice_information_reg[ VOICE_INFO_DATA_STRUCTURE_SIZE - 1 : 0 ];
+(* keep = "true" *) reg  [ C_M_AXI_ADDR_WIDTH - 1 : 0 ] voice_info_addr;
+(* keep = "true" *) reg                                 voice_info_req;
+(* keep = "true" *) reg  [ MAX_INFO_COUNT - 1 : 0 ]     info_count;
+(* keep = "true" *) reg  [ 31 : 0 ]                     voice_information_reg[ VOICE_INFO_DATA_STRUCTURE_SIZE - 1 : 0 ];
 // Information signals
-wire [ 31 : 0 ] voice_start_addr;
-wire [ 31 : 0 ] voice_stream_length;
-reg  [ 31 : 0 ] voice_stream_count;
+(* keep = "true" *) wire [ 31 : 0 ] voice_start_addr;
+(* keep = "true" *) wire [ 31 : 0 ] voice_stream_length;
+(* keep = "true" *) reg  [ 31 : 0 ] voice_stream_count;
 
 //////////////////////////////////
 // Voice Stream request and data signals
@@ -231,7 +231,7 @@ always_ff @(posedge clk, negedge reset_n) begin
 end
 
 
-assign address = (voice_dma_sm_curr_st == VOICE_DMA_ST_SAMPLE_INFO_REQ) ? voice_info_addr : voice_stream_addr;
+assign dma_address = (voice_dma_sm_curr_st == VOICE_DMA_ST_SAMPLE_INFO_REQ) ? voice_info_addr : voice_stream_addr;
 assign dma_req = (voice_dma_sm_curr_st == VOICE_DMA_ST_SAMPLE_INFO_REQ) ? voice_info_req  : voice_stream_req;
 
 assign dma_req_len = ( voice_info_req ) ? VOICE_INFO_DMA_BURST_SIZE : VOICE_STREAM_DMA_BURST_SIZE;
