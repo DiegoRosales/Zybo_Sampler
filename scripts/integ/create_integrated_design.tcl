@@ -71,9 +71,11 @@ if { $skip_project_gen == 0 } {
             implement_debug_core
         }
 
-        if { [file exists ${integrated_ip_project_path}/post_route.dcp] != 0} { 
-            puts "Found checkpoint. Running incrementally"
-            read_checkpoint -incremental ${integrated_ip_project_path}/post_route.dcp
+        if { ${enable_debug} == 0 } {
+            if { [file exists ${integrated_ip_project_path}/post_route.dcp] != 0} { 
+                puts "Found checkpoint. Running incrementally"
+                read_checkpoint -incremental ${integrated_ip_project_path}/post_route.dcp
+            }
         }
 
         ## Opt Desgin

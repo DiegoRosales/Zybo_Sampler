@@ -218,5 +218,6 @@ if { ${enable_debug} == 1 } {
                                                             [get_bd_intf_nets ps7_0_axi_periph_M01_AXI] {AXI_R_ADDRESS "Data and Trigger" AXI_R_DATA "Data and Trigger" AXI_W_ADDRESS "None" AXI_W_DATA "None" AXI_W_RESPONSE "None" CLK_SRC "/processing_system7_0/FCLK_CLK0" SYSTEM_ILA "Auto" APC_EN "0" } \
                                                             [get_bd_intf_nets audio_sampler_inst_axi_dma_master] {AXI_R_ADDRESS "Data and Trigger" AXI_R_DATA "Data" AXI_W_ADDRESS "Data and Trigger" AXI_W_DATA "Data" AXI_W_RESPONSE "None" CLK_SRC "/processing_system7_0/FCLK_CLK0" SYSTEM_ILA "Auto" APC_EN "0" } \
                                                             ]
+    set_property -dict [list CONFIG.C_BRAM_CNT {12} CONFIG.C_SLOT_0_AXI_AW_SEL_DATA {1} CONFIG.C_SLOT_0_AXI_W_SEL_DATA {1} CONFIG.C_SLOT_0_AXI_AW_SEL {1} CONFIG.C_SLOT_0_AXI_W_SEL {1} CONFIG.C_PROBE0_MU_CNT {4} CONFIG.ALL_PROBE_SAME_MU_CNT {4}] [get_bd_cells system_ila_0]
 }
 
