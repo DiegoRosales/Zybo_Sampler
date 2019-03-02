@@ -15,7 +15,7 @@ static SAMPLER_VOICE_t sampler_voices_information[MAX_VOICES];
 uint32_t SamplerRegWr(uint32_t addr, uint32_t value, uint32_t check) {
 	uint32_t readback  = 0;
 	uint32_t ok        = 0;
-	uint32_t full_addr = SAMPLER_BASE_ADDR + (addr*4);
+	uint32_t full_addr = GET_SAMPLER_FULL_ADDR(addr);
 
 	Xil_Out32(full_addr, value);
 
@@ -29,7 +29,7 @@ uint32_t SamplerRegWr(uint32_t addr, uint32_t value, uint32_t check) {
 
 uint32_t SamplerRegRd(uint32_t addr) {
 	uint32_t readback  = 0;
-	uint32_t full_addr = SAMPLER_BASE_ADDR + (addr*4);
+	uint32_t full_addr = GET_SAMPLER_FULL_ADDR(addr);
 
 	readback = Xil_In32(full_addr);
 
@@ -61,14 +61,14 @@ uint32_t start_voice_playback( uint32_t sample_addr, uint32_t sample_size ) {
 
 	// Step 2 - Load the voice information data structure
 	sampler_voices_information[voice_slot].voice_start_addr = sample_addr;
-	sampler_voices_information[voice_slot].voice_start_addr = sample_size;
+	sampler_voices_information[voice_slot].voice_size       = sample_size;
 
 	// Step 3 - Write the voice information address to the register with the slot number
-	SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_addr.value    = &sampler_voices_information[voice_slot];
+	SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_addr.value = &sampler_voices_information[voice_slot];
 	
 	// Step 4 - Start the DMA
-	SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_control.field.stop  = 0;
-	SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_control.field.start = 1;
+	SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_control.value = 0;
+	SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_control.value = 1;
 
 	return voice_slot;
 }
