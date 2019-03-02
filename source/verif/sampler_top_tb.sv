@@ -23,6 +23,11 @@ initial begin
    //#(128300ns) release sampler_top.codec_unit.register_unit.axi_slave_controller_inst.codec_registers.controller_reset;
 end
 
+initial begin
+  #(500ns) force sampler_top.sampler_dma_top.sampler_dma_v1_0_AXI_LITE_SLAVE_inst.sampler_dma_registers.dma_base_addr[0] = 32'hbcd00000;
+  #(50000ns) force sampler_top.sampler_dma_top.sampler_dma_v1_0_AXI_LITE_SLAVE_inst.sampler_dma_registers.dma_control[0] = 1;
+end
+
 wire i2c_sda;
 wire i2c_scl;
 
@@ -104,7 +109,13 @@ sampler_top sampler_top (
   .m_axis_tready(m_trdy),    // Ready (RD)
   .m_axis_tvalid(m_tvalid),  // Data Valid
   .m_axis_tdata(),         // Data
-  .m_axis_tlast(m_tlast)
+  .m_axis_tlast(m_tlast),
+
+  .axi_dma_master_aclk    ( clk_125 ),
+  .axi_dma_master_aresetn ( reset_n ),
+  .axi_lite_slave_aclk    ( clk_125 ),
+  .axi_lite_slave_aresetn ( reset_n ),
+  .axi_dma_master_arready ( 1'b1 )
 );
 
 
