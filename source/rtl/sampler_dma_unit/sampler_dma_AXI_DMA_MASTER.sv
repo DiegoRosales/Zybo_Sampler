@@ -252,11 +252,9 @@ reg [ MAX_VOICES - 1 : 0 ]         indv_dma_req_reg; // Request
 reg [ C_M_AXI_ADDR_WIDTH - 1 : 0 ] indv_dma_addr_reg[ MAX_VOICES - 1 : 0 ]; // Address
 reg [ 7 : 0 ]                      indv_dma_req_len_reg[ MAX_VOICES - 1 : 0 ]; // Burst Size
 
-wire [ MAX_VOICES - 1 : 0 ]         indv_dma_req; // Request
-wire [ C_M_AXI_ADDR_WIDTH - 1 : 0 ] indv_dma_addr[ MAX_VOICES - 1 : 0 ]; // Address
-wire [ 7 : 0 ]                      indv_dma_req_len[ MAX_VOICES - 1 : 0 ]; // Burst Size
-
-wire [ MAX_VOICES - 1 : 0 ] start_dma;
+(* keep = "true" *) wire [ MAX_VOICES - 1 : 0 ]         indv_dma_req; // Request
+(* keep = "true" *) wire [ C_M_AXI_ADDR_WIDTH - 1 : 0 ] indv_dma_addr[ MAX_VOICES - 1 : 0 ]; // Address
+(* keep = "true" *) wire [ 7 : 0 ]                      indv_dma_req_len[ MAX_VOICES - 1 : 0 ]; // Burst Size
 
 (* keep = "true" *) wire [ C_M_AXI_DATA_WIDTH - 1 : 0 ] indiv_fifo_data[MAX_VOICES - 1 : 0];
 (* keep = "true" *) wire [ MAX_VOICES - 1 : 0 ] indiv_fifo_data_available;
@@ -268,10 +266,10 @@ reg   [ 3 : 0 ] req_arbiter_curr_st;
 logic [ 3 : 0 ] req_arbiter_next_st;
 
 // State Control
-wire all_dma_req;
-wire found_req;
-reg req_done;
-wire end_of_scan;
+(* keep = "true" *) wire all_dma_req;
+(* keep = "true" *) wire found_req;
+(* keep = "true" *) reg req_done;
+(* keep = "true" *) wire end_of_scan;
 
 
 ///////////////////////////////////////////////////////////////
@@ -415,7 +413,7 @@ end
 
 
 
-assign all_dma_req = |{indv_dma_req};
+assign all_dma_req = |{indv_dma_req_reg};
 
 always_comb begin
 	case (req_arbiter_curr_st)
@@ -479,22 +477,22 @@ always_ff @(posedge M_AXI_ACLK or negedge M_AXI_ARESETN) begin
 		dma_req_serviced  <= 'h0;
 
 		if ( req_arbiter_curr_st == REQ_ARB_SCAN ) begin
-
-			if ( req_arbiter_count <= (MAX_VOICES - 1) ) begin
+			if ( req_arbiter_count <= (MAX_VOICES - 1) && ( indv_dma_req_reg[ req_arbiter_count ] == 1'b0 ) ) begin
 				req_arbiter_count <= req_arbiter_count + 1'b1; // Increase the counter
-
-				if ( indv_dma_req_reg[ req_arbiter_count ] == 1'b1 ) begin // Check if the DMA request came from which FSM
-					// Capture the addressess
-					dma_req_reg     <= 1'b1;
-					dma_addr_reg    <= indv_dma_addr_reg[ req_arbiter_count ];
-					dma_req_len_reg <= indv_dma_req_len_reg[ req_arbiter_count ];
-					dma_req_id_reg  <= req_arbiter_count;
-					// Let know the individual that the request is being handled
-					dma_req_serviced[ req_arbiter_count ] <= 1'b1;
-				end
 			end
 		end
-		if ( req_arbiter_curr_st == REQ_ARB_IDLE ) begin
+		else if ( req_arbiter_curr_st == REQ_ARB_DMA_REQ ) begin
+			if ( indv_dma_req_reg[ req_arbiter_count ] == 1'b1 ) begin // Check if the DMA request came from which FSM
+				// Capture the addressess
+				dma_req_reg     <= 1'b1;
+				dma_addr_reg    <= indv_dma_addr_reg[ req_arbiter_count ];
+				dma_req_len_reg <= indv_dma_req_len_reg[ req_arbiter_count ];
+				dma_req_id_reg  <= req_arbiter_count;
+				// Let know the individual that the request is being handled
+				dma_req_serviced[ req_arbiter_count ] <= 1'b1;
+			end
+		end
+		else if ( req_arbiter_curr_st == REQ_ARB_IDLE ) begin
 			req_arbiter_count <= 'h0;
 		end
 
