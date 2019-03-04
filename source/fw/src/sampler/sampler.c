@@ -62,6 +62,8 @@ uint32_t start_voice_playback( uint32_t sample_addr, uint32_t sample_size ) {
 	// Step 2 - Load the voice information data structure
 	sampler_voices_information[voice_slot].voice_start_addr = sample_addr;
 	sampler_voices_information[voice_slot].voice_size       = sample_size;
+	//Xil_DCacheFlushRange(&sampler_voices_information[voice_slot].voice_start_addr, 64);
+	Xil_DCacheFlush();
 
 	// Step 3 - Write the voice information address to the register with the slot number
 	SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_addr.value = &sampler_voices_information[voice_slot];
@@ -69,6 +71,7 @@ uint32_t start_voice_playback( uint32_t sample_addr, uint32_t sample_size ) {
 	// Step 4 - Start the DMA
 	SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_control.value = 0;
 	SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_control.value = 1;
+	SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_control.value = 0;
 
 	return voice_slot;
 }
