@@ -185,13 +185,10 @@ assign dma_done            = dma_input_data_last; // DMA is done when the last d
 // DMA Info Address
 always_ff @(posedge clk, negedge reset_n) begin
     if (~reset_n) begin
-        voice_info_addr       <= 'h0;
+        voice_info_addr <= 'h0;
     end
     else begin
-        voice_info_addr <= voice_info_addr;
-        if ( start_dma ) begin
-            voice_info_addr <= dma_base_addr;
-        end
+        voice_info_addr <= dma_base_addr;
     end
 end
 
@@ -200,7 +197,6 @@ always_ff @(posedge clk, negedge reset_n) begin
     if (~reset_n) begin
         info_count            <= 'h0;
         voice_information_reg <= '{VOICE_INFO_DATA_STRUCTURE_SIZE{'h0}};
-        voice_info_addr       <= 'h0;
     end
     else begin
         info_count            <= info_count;
