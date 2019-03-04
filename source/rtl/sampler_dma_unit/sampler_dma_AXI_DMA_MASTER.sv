@@ -299,6 +299,7 @@ assign M_AXI_ARPROT  = ARPROT_reg;
 assign M_AXI_ARQOS   = ARQOS_reg;
 assign M_AXI_ARUSER  = ARUSER_reg;
 assign M_AXI_ARVALID = ARVALID_reg;
+assign M_AXI_RREADY  = 1'b1;
 
 
 always_ff @(posedge M_AXI_ACLK or negedge M_AXI_ARESETN) begin
@@ -319,12 +320,18 @@ always_comb begin
 			if ( dma_req_reg ) begin
 				axi_rd_sm_next_st = AXI_RD_ADDR_WR;
 			end
+			else begin
+				axi_rd_sm_next_st = AXI_RD_STATE_IDLE;
+			end
 
 		end
 
 		AXI_RD_ADDR_WR: begin
 			if ( dma_addr_wr_done ) begin
 				axi_rd_sm_next_st = AXI_RD_STATE_IDLE;
+			end
+			else begin
+				axi_rd_sm_next_st = AXI_RD_ADDR_WR;
 			end
 		end
 
@@ -335,7 +342,7 @@ always_comb begin
 
 end
 
-assign dma_addr_wr_done = ( ( axi_rd_sm_curr_st == AXI_RD_ADDR_WR ) & ( M_AXI_ARREADY )  ) ? 1'b1 : 1'b0;
+assign dma_addr_wr_done = ( ( axi_rd_sm_curr_st == AXI_RD_ADDR_WR ) & ( M_AXI_ARREADY ) & ( M_AXI_ARVALID ) ) ? 1'b1 : 1'b0;
 
 always_ff @(posedge M_AXI_ACLK or negedge M_AXI_ARESETN) begin
 	if ( ~M_AXI_ARESETN ) begin
@@ -372,7 +379,7 @@ always_ff @(posedge M_AXI_ACLK or negedge M_AXI_ARESETN) begin
 			ARLEN_reg   <= dma_req_len_reg;
 			ARID_reg    <= dma_req_id_reg;
 			ARSIZE_reg  <= 3'b010; // 4 bytes per transfer == 32 bit transfers
-			ARBURST_reg <= 2'b10;  // Burst type == INCR
+			ARBURST_reg <= 2'b01;  // Burst type == INCR
 			ARLOCK_reg  <= 1'b0;
 			ARCACHE_reg <= 4'b0010; // Normal Non-cacheable Non-bufferable
 			ARPROT_reg  <= 3'b000;
@@ -421,6 +428,9 @@ always_comb begin
 			if ( all_dma_req ) begin
 				req_arbiter_next_st = REQ_ARB_SCAN;
 			end
+			else begin
+				req_arbiter_next_st = REQ_ARB_IDLE;
+			end
 		end
 
 		REQ_ARB_SCAN: begin
@@ -433,18 +443,27 @@ always_comb begin
 			else if ( end_of_scan ) begin
 				req_arbiter_next_st = REQ_ARB_IDLE;
 			end
+			else begin
+				req_arbiter_next_st = REQ_ARB_SCAN;
+			end
 		end
 
 		REQ_ARB_DMA_REQ: begin
 			if ( dma_addr_wr_done ) begin
 				req_arbiter_next_st = REQ_ARB_SCAN;
 			end
+			else begin
+				req_arbiter_next_st = REQ_ARB_DMA_REQ;
+			end
 		end
 
 		REQ_ARB_DMA_REQ2: begin // Go to idle instead of continuing with the scan
 			if ( dma_addr_wr_done ) begin
 				req_arbiter_next_st = REQ_ARB_IDLE;
-			end			
+			end		
+			else begin
+				req_arbiter_next_st = REQ_ARB_DMA_REQ2;
+			end	
 		end
 
 		default: begin
