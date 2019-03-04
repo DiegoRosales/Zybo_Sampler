@@ -25,7 +25,7 @@ end
 
 initial begin
   #(500ns) force sampler_top.sampler_dma_top.sampler_dma_v1_0_AXI_LITE_SLAVE_inst.sampler_dma_registers.dma_base_addr[0] = 32'hbcd00000;
-  #(50000ns) force sampler_top.sampler_dma_top.sampler_dma_v1_0_AXI_LITE_SLAVE_inst.sampler_dma_registers.dma_control[0] = 1;
+  #(50500ns) force sampler_top.sampler_dma_top.sampler_dma_v1_0_AXI_LITE_SLAVE_inst.sampler_dma_registers.dma_control[0] = 1;
 end
 
 wire i2c_sda;
@@ -111,11 +111,16 @@ sampler_top sampler_top (
   .m_axis_tdata(),         // Data
   .m_axis_tlast(m_tlast),
 
-  .axi_dma_master_aclk    ( clk_125 ),
-  .axi_dma_master_aresetn ( reset_n ),
-  .axi_lite_slave_aclk    ( clk_125 ),
-  .axi_lite_slave_aresetn ( reset_n ),
-  .axi_dma_master_arready ( 1'b1 )
+  .axi_dma_master_aclk    ( clk_125     ),
+  .axi_dma_master_aresetn ( reset_n     ),
+  .axi_lite_slave_aclk    ( clk_125     ),
+  .axi_lite_slave_aresetn ( reset_n     ),
+  .axi_dma_master_arready ( 1'b1        ),
+  .axi_dma_master_rdata   ( 'hafaf_0000 ),
+  .axi_dma_master_rid     ( 'h0         ),
+  .axi_dma_master_rvalid  ( 'h0         ),
+  .axi_dma_master_rlast   ( 'h0         )
+
 );
 
 
