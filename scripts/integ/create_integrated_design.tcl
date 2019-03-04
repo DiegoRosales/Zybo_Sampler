@@ -61,11 +61,15 @@ if { $skip_project_gen == 0 } {
     ###############################################
     set top_module [find_top]
 
-    if { $implement == 1 } {
-        ### Launch Synthesis and PAR Jobs
+    ### Launch Synthesis
+    if { $implement == 1 || $synthesize == 1} {
         ## Synthesis
         synth_design -top $top_module
         write_checkpoint -force ${integrated_ip_project_path}/post_synth.dcp
+    }
+
+    ### Launch P&R
+    if { $implement == 1 } {
 
         if { ${enable_debug} == 1 } {
             implement_debug_core

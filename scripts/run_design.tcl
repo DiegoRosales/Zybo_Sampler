@@ -4,6 +4,7 @@
 set pack             0
 set integ            0
 set implement        0
+set synthesize       0
 set burn_bitfile     0
 set skip_project_gen 0
 set export_ws        0
@@ -73,6 +74,11 @@ if { $argc > 0 } {
             debug {
                 set enable_debug 1
             }
+            prep_debug {
+                set pack             1
+                set integ            1
+                set synthesize       1
+            }            
         }
     }
 }
