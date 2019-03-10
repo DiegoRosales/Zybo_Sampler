@@ -14,13 +14,16 @@
 // FreeRTOS Includes
 #include "FreeRTOS.h"
 #include "task.h"
+
+// FreeRTOS+CLI Includes
 #include "FreeRTOS_CLI.h"
+#include "zybo_uart_driver.h" // Zybo UART Driver for FreeRTOS+CLI
+#include "codec_CLI_apps.h"   // CLI Applications
 
-// Zybo UART Driver for FreeRTOS+CLI
-#include "zybo_uart_driver.h"
-
-// CLI Applications
-#include "codec_CLI_apps.h"
+// FreeRTOS+FAT includes
+#include "ff_stdio.h"
+#include "ff_ramdisk.h"
+#include "ff_sddisk.h"
 
 // Other
 #include "codec_utils.h"
