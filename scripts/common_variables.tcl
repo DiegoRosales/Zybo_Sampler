@@ -18,7 +18,7 @@ set worskpace_project_path     "${results_dir}/${workspace_project_name}"
 ## File list variables
 set rtl_file_list         ${project_root}/scripts/rtl_filelist.f
 set constraints_file_list ${project_root}/scripts/constraints_filelist.f
-set fw_source_path        ${project_root}/source/fw/src
+set fw_source_path        ${project_root}/source/fw/
 
 ## Packaged Project Variables
 set packaged_ip_dirname   "packaged_ip"
