@@ -42,7 +42,7 @@ You can find more about the board over at https://reference.digilentinc.com/refe
 
 [**IN PROGRESS**] Custom DMA engine to support up to 64 different DMA regions (64 voices)
 
-[**NOT STARTED**] Enable FreeRTOS+FAT to download samples to memory from an SD Card
+[**IN PROGRESS**] Enable FreeRTOS+FAT to download samples to memory from an SD Card
 
 [**NOT STARTED**] Enable a MIDI bridge using UART
 
@@ -97,7 +97,9 @@ Once it has been added, Right click on the project and go to `C/C++ Build Settin
 
 ```tcl
 "${workspace_loc:/${ProjName}/src/fw/FreeRTOS-Plus-CLI}"
+"${workspace_loc:/${ProjName}/src/fw/FreeRTOS-Plus-FAT}"
 "${workspace_loc:/${ProjName}/src/fw/ZyboCLI}"
+"${workspace_loc:/${ProjName}/src/fw/ZyboSD}"
 "${workspace_loc:/${ProjName}/src/fw/nco}"
 "${workspace_loc:/${ProjName}/src/fw/sampler}"
 ```
