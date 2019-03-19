@@ -33,6 +33,7 @@
 
 nco_t sine_nco;
 static volatile audio_data_t output_stream_audio_data[ NUM_OF_SINE_SAMPLES ];
+FF_Disk_t *pxSDDisk;
 
 void main_rtos_program() {
 
@@ -41,6 +42,7 @@ void main_rtos_program() {
     vUARTCommandConsoleStart( mainUART_COMMAND_CONSOLE_STACK_SIZE, mainUART_COMMAND_CONSOLE_TASK_PRIORITY );
 
     register_codec_cli_commands();
+    register_fat_cli_commands();
 
     vTaskStartScheduler();
 
@@ -67,9 +69,12 @@ void sampler_init( void ) {
     xil_printf("Initializing the Sine NCO memory...\n\r");
     sine_nco.target_memory_size = NUM_OF_SINE_SAMPLES;
     sine_nco.audio_data = &output_stream_audio_data;
-    xil_printf("Audio Data Address Start = 0x%x", sine_nco.audio_data);
+    xil_printf("Audio Data Address Start = 0x%x\n\r", sine_nco.audio_data);
     xil_printf("Done!\n\r");    
 
+
+    /* Create the SD card disk. */
+	
 //    ////////
 //    // GPIO Configuration
 //    ////////
@@ -88,5 +93,8 @@ void sampler_init( void ) {
 //    xil_printf("Initializing the DMA Engine...\n\r");
     xil_printf("Done!\n\r");
     xil_printf("==========================\n\r");
-    for(int i=0; i<100000; i++); // Small delay
+    //for(int i=0; i<100000; i++); // Small delay
+    //while(1);
 }
+
+
