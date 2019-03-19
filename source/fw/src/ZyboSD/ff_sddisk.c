@@ -64,6 +64,8 @@
 #include "xil_types.h"
 #include "xsdps.h"		/* SD device driver */
 #include "xsdps_info.h"	/* SD info */
+#include "xil_printf.h"
+
 
 /* FreeRTOS includes. */
 #include "FreeRTOS.h"
@@ -135,10 +137,10 @@ const int drive_nr = 0;
 static SemaphoreHandle_t xPlusFATMutex;
 #if( ffconfigSDIO_DRIVER_USES_INTERRUPT != 0 )
 	/* Create a semaphore for each of the two memory-card slots. */
-	static SemaphoreHandle_t xSDSemaphores[ 2 ];
+	static SemaphoreHandle_t xSDSemaphores[ 1 ];
 #endif
 
-static int vSDMMC_Init( int iDriveNumber );
+static int vSDMMC_Init( int iDriveNumber, FF_Disk_t *pxDisk );
 static int vSDMMC_Status( int iDriveNumber );
 
 #if( ffconfigSDIO_DRIVER_USES_INTERRUPT != 0 )
@@ -190,12 +192,12 @@ uint8_t *pucReadBuffer;
 		if( ( iResult & STA_NODISK ) != 0 )
 		{
 			lReturnCode = FF_ERR_DRIVER_NOMEDIUM | FF_ERRFLAG;
-			FF_PRINTF( "prvFFRead: NOMEDIUM\n" );
+			FF_PRINTF( "prvFFRead: NOMEDIUM\n\r" );
 		}
 		else if( ( iResult & STA_NOINIT ) != 0 )
 		{
 			lReturnCode = FF_ERR_IOMAN_OUT_OF_BOUNDS_READ | FF_ERRFLAG;
-			FF_PRINTF( "prvFFRead: NOINIT\n" );
+			FF_PRINTF( "prvFFRead: NOINIT\n\r" );
 		}
 		else if( ulSectorCount == 0ul )
 		{
@@ -242,7 +244,7 @@ uint8_t *pucReadBuffer;
 
 		if( pxDisk->xStatus.bIsInitialised != pdFALSE )
 		{
-			FF_PRINTF( "prvFFRead: warning: %lu + %lu > %lu\n", ulSectorNumber, ulSectorCount, pxDisk->ulNumberOfSectors );
+			FF_PRINTF( "prvFFRead: warning: %lu + %lu > %lu\n\r", ulSectorNumber, ulSectorCount, pxDisk->ulNumberOfSectors );
 		}
 
 		lReturnCode = FF_ERR_IOMAN_OUT_OF_BOUNDS_READ | FF_ERRFLAG;
@@ -268,12 +270,12 @@ int32_t lReturnCode;
 		if( ( iResult & STA_NODISK ) != 0 )
 		{
 			lReturnCode = FF_ERR_DRIVER_NOMEDIUM | FF_ERRFLAG;
-			FF_PRINTF( "prvFFWrite: NOMEDIUM\n" );
+			FF_PRINTF( "prvFFWrite: NOMEDIUM\n\r" );
 		}
 		else if( ( iResult & STA_NOINIT ) != 0 )
 		{
 			lReturnCode = FF_ERR_IOMAN_OUT_OF_BOUNDS_WRITE | FF_ERRFLAG;
-			FF_PRINTF( "prvFFWrite: NOINIT\n" );
+			FF_PRINTF( "prvFFWrite: NOINIT\n\r" );
 		}
 		else
 		{
@@ -301,7 +303,7 @@ int32_t lReturnCode;
 				}
 				else
 				{
-					FF_PRINTF( "prvFFWrite[%d]: at 0x%X count %ld : %d\n",
+					FF_PRINTF( "prvFFWrite[%d]: at 0x%X count %ld : %d\n\r",
 						(int)drive_nr, (unsigned)ulSectorNumber, ulSectorCount, iResult );
 					lReturnCode = FF_ERR_IOMAN_OUT_OF_BOUNDS_WRITE | FF_ERRFLAG;
 				}
@@ -313,7 +315,7 @@ int32_t lReturnCode;
 		lReturnCode = FF_ERR_IOMAN_OUT_OF_BOUNDS_WRITE | FF_ERRFLAG;
 		if( pxDisk->xStatus.bIsInitialised )
 		{
-			FF_PRINTF( "prvFFWrite::read: warning: %lu + %lu > %lu\n",
+			FF_PRINTF( "prvFFWrite::read: warning: %lu + %lu > %lu\n\r",
 				ulSectorNumber, ulSectorCount, pxDisk->ulNumberOfSectors );
 		}
 	}
@@ -397,11 +399,11 @@ FF_Disk_t * pxDisk;
 	pxDisk = (FF_Disk_t *)pvPortMalloc( sizeof( *pxDisk ) );
 	if( pxDisk == NULL )
 	{
-		FF_PRINTF( "FF_SDDiskInit: Malloc failed\n" );
+		FF_PRINTF( "FF_SDDiskInit: Malloc failed\n\r" );
 	}
 	else if( pxCacheMem == NULL )
 	{
-		FF_PRINTF( "FF_SDDiskInit: Cached memory failed\n" );
+		FF_PRINTF( "FF_SDDiskInit: Cached memory failed\n\r" );
 	}
 	else
 	{
@@ -420,12 +422,13 @@ FF_Disk_t * pxDisk;
 		}
 		#endif
 
-		vSDMMC_Init( 0 );
-
 		/* Initialise the created disk structure. */
 		memset( pxDisk, '\0', sizeof( *pxDisk ) );
 
-		pxDisk->ulNumberOfSectors = myCSD.sd_last_block_address + 1;
+		vSDMMC_Init( 0, pxDisk );
+
+		//pxDisk->ulNumberOfSectors = myCSD.sd_last_block_address + 1;
+		//pxDisk->ulNumberOfSectors = myCSD.SectorCount;//myCSD.sd_last_block_address + 1;
 
 		if( xPlusFATMutex == NULL )
 		{
@@ -454,7 +457,7 @@ FF_Disk_t * pxDisk;
 			pxDisk->pxIOManager = FF_CreateIOManger( &xParameters, &xFFError );
 			if( pxDisk->pxIOManager == NULL )
 			{
-				FF_PRINTF( "FF_SDDiskInit: FF_CreateIOManger: %s\n", (const char*)FF_GetErrMessage( xFFError ) );
+				FF_PRINTF( "FF_SDDiskInit: FF_CreateIOManger: %s\n\r", (const char*)FF_GetErrMessage( xFFError ) );
 				FF_SDDiskDelete( pxDisk );
 				pxDisk = NULL;
 			}
@@ -476,7 +479,7 @@ FF_Disk_t * pxDisk;
 					}
 
 					FF_FS_Add( pcName, pxDisk );
-					FF_PRINTF( "FF_SDDiskInit: Mounted SD-card as root \"%s\"\n", pcName );
+					FF_PRINTF( "FF_SDDiskInit: Mounted SD-card as root \"%s\"\n\r", pcName );
 					FF_SDDiskShowPartition( pxDisk );
 				}
 			}
@@ -498,15 +501,15 @@ BaseType_t xReturn = 0;
 		xError = FF_Format( pxDisk, aPart, pdFALSE, pdFALSE);  // Try FAT32 with large clusters
 		if( FF_isERR( xError ) )
 		{
-			FF_PRINTF( "FF_SDDiskFormat: %s\n", (const char*)FF_GetErrMessage( xError ) );
+			FF_PRINTF( "FF_SDDiskFormat: %s\n\r", (const char*)FF_GetErrMessage( xError ) );
 			return 0;
 		}
 		else
 		{
-			FF_PRINTF( "FF_SDDiskFormat: OK, now remounting\n" );
+			FF_PRINTF( "FF_SDDiskFormat: OK, now remounting\n\r" );
 			pxDisk->xStatus.bPartitionNumber = aPart;
 			xError = FF_SDDiskMount( pxDisk );
-			FF_PRINTF( "FF_SDDiskFormat: rc %08x\n", ( unsigned )xError );
+			FF_PRINTF( "FF_SDDiskFormat: rc %08x\n\r", ( unsigned )xError );
 			if( FF_isERR( xError ) == pdFALSE )
 			{
 				xReturn = 1;
@@ -528,14 +531,14 @@ BaseType_t xReturn = 1;
 	{
 		pxDisk->xStatus.bIsMounted = pdFALSE;
 		xFFError = FF_Unmount( pxDisk );
-		FF_PRINTF( "FF_SDDiskUnmount: rc %08x\n", ( unsigned )xFFError );
+		FF_PRINTF( "FF_SDDiskUnmount: rc %08x\n\r", ( unsigned )xFFError );
 		if( FF_isERR( xFFError ) )
 		{
 			xReturn = 0;
 		}
 		else
 		{
-			FF_PRINTF( "Drive unmounted\n" );
+			FF_PRINTF( "Drive unmounted\n\r" );
 		}
 	}
 
@@ -545,12 +548,12 @@ BaseType_t xReturn = 1;
 
 BaseType_t FF_SDDiskReinit( FF_Disk_t *pxDisk )
 {
-int iStatus = vSDMMC_Init( 0 ); /* Hard coded index. */
+int iStatus = vSDMMC_Init( 0, pxDisk ); /* Hard coded index. */
 
 	/*_RB_ parameter not used. */
 	( void ) pxDisk;
 
-	FF_PRINTF( "FF_SDDiskReinit: rc %08x\n", ( unsigned )iStatus );
+	FF_PRINTF( "FF_SDDiskReinit: rc %08x\n\r", ( unsigned )iStatus );
 	return iStatus;
 }
 /*-----------------------------------------------------------*/
@@ -565,13 +568,13 @@ BaseType_t xReturn = 1;
 
 	if( FF_isERR( xFFError ) )
 	{
-		FF_PRINTF( "FF_SDDiskMount: %08lX\n", xFFError );
+		FF_PRINTF( "FF_SDDiskMount: %08lX\n\r", xFFError );
 		xReturn = 0;
 	}
 	else
 	{
 		pxDisk->xStatus.bIsMounted = pdTRUE;
-		FF_PRINTF( "****** FreeRTOS+FAT initialized %lu sectors\n", pxDisk->pxIOManager->xPartition.ulTotalSectors );
+		FF_PRINTF( "****** FreeRTOS+FAT initialized %lu sectors\n\r", pxDisk->pxIOManager->xPartition.ulTotalSectors );
 	}
 
 	return xReturn;
@@ -635,7 +638,7 @@ BaseType_t xReturn = pdPASS;
 	{
 		pxIOManager = pxDisk->pxIOManager;
 
-		FF_PRINTF( "Reading FAT and calculating Free Space\n" );
+		FF_PRINTF( "Reading FAT and calculating Free Space\n\r" );
 
 		switch( pxIOManager->xPartition.ucType )
 		{
@@ -667,13 +670,13 @@ BaseType_t xReturn = pdPASS;
 
 		/* It is better not to use the 64-bit format such as %Lu because it
 		might not be implemented. */
-		FF_PRINTF( "Partition Nr   %8u\n", pxDisk->xStatus.bPartitionNumber );
-		FF_PRINTF( "Type           %8u (%s)\n", pxIOManager->xPartition.ucType, pcTypeName );
-		FF_PRINTF( "VolLabel       '%8s' \n", pxIOManager->xPartition.pcVolumeLabel );
-		FF_PRINTF( "TotalSectors   %8lu\n", pxIOManager->xPartition.ulTotalSectors );
-		FF_PRINTF( "SecsPerCluster %8lu\n", pxIOManager->xPartition.ulSectorsPerCluster );
-		FF_PRINTF( "Size           %8lu MB\n", ulTotalSizeMB );
-		FF_PRINTF( "FreeSize       %8lu MB ( %d perc free )\n", ulFreeSizeMB, iPercentageFree );
+		FF_PRINTF( "Partition Nr   %8u\n\r", pxDisk->xStatus.bPartitionNumber );
+		FF_PRINTF( "Type           %8u (%s)\n\r", pxIOManager->xPartition.ucType, pcTypeName );
+		FF_PRINTF( "VolLabel       '%8s' \n\r", pxIOManager->xPartition.pcVolumeLabel );
+		FF_PRINTF( "TotalSectors   %8lu\n\r", pxIOManager->xPartition.ulTotalSectors );
+		FF_PRINTF( "SecsPerCluster %8lu\n\r", pxIOManager->xPartition.ulSectorsPerCluster );
+		FF_PRINTF( "Size           %8lu MB\n\r", ulTotalSizeMB );
+		FF_PRINTF( "FreeSize       %8lu MB ( %d perc free )\n\r", ulFreeSizeMB, iPercentageFree );
 	}
 
 	return xReturn;
@@ -702,7 +705,7 @@ BaseType_t xReturn = pdPASS;
 #endif /* ffconfigSDIO_DRIVER_USES_INTERRUPT */
 /*-----------------------------------------------------------*/
 
-static int vSDMMC_Init( int iDriveNumber )
+static int vSDMMC_Init( int iDriveNumber, FF_Disk_t *pxDisk )
 {
 int iReturnCode, iStatus;
 XSdPs_Config *SdConfig;
@@ -747,6 +750,9 @@ XSdPs_Config *SdConfig;
 		{
 			break;
 		}
+
+		// Decode the SD Data
+		pxDisk->ulNumberOfSectors = pxSDCardInstance->SectorCount; // Get number of sectors
 
 		/* Disk is initialized OK: clear the 'STA_NOINIT' bit. */
 		iStatus &= ~( STA_NOINIT );
@@ -905,7 +911,7 @@ volatile unsigned sd_int_count = 0;
 		ulStatusReg = XSdPs_ReadReg( InstancePtr->Config.BaseAddress, XSDPS_NORM_INTR_STS_OFFSET );
 			if( ulWait != 0UL )
 			{
-				FF_PRINTF( "XSdPs_WaitInterrupt[ %d ]: Got %08lx, expect %08lx ints: %d\n",
+				FF_PRINTF( "XSdPs_WaitInterrupt[ %d ]: Got %08lx, expect %08lx ints: %d\n\r",
 					iIndex,
 					ulStatusReg,
 					ulMask,
