@@ -129,12 +129,14 @@ uint32_t usSectorSize = pxParameters->ulSectorSize;
 	{
 		/* ulSectorSize Size not a multiple of 512 or it is zero*/
 		xError = FF_ERR_IOMAN_BAD_BLKSIZE | FF_CREATEIOMAN;
+		FF_PRINTF("Error = FF_ERR_IOMAN_BAD_BLKSIZE | FF_CREATEIOMAN: %x\n\r", xError);
 	}
 	else if( ( ( ulCacheSize % ( uint32_t ) usSectorSize ) != 0 ) || ( ulCacheSize == 0 ) ||
 			 ( ulCacheSize == ( uint32_t ) usSectorSize ) )
 	{
 		/* The size of the caching memory (ulCacheSize) must now be atleast 2 * ulSectorSize (or a deadlock will occur). */
 		xError = FF_ERR_IOMAN_BAD_MEMSIZE | FF_CREATEIOMAN;
+		FF_PRINTF("Error = FF_ERR_IOMAN_BAD_MEMSIZE | FF_CREATEIOMAN: %x\n\r", xError);
 	}
 	else
 	{
@@ -150,12 +152,14 @@ uint32_t usSectorSize = pxParameters->ulSectorSize;
 		else
 		{
 			xError = FF_ERR_NOT_ENOUGH_MEMORY | FF_CREATEIOMAN;
+			FF_PRINTF("Error = FF_ERR_NOT_ENOUGH_MEMORY | FF_CREATEIOMAN: %x (pxIOManager != NULL)\n\r", xError);
 		}
 	}
 
 	if( FF_CreateEvents( pxIOManager ) != pdTRUE )
 	{
 		xError = FF_ERR_NOT_ENOUGH_MEMORY | FF_CREATEIOMAN;
+		FF_PRINTF("Error = FF_ERR_NOT_ENOUGH_MEMORY | FF_CREATEIOMAN: %x (FF_CreateEvents( pxIOManager ) != pdTRUE)\n\r", xError);
 	}
 	else if( FF_isERR( xError ) == pdFALSE )
 	{
@@ -176,6 +180,7 @@ uint32_t usSectorSize = pxParameters->ulSectorSize;
 			else
 			{
 				xError = FF_ERR_NOT_ENOUGH_MEMORY | FF_CREATEIOMAN;
+				FF_PRINTF("Error = FF_ERR_NOT_ENOUGH_MEMORY | FF_CREATEIOMAN: %x (pxIOManager->pucCacheMem == NULL)\n\r", xError);
 			}
 		}
 
@@ -218,6 +223,7 @@ uint32_t usSectorSize = pxParameters->ulSectorSize;
 		else
 		{
 			xError = FF_ERR_NOT_ENOUGH_MEMORY | FF_CREATEIOMAN;
+			FF_PRINTF("Error = FF_ERR_NOT_ENOUGH_MEMORY | FF_CREATEIOMAN: %x (pxIOManager->pxBuffers == NULL)\n\r", xError);
 		}
 	}
 
@@ -505,7 +511,7 @@ const FF_Buffer_t *pxLastBuffer = &( pxIOManager->pxBuffers[ pxIOManager->usCach
 	}
 	if( pxMatchingBuffer == NULL )
 	{
-		FF_PRINTF( "FF_GetBuffer[0x%X]: failed mode 0x%X\n", ( unsigned )ulSector, ( unsigned )ucMode );
+		FF_PRINTF( "FF_GetBuffer[0x%X]: failed mode 0x%X\n\r", ( unsigned )ulSector, ( unsigned )ucMode );
 	}
 	return pxMatchingBuffer;	/* Return the Matched Buffer! */
 }	/* FF_GetBuffer() */
@@ -754,11 +760,11 @@ FF_Error_t xError = FF_ERR_NONE;
 				else {
 					if( ( ulFirstWord & 0x3FF ) != 0x3F8 )
 					{
-						FF_PRINTF( "Part at %lu is probably a FAT12\n", pxIOManager->xPartition.ulFATBeginLBA );
+						FF_PRINTF( "Part at %lu is probably a FAT12\n\r", pxIOManager->xPartition.ulFATBeginLBA );
 					}
 					else
 					{
-						FF_PRINTF( "Partition at %lu has strange FAT data %08lX\n",
+						FF_PRINTF( "Partition at %lu has strange FAT data %08lX\n\r",
 							pxIOManager->xPartition.ulFATBeginLBA, ulFirstWord );
 					}
 					xError = FF_ERR_IOMAN_INVALID_FORMAT | FF_DETERMINEFATTYPE;
@@ -779,7 +785,7 @@ FF_Error_t xError = FF_ERR_NONE;
 				but FreeRTOS+FAT returned me this error
 				So for me I left out this check (just issue a warning for now)
 				*/
-				FF_PRINTF( "prvDetermineFatType: firstWord %08lX\n", ulFirstWord );
+				FF_PRINTF( "prvDetermineFatType: firstWord %08lX\n\r", ulFirstWord );
 				xError = FF_ERR_NONE; /* FF_ERR_IOMAN_NOT_FAT_FORMATTED; */
 			}
 
@@ -817,7 +823,7 @@ static BaseType_t prvIsValidMedia( uint8_t media )
 {
 BaseType_t xResult;
 	/*
-	 * 0xF8 is the standard value for “fixed” (non-removable) media. For
+	 * 0xF8 is the standard value for ï¿½fixedï¿½ (non-removable) media. For
 	 * removable media, 0xF0 is frequently used. The legal values for this
 	 * field are 0xF0, 0xF8, 0xF9, 0xFA, 0xFB, 0xFC, 0xFD, 0xFE, and
 	 * 0xFF. The only other important point is that whatever value is put
@@ -896,7 +902,7 @@ FF_Part_t pxPartitions[ 4 ];
 					break;
 				}
 			}
-			FF_PRINTF( "FF_ParseExtended: Read sector %u\n", ( unsigned) ulThisSector );
+			FF_PRINTF( "FF_ParseExtended: Read sector %u\n\r", ( unsigned) ulThisSector );
 			pxBuffer = FF_GetBuffer( pxIOManager, ulThisSector, FF_MODE_READ );
 			if( pxBuffer == NULL )
 			{
@@ -911,7 +917,7 @@ FF_Part_t pxPartitions[ 4 ];
 
 			if( ( a != 0x55 ) || ( b != 0xAA ) )
 			{
-				FF_PRINTF( "FF_ParseExtended: No signature %02X,%02X\n", a, b );
+				FF_PRINTF( "FF_ParseExtended: No signature %02X,%02X\n\r", a, b );
 				break;
 			}
 		}
@@ -956,7 +962,7 @@ FF_Part_t pxPartitions[ 4 ];
 				( ulNext > ulFirstSector + ulFirstSize )
 				)
 			{
-				FF_PRINTF( "Part %d looks insane: ulThisSector %u ulOffset %u ulNext %u\n",
+				FF_PRINTF( "Part %d looks insane: ulThisSector %u ulOffset %u ulNext %u\n\r",
 					( int ) xPartNr, ( unsigned )ulThisSector, ( unsigned )ulOffset, ( unsigned )ulNext );
 				continue;
 			}
@@ -983,7 +989,7 @@ FF_Part_t pxPartitions[ 4 ];
 
 		if( xExtendedPartNr < 0 )
 		{
-			FF_PRINTF( "No more extended partitions\n" );
+			FF_PRINTF( "No more extended partitions\n\r" );
 			break;		/* nothing left to do */
 		}
 
@@ -1061,7 +1067,7 @@ FF_Part_t pxPartitions[ 4 ];
 			}
 			else
 			{
-				FF_PRINTF( "FF_PartitionSearch: [%02X,%02X] No signature (%02X %02X), no PBR neither\n",
+				FF_PRINTF( "FF_PartitionSearch: [%02X,%02X] No signature (%02X %02X), no PBR neither\n\r",
 					FF_getChar( ucDataBuffer, 0 ),
 					FF_getChar( ucDataBuffer, 2 ),
 					FF_getChar( ucDataBuffer, FF_FAT_MBR_SIGNATURE ),
@@ -1077,7 +1083,7 @@ FF_Part_t pxPartitions[ 4 ];
 
 		for( xPartNr = 0; ( xPartNr < 4 ) && ( isPBR == pdFALSE ); xPartNr++ )
 		{
-			/*		FF_PRINTF ("FF_Part[%d]: id %02X act %02X Start %6lu Len %6lu (sectors)\n", */
+			/*		FF_PRINTF ("FF_Part[%d]: id %02X act %02X Start %6lu Len %6lu (sectors)\n\r", */
 			/*			xPartNr, pxPartitions[ xPartNr ].ucPartitionID, */
 			/*			pxPartitions[ xPartNr ].ucActive, */
 			/*			pxPartitions[ xPartNr ].ulStartLBA, */
@@ -1134,7 +1140,7 @@ FF_Part_t pxPartitions[ 4 ];
 
 		if( pPartsFound->iCount == 0 )
 		{
-			FF_PRINTF( "FF_Part: no partitions, try as PBR\n" );
+			FF_PRINTF( "FF_Part: no partitions, try as PBR\n\r" );
 			isPBR = pdTRUE;
 		}
 
@@ -1144,7 +1150,7 @@ FF_Part_t pxPartitions[ 4 ];
 			FF_Part_t	*p;
 			if( !prvIsValidMedia( media ) )
 			{
-				FF_PRINTF( "FF_Part: Looks like PBR but media %02X\n", media );
+				FF_PRINTF( "FF_Part: Looks like PBR but media %02X\n\r", media );
 				xError = FF_ERR_IOMAN_NO_MOUNTABLE_PARTITION | FF_PARTITIONSEARCH;
 				goto done;
 			}
@@ -1439,6 +1445,7 @@ partsFound.iCount = 0;
 		{	/* FAT32 */
 			pxPartition->ulSectorsPerFAT = FF_getLong( pxBuffer->pucBuffer, FF_FAT_32_SECTORS_PER_FAT );
 			pxPartition->ulRootDirCluster = FF_getLong( pxBuffer->pucBuffer, FF_FAT_ROOT_DIR_CLUSTER );
+//			memcpy( pxPartition->pcVolumeLabel, pxBuffer->pucBuffer + FF_FAT_32_VOL_LABEL + 1, sizeof( pxPartition->pcVolumeLabel ) - 1 );
 			memcpy( pxPartition->pcVolumeLabel, pxBuffer->pucBuffer + FF_FAT_32_VOL_LABEL, sizeof( pxPartition->pcVolumeLabel ) );
 		}
 		else
@@ -1493,7 +1500,7 @@ partsFound.iCount = 0;
 
 		if( !rootEntryCount && pxPartition->ucType != FF_T_FAT32 )
 		{
-			FF_PRINTF( "No root dir, must be a FAT32\n" );
+			FF_PRINTF( "No root dir, must be a FAT32\n\r" );
 			pxPartition->ucType = FF_T_FAT32;
 		}
 

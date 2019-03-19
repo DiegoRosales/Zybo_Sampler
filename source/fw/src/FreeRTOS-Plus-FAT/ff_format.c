@@ -248,7 +248,7 @@ FF_IOManager_t *pxIOManager = pxDisk->pxIOManager;
 		ulClustersPerFATSector = 256u;
 	}
 
-	FF_PRINTF( "FF_Format: Secs %lu Rsvd %lu Hidden %lu Root %lu Data %lu\n",
+	FF_PRINTF( "FF_Format: Secs %lu Rsvd %lu Hidden %lu Root %lu Data %lu\n\r",
 		ulSectorCount, ulFATReservedSectors, ulHiddenSectors, iFAT16RootSectors, ulSectorCount - ulNonDataSectors );
 
 	/* Either search from small to large or v.v. */
@@ -299,7 +299,7 @@ FF_IOManager_t *pxIOManager = pxDisk->pxIOManager;
 		if( ( ( xSmallClusters != pdFALSE ) && ( ulSectorsPerCluster == 32 ) ) ||
 			( ( xSmallClusters == pdFALSE ) && ( ulSectorsPerCluster == 1) ) )
 		{
-			FF_PRINTF( "FF_Format: Can not make a FAT%d (tried %d) with %lu sectors\n",
+			FF_PRINTF( "FF_Format: Can not make a FAT%d (tried %d) with %lu sectors\n\r",
 				ucFATType == FF_T_FAT32 ? 32 : 16, xPreferFAT16 ? 16 : 32, ulSectorCount );
 			return FF_ERR_IOMAN_BAD_MEMSIZE | FF_MODULE_FORMAT;
 		}
@@ -359,7 +359,7 @@ FF_IOManager_t *pxIOManager = pxDisk->pxIOManager;
 		int32_t dirBegin;
 
 		FF_putChar( pucSectorBuffer, OFS_BPB_SecPerClus_8, ( uint32_t ) ulSectorsPerCluster ); /*  0x00D / Only 1, 2, 4, 8, 16, 32, 64, 128 */
-		FF_PRINTF("FF_Format: SecCluster %lu DatSec %lu DataClus %lu ulClusterBeginLBA %lu\n",
+		FF_PRINTF( "FF_Format: SecCluster %lu DatSec %lu DataClus %lu ulClusterBeginLBA %lu\n\r",
 			ulSectorsPerCluster, ulUsableDataSectors, ulUsableDataClusters, ulClusterBeginLBA );
 
 		/* This field is the new 32-bit total count of sectors on the volume. */
@@ -441,7 +441,7 @@ FF_IOManager_t *pxIOManager = pxDisk->pxIOManager;
 		FF_BlockWrite( pxIOManager, ( uint32_t ) fatBeginLBA, 1, pucSectorBuffer, pdFALSE );
 		FF_BlockWrite( pxIOManager, ( uint32_t ) fatBeginLBA + ulSectorsPerFAT, 1, pucSectorBuffer, pdFALSE );
 
-		FF_PRINTF( "FF_Format: Clearing entire FAT (2 x %lu sectors):\n", ulSectorsPerFAT );
+		FF_PRINTF( "FF_Format: Clearing entire FAT (2 x %lu sectors):\n\r", ulSectorsPerFAT );
 		{
 		int32_t addr;
 
@@ -454,7 +454,7 @@ FF_IOManager_t *pxIOManager = pxDisk->pxIOManager;
 				FF_BlockWrite( pxIOManager, ( uint32_t ) addr + ulSectorsPerFAT, 1, pucSectorBuffer, pdFALSE );
 			}
 		}
-		FF_PRINTF( "FF_Format: Clearing done\n" );
+		FF_PRINTF( "FF_Format: Clearing done\n\r" );
 		dirBegin = fatBeginLBA + ( 2 * ulSectorsPerFAT );
 #if( ffconfigTIME_SUPPORT != 0 )
 		{
@@ -491,7 +491,7 @@ FF_IOManager_t *pxIOManager = pxDisk->pxIOManager;
 				lLastAddress = dirBegin + ulSectorsPerCluster;
 			}
 
-			FF_PRINTF("FF_Format: Clearing root directory at %08lX: %lu sectors\n", dirBegin, lLastAddress - dirBegin );
+			FF_PRINTF( "FF_Format: Clearing root directory at %08lX: %lu sectors\n\r", dirBegin, lLastAddress - dirBegin );
 			for( lAddress = dirBegin; lAddress < lLastAddress; lAddress++ )
 			{
 				FF_BlockWrite( pxIOManager, ( uint32_t ) lAddress, 1, pucSectorBuffer, 0u );

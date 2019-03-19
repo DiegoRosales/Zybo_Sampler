@@ -80,14 +80,14 @@ int iResult = 0;
 		break;
 
 	default:
-		FF_PRINTF ("mmc_decode_cid: card has unknown MMCA version %d\n",
+		FF_PRINTF ("mmc_decode_cid: card has unknown MMCA version %d\n\r",
 			pxCSD->mmca_vsn);
 		iResult = -1;
 		break;
 	}
 	if( iResult >= 0 )
 	{
-		FF_PRINTF ("CID: Manfid %lu (%-8.8s) serial %lu oem %u mon/year %u/%u rev %u fw %u\n",
+		FF_PRINTF ("CID: Manfid %lu (%-8.8s) serial %lu oem %u mon/year %u/%u rev %u fw %u\n\r",
 			pxCID->manfid,
 			pxCID->prod_name,
 			pxCID->serial,
@@ -147,7 +147,7 @@ int iResult = 0;
 
 	pxCSD->mmca_vsn = UNSTUFF_BITS( ulResponse, 122, 4 );
 
-	FF_PRINTF("CSD data: %08x %08x %08x %08x mmca_vsn = %u\n",
+	FF_PRINTF("CSD data: %08x %08x %08x %08x mmca_vsn = %u\n\r",
 		( unsigned )ulResponse[0],
 		( unsigned )ulResponse[1],
 		( unsigned )ulResponse[2],
@@ -186,7 +186,7 @@ int iResult = 0;
 		pxCSD->write_partial = UNSTUFF_BITS( ulResponse, 21, 1 );
 
 		pxCSD->capacity <<= ( pxCSD->read_blkbits - 9 );
-		FF_PRINTF ("Capacity: (%u + 1) << (%u + 2) = %u Rd/Wr bits %u/%u\n",
+		FF_PRINTF ("Capacity: (%u + 1) << (%u + 2) = %u Rd/Wr bits %u/%u\n\r",
 			m, e,
 			( unsigned )pxCSD->capacity,
 			( unsigned )pxCSD->read_blkbits,
@@ -229,7 +229,7 @@ int iResult = 0;
 		m = UNSTUFF_BITS( ulResponse, 48, 22 );
 		pxCSD->capacity = ( 1 + m ) << 10;
 
-		FF_PRINTF( "capacity: (1 + %u) << 10  DTR %u Mhz\n", m, pxCSD->max_dtr / 1000000);
+		FF_PRINTF( "capacity: (1 + %u) << 10  DTR %u Mhz\n\r", m, pxCSD->max_dtr / 1000000);
 
 		pxCSD->read_blkbits = 9;
 		pxCSD->read_partial = 0;
@@ -241,7 +241,7 @@ int iResult = 0;
 		pxCSD->erase_size = 1;
 		break;
 	default:
-		FF_PRINTF ("sd_decode_csd: unrecognised CSD structure version %d\n", csd_struct);
+		FF_PRINTF ("sd_decode_csd: unrecognised CSD structure version %d\n\r", csd_struct);
 		iResult = -1;
 		break;
 	}
@@ -249,7 +249,7 @@ int iResult = 0;
 	{
 	unsigned int sz;
 
-		FF_PRINTF ("sd_decode_csd: capacity %lu (%s addressed)\n",
+		FF_PRINTF ("sd_decode_csd: capacity %lu (%s addressed)\n\r",
 			pxCSD->capacity, mmc_is_block_addressed ? "block" : "byte");
 
 		sz = (pxCSD->capacity << (pxCSD->read_blkbits - 9)) >> 11;
@@ -290,7 +290,7 @@ int iResult = 0;
 		// compute card capacity in bytes
 		pxCSD->capacity_bytes = ( ( uint64_t )XSDPS_BLK_SIZE_512_MASK ) * pxCSD->capacity;
 
-		FF_PRINTF( "sd_mmc_spi_get_capacity: Capacity %lu MB Erase %u Pref %lu\n",
+		FF_PRINTF( "sd_mmc_spi_get_capacity: Capacity %lu MB Erase %u Pref %lu\n\r",
 			( uint32_t ) ( pxCSD->capacity_bytes / ( 1024LLU * 1024LLU ) ),
 			pxCSD->erase_size,
 			pxCSD->pref_erase );

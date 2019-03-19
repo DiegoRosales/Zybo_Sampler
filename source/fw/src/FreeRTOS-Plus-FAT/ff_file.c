@@ -305,7 +305,7 @@ FF_FindParams_t xFindParams;
 		{
 			if( ( ucMode & FF_MODE_WRITE ) != 0 )
 			{
-				FF_PRINTF( "FF_Open[%s]: Path not found\n", pcPath );
+				FF_PRINTF( "FF_Open[%s]: Path not found\n\r", pcPath );
 			}
 			/* The user tries to open a file but the path leading to the file does not exist. */
 		}

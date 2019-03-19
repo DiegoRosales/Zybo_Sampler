@@ -169,7 +169,7 @@ extern u8 _end;
 
 	if( ( ( u32 )pucStartOfMemory ) + UNCACHED_MEMORY_SIZE > DDR_MEMORY_END )
 	{
-		FF_PRINTF( "vInitialiseUncachedMemory: Can not allocate uncached memory\n" );
+		FF_PRINTF( "vInitialiseUncachedMemory: Can not allocate uncached memory\n\r" );
 	}
 	else
 	{

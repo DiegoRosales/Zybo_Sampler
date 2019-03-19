@@ -192,7 +192,7 @@ to allow the application writer to override this default by providing their own
 implementation in the application code. */
 void vApplicationMallocFailedHook( void )
 {
-	xil_printf( "vApplicationMallocFailedHook() called\n" );
+	xil_printf( "vApplicationMallocFailedHook() called\n\r" );
 }
 /*-----------------------------------------------------------*/
 

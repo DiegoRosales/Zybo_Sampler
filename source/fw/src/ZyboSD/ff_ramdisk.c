@@ -188,7 +188,7 @@ FF_CreationParameters_t xParameters;
 
 				/* Mount the partition. */
 				xError = FF_Mount( pxDisk, ramPARTITION_NUMBER );
-				FF_PRINTF( "FF_RAMDiskInit: FF_Mount: %s\n", ( const char * ) FF_GetErrMessage( xError ) );
+				FF_PRINTF( "FF_RAMDiskInit: FF_Mount: %s\n\r", ( const char * ) FF_GetErrMessage( xError ) );
 			}
 
 			if( FF_isERR( xError ) == pdFALSE )
@@ -201,7 +201,7 @@ FF_CreationParameters_t xParameters;
 		}
 		else
 		{
-			FF_PRINTF( "FF_RAMDiskInit: FF_CreateIOManger: %s\n", ( const char * ) FF_GetErrMessage( xError ) );
+			FF_PRINTF( "FF_RAMDiskInit: FF_CreateIOManger: %s\n\r", ( const char * ) FF_GetErrMessage( xError ) );
 
 			/* The disk structure was allocated, but the disk's IO manager could
 			not be allocated, so free the disk again. */
@@ -211,7 +211,7 @@ FF_CreationParameters_t xParameters;
 	}
 	else
 	{
-		FF_PRINTF( "FF_RAMDiskInit: Malloc failed\n" );
+		FF_PRINTF( "FF_RAMDiskInit: Malloc failed\n\r" );
 	}
 
 	return pxDisk;
@@ -358,13 +358,13 @@ FF_Error_t xError;
 
 	/* Partition the disk */
 	xError = FF_Partition( pxDisk, &xPartition );
-	FF_PRINTF( "FF_Partition: %s\n", ( const char * ) FF_GetErrMessage( xError ) );
+	FF_PRINTF( "FF_Partition: %s\n\r", ( const char * ) FF_GetErrMessage( xError ) );
 
 	if( FF_isERR( xError ) == pdFALSE )
 	{
 		/* Format the partition. */
 		xError = FF_Format( pxDisk, ramPARTITION_NUMBER, pdTRUE, pdTRUE );
-		FF_PRINTF( "FF_RAMDiskInit: FF_Format: %s\n", ( const char * ) FF_GetErrMessage( xError ) );
+		FF_PRINTF( "FF_RAMDiskInit: FF_Format: %s\n\r", ( const char * ) FF_GetErrMessage( xError ) );
 	}
 
 	return xError;
@@ -389,7 +389,7 @@ BaseType_t xReturn = pdPASS;
 	{
 		pxIOManager = pxDisk->pxIOManager;
 
-		FF_PRINTF( "Reading FAT and calculating Free Space\n" );
+		FF_PRINTF( "Reading FAT and calculating Free Space\n\r" );
 
 		switch( pxIOManager->xPartition.ucType )
 		{
@@ -421,13 +421,13 @@ BaseType_t xReturn = pdPASS;
 
 		/* It is better not to use the 64-bit format such as %Lu because it
 		might not be implemented. */
-		FF_PRINTF( "Partition Nr   %8u\n", pxDisk->xStatus.bPartitionNumber );
-		FF_PRINTF( "Type           %8u (%s)\n", pxIOManager->xPartition.ucType, pcTypeName );
-		FF_PRINTF( "VolLabel       '%8s' \n", pxIOManager->xPartition.pcVolumeLabel );
-		FF_PRINTF( "TotalSectors   %8lu\n", pxIOManager->xPartition.ulTotalSectors );
-		FF_PRINTF( "SecsPerCluster %8lu\n", pxIOManager->xPartition.ulSectorsPerCluster );
-		FF_PRINTF( "Size           %8lu MB\n", ulTotalSizeMB );
-		FF_PRINTF( "FreeSize       %8lu MB ( %d perc free )\n", ulFreeSizeMB, iPercentageFree );
+		FF_PRINTF( "Partition Nr   %8u\n\r", pxDisk->xStatus.bPartitionNumber );
+		FF_PRINTF( "Type           %8u (%s)\n\r", pxIOManager->xPartition.ucType, pcTypeName );
+		FF_PRINTF( "VolLabel       '%8s' \n\r", pxIOManager->xPartition.pcVolumeLabel );
+		FF_PRINTF( "TotalSectors   %8lu\n\r", pxIOManager->xPartition.ulTotalSectors );
+		FF_PRINTF( "SecsPerCluster %8lu\n\r", pxIOManager->xPartition.ulSectorsPerCluster );
+		FF_PRINTF( "Size           %8lu MB\n\r", ulTotalSizeMB );
+		FF_PRINTF( "FreeSize       %8lu MB ( %d perc free )\n\r", ulFreeSizeMB, iPercentageFree );
 	}
 
 	return xReturn;

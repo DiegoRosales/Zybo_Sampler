@@ -108,7 +108,7 @@ int FF_FS_Add( const char *pcPath, FF_Disk_t *pxDisk )
 
 	if (*pcPath != '/')
 	{
-		FF_PRINTF( "FF_FS_Add: Need a \"/\": '%s'\n", pcPath );
+		FF_PRINTF( "FF_FS_Add: Need a \"/\": '%s'\n\r", pcPath );
 	}
 	else
 	{
@@ -142,7 +142,7 @@ int FF_FS_Add( const char *pcPath, FF_Disk_t *pxDisk )
 		}
 		if( ( index < 0 ) && ( file_systems.fsCount >= ARRAY_SIZE( file_systems.systems ) ) )
 		{
-			FF_PRINTF( "FF_FS_Add: Table full '%s' (max = %d)\n", pcPath, (int)ARRAY_SIZE( file_systems.systems ) );
+			FF_PRINTF( "FF_FS_Add: Table full '%s' (max = %d)\n\r", pcPath, (int)ARRAY_SIZE( file_systems.systems ) );
 		}
 		else
 		{

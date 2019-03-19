@@ -1347,7 +1347,7 @@ FF_Error_t xError;
 	if( pxFindData->xDirectoryHandler.u.bits.bIsValid == pdFALSE )
 	{
 		xError = ( FF_Error_t ) ( FF_ERR_DIR_INVALID_PARAMETER | FF_FINDNEXT );
-		FF_PRINTF("ff_findnext: xDirectoryHandler not valid\n" );
+		FF_PRINTF( "ff_findnext: xDirectoryHandler not valid\n\r" );
 	}
 	else
 	{
@@ -1639,7 +1639,7 @@ FF_Error_t xReturned;
 				iResult = ff_rmdir( pcPath );
 				if( iResult )
 				{
-					FF_PRINTF("ff_deltree(%s): %s\n", pcPath, strerror( stdioGET_ERRNO( ) ) );
+					FF_PRINTF( "ff_deltree(%s): %s\n\r", pcPath, strerror( stdioGET_ERRNO( ) ) );
 				}
 			}
 			ffconfigFREE( pcPath );
@@ -1716,7 +1716,7 @@ FF_Error_t xReturned;
 							xError = ff_rmdir( pcPath );
 							if( xError != 0 )
 							{
-								FF_PRINTF( "ff_rmdir( %s ): errno %d\n", pcPath, stdioGET_ERRNO() );
+								FF_PRINTF( "ff_rmdir( %s ): errno %d\n\r", pcPath, stdioGET_ERRNO() );
 							}
 							else
 							{
@@ -1741,7 +1741,7 @@ FF_Error_t xReturned;
 						xError = ff_remove( pcPath );
 						if( xError != 0 )
 						{
-							FF_PRINTF( "ff_remove( %s ): errno %d\n", pcPath, stdioGET_ERRNO() );
+							FF_PRINTF( "ff_remove( %s ): errno %d\n\r", pcPath, stdioGET_ERRNO() );
 						}
 						else
 						{
@@ -1761,7 +1761,7 @@ FF_Error_t xReturned;
 				}
 				if( ( FF_GETERROR( iResult ) != FF_ERR_DIR_END_OF_DIR ) && ( FF_GETERROR( iResult ) != FF_ERR_FILE_INVALID_PATH ) )
 				{
-					FF_PRINTF( "ff_deltree_recurse[%s]: %s\n", pcPath, ( const char * ) FF_GetErrMessage( iResult ) );
+					FF_PRINTF( "ff_deltree_recurse[%s]: %s\n\r", pcPath, ( const char * ) FF_GetErrMessage( iResult ) );
 				}
 			}
 			ffconfigFREE( pxFindData );
