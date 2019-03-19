@@ -318,6 +318,7 @@ conform with the coding standard, so use this function with care! */
 
 
 #define FF_PRINTF xil_printf
+#define FF_ERR_NONE 0
 
 #endif /* _FF_CONFIG_H_ */
 
