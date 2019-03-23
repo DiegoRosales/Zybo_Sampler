@@ -19,9 +19,11 @@
     input wire clk,
     input wire reset_n,
 
-    input wire                                start_dma,
-    input wire                                stop_dma,
-    input wire [ C_M_AXI_ADDR_WIDTH - 1 : 0 ] dma_base_addr,
+    input  wire                                start_dma,
+    input  wire                                stop_dma,
+    input  wire [ C_M_AXI_ADDR_WIDTH - 1 : 0 ] dma_base_addr,
+	output wire [ 31 : 0 ]                     dma_status,
+	output wire [ 31 : 0 ]                     dma_curr_addr,
 
     // DMA request signals
     output wire [ C_M_AXI_ADDR_WIDTH - 1 : 0 ] dma_address,
@@ -97,6 +99,7 @@ wire [ 31 : 0 ] input_fifo_data_in;
 wire            input_fifo_data_in_valid;
 wire            fifo_full;
 wire            fifo_empty;
+wire [ 6 : 0 ]  fifo_data_count;
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -286,7 +289,16 @@ sampler_dma_fifo sampler_dma_fifo_inst (
     .empty      ( fifo_empty                ), // output wire empty
 
     // Misc
-    .data_count (  )  // output wire [6 : 0] data_count
+    .data_count ( fifo_data_count )  // output wire [6 : 0] data_count
 );
 
+//////////////////////////////////////////
+// Status Register Assignments
+//////////////////////////////////////////
+// Status
+assign dma_status[ 3 : 0   ] = voice_dma_sm_curr_st;
+assign dma_status[ 11 : 4  ] = fifo_data_count;
+assign dma_status[ 31 : 12 ] = 'h0;
+// Current Address
+assign dma_curr_addr = voice_stream_addr;
 endmodule

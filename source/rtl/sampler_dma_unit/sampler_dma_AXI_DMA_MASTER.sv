@@ -38,8 +38,10 @@
 	(
 		// Users to add ports here
 		// DMA Start/Stop
-		input wire  [ 31 : 0 ]                     dma_control[ MAX_VOICES - 1 : 0 ],
-		input wire  [ C_M_AXI_ADDR_WIDTH - 1 : 0 ] dma_base_addr[ MAX_VOICES - 1 : 0 ], // This holds the note number information
+		input  wire [ 31 : 0 ]                     dma_control[ MAX_VOICES - 1 : 0 ],
+		input  wire [ C_M_AXI_ADDR_WIDTH - 1 : 0 ] dma_base_addr[ MAX_VOICES - 1 : 0 ],
+		output wire [ 31 : 0 ]                     dma_status[ MAX_VOICES - 1 : 0 ],
+		output wire [ 31 : 0 ]                     dma_curr_addr[ MAX_VOICES - 1 : 0 ],
 
 		// Output FIFO Read
 		output wire [ C_M_AXI_DATA_WIDTH : 0 ]     fifo_data_out,
@@ -603,7 +605,9 @@ generate
 
 			.start_dma     ( dma_control[i][0] ),
 			.stop_dma      ( dma_control[i][1] ),
-			.dma_base_addr ( dma_base_addr[i] ),
+			.dma_base_addr ( dma_base_addr[i]  ),
+			.dma_status    ( dma_status[i]     ),
+			.dma_curr_addr ( dma_curr_addr[i]  ),
 
 			// DMA request signals
 			.dma_address ( indv_dma_addr[i]    ),

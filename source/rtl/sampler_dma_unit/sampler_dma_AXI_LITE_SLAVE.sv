@@ -17,6 +17,8 @@
 		// Users to add ports here
 		output wire [ 31 : 0 ] dma_control[ MAX_VOICES - 1 : 0 ],
 		output wire [ 31 : 0 ] dma_base_addr[ MAX_VOICES - 1 : 0 ],
+		input  wire [ 31 : 0 ] dma_status[ MAX_VOICES - 1 : 0 ],
+		input  wire [ 31 : 0 ] dma_curr_addr[ MAX_VOICES - 1 : 0 ],
 		// User ports ends
 		// Do not modify the ports beyond this line
 
