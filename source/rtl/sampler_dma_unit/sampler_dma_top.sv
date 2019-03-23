@@ -172,6 +172,8 @@ module sampler_dma_top #(
 // Register signals
 wire [ 31 : 0 ] dma_control[ MAX_VOICES - 1 : 0 ];
 wire [ 31 : 0 ] dma_base_addr[ MAX_VOICES - 1 : 0 ];
+wire [ 31 : 0 ] dma_status[ MAX_VOICES - 1 : 0 ];
+wire [ 31 : 0 ] dma_curr_addr[ MAX_VOICES - 1 : 0 ];
 
 // Instantiation of Axi Bus Interface AXI_DMA_MASTER
     sampler_dma_v1_0_AXI_DMA_MASTER # (
@@ -192,6 +194,8 @@ wire [ 31 : 0 ] dma_base_addr[ MAX_VOICES - 1 : 0 ];
         // Register inputs
         .dma_control   ( dma_control   ),
         .dma_base_addr ( dma_base_addr ),
+        .dma_status    ( dma_status    ),
+        .dma_curr_addr ( dma_curr_addr ),
         // AXI Signals
         .INIT_AXI_TXN  ( axi_dma_master_init_axi_txn ),
         .TXN_DONE      ( axi_dma_master_txn_done     ),
@@ -249,8 +253,10 @@ wire [ 31 : 0 ] dma_base_addr[ MAX_VOICES - 1 : 0 ];
         .C_S_AXI_ADDR_WIDTH ( C_AXI_LITE_SLAVE_ADDR_WIDTH )
     ) sampler_dma_v1_0_AXI_LITE_SLAVE_inst (
         // Register outputs
-        .dma_control   ( dma_control            ),
-        .dma_base_addr ( dma_base_addr          ),
+        .dma_control   ( dma_control   ),
+        .dma_base_addr ( dma_base_addr ),
+        .dma_status    ( dma_status    ),
+        .dma_curr_addr ( dma_curr_addr ),        
         // AXI Signals
         .S_AXI_ACLK    ( axi_lite_slave_aclk    ),
         .S_AXI_ARESETN ( axi_lite_slave_aresetn ),
