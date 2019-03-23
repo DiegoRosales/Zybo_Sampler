@@ -124,17 +124,14 @@ wire [ NUM_OF_CONTROL_REG_BITS - 1 : 0 ] rd_control_reg_num; // Control
 // Write
 assign wr_addr_is_control_reg       = ( reg_addr_wr < DMA_START_ADDR);
 assign wr_addr_is_dma_reg           = ( ( reg_addr_wr >= DMA_START_ADDR ) & ( reg_addr_wr <= DMA_END_ADDR ) );
-assign wr_addr_is_dma_base_addr_reg = ( reg_addr_wr[1:0] == DMA_BASE_ADDR_REG );
-assign wr_addr_is_dma_control_reg   = ( reg_addr_wr[1:0] == DMA_CONTROL_REG   );
-assign wr_addr_is_dma_status_reg    = ( reg_addr_wr[1:0] == DMA_STATUS_REG    );
-assign wr_addr_is_dma_curr_addr_reg = ( reg_addr_wr[1:0] == DMA_CURR_ADDR_REG );
+
 // Read
 assign rd_addr_is_control_reg       = ( reg_addr_rd < DMA_START_ADDR);
 assign rd_addr_is_dma_reg           = ( ( reg_addr_rd >= DMA_START_ADDR ) & ( reg_addr_rd <= DMA_END_ADDR ) );
 
-// Get the register number
-assign wr_dma_reg_num = reg_addr_wr[ NUM_OF_DMA_REG_BITS : 2 ]; // Lower two bits used to address the 4 registers
-assign rd_dma_reg_num = reg_addr_rd[ NUM_OF_DMA_REG_BITS : 2 ]; // Lower two bits used to address the 4 registers
+// Get the DMA register number
+assign wr_dma_reg_num = reg_addr_wr[ NUM_OF_DMA_REG_BITS - 1 : 2 ]; // Lower two bits used to address the 4 registers
+assign rd_dma_reg_num = reg_addr_rd[ NUM_OF_DMA_REG_BITS - 1 : 2 ]; // Lower two bits used to address the 4 registers
 
 // Get the control register number
 assign wr_control_reg_num = reg_addr_wr[ NUM_OF_CONTROL_REG_BITS - 1 : 0 ];
@@ -160,8 +157,8 @@ end
 // Output to the AXI interface
 always_comb begin
 	case ( reg_addr_rd[1:0] )
-		DMA_CONTROL_REG:   dma_reg_data_out = dma_control_reg[ rd_dma_reg_num ];
 		DMA_BASE_ADDR_REG: dma_reg_data_out = dma_base_addr_reg[ rd_dma_reg_num ]; 
+		DMA_CONTROL_REG:   dma_reg_data_out = dma_control_reg[ rd_dma_reg_num ];
 		DMA_STATUS_REG:    dma_reg_data_out = dma_status_reg[ rd_dma_reg_num ];
 		DMA_CURR_ADDR_REG: dma_reg_data_out = dma_curr_addr_reg[ rd_dma_reg_num ]; 
 		default:           dma_reg_data_out = 32'hbeefbeef;
@@ -185,15 +182,11 @@ always_ff @(posedge axi_clk or negedge axi_reset) begin
 		dma_control_reg   <= dma_control_reg;
 		dma_status_reg    <= dma_status;
 		dma_curr_addr_reg <= dma_curr_addr;
-		if ( data_wren == 1'b1 ) begin
-			if ( wr_addr_is_dma_reg == 1'b1 ) begin
-				if ( wr_addr_is_dma_base_addr_reg == 1'b1 ) begin
-					dma_base_addr_reg[ wr_dma_reg_num ] <= data_in;
-				end
-				else if ( wr_addr_is_dma_control_reg ) begin
-					dma_control_reg[ wr_dma_reg_num ] <= data_in;
-				end			
-			end	
+		if ( data_wren == 1'b1 && wr_addr_is_dma_reg == 1'b1 ) begin
+			case ( reg_addr_wr[1:0] )
+				DMA_BASE_ADDR_REG: dma_base_addr_reg[ wr_dma_reg_num ] <= data_in;
+				DMA_CONTROL_REG:   dma_control_reg[ wr_dma_reg_num ]   <= data_in;
+			endcase		
 		end
 	end
 end
