@@ -41,6 +41,35 @@ static const CLI_Command_Definition_t xDIR =
 	0 /* No parameters are expected. */
 };
 
+/* Structure that defines the CD command line command, which changes the
+working directory. */
+static const CLI_Command_Definition_t xCD =
+{
+	"cd", /* The command string to type. */
+	"\r\ncd <dir name>:\r\n Changes the working directory\r\n",
+	prvCDCommand, /* The function to run. */
+	1 /* One parameter is expected. */
+};
+
+/* Structure that defines the TYPE command line command, which prints the
+contents of a file to the console. */
+static const CLI_Command_Definition_t xTYPE =
+{
+	"type", /* The command string to type. */
+	"\r\ntype <filename>:\r\n Prints file contents to the terminal\r\n",
+	prvTYPECommand, /* The function to run. */
+	1 /* One parameter is expected. */
+};
+
+/* Structure that defines the pwd command line command, which prints the current working directory. */
+static const CLI_Command_Definition_t xPWD =
+{
+	"pwd", /* The command string to type. */
+	"\r\npwd:\r\n Print Working Directory\r\n",
+	prvPWDCommand, /* The function to run. */
+	0 /* No parameters are expected. */
+};
+
 ////////////////////////////////////////////////////////
 // Functions
 ////////////////////////////////////////////////////////
@@ -49,6 +78,10 @@ static const CLI_Command_Definition_t xDIR =
 void register_fat_cli_commands( void ) {
     FreeRTOS_CLIRegisterCommand( &sd_initialization_command_definition );
     FreeRTOS_CLIRegisterCommand( &xDIR );
+    FreeRTOS_CLIRegisterCommand( &xCD );
+    FreeRTOS_CLIRegisterCommand( &xTYPE );
+    FreeRTOS_CLIRegisterCommand( &xPWD );
+
 }
 
 static void prvCreateFileInfoString( char *pcBuffer, FF_FindData_t *pxFindStruct )
@@ -160,4 +193,123 @@ BaseType_t xReturn = pdFALSE;
 	strcat( pcWriteBuffer, cliNEW_LINE );
 
 	return xReturn;
+}
+
+static BaseType_t prvCDCommand( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString )
+{
+const char *pcParameter;
+BaseType_t xParameterStringLength;
+int iReturned;
+size_t xStringLength;
+
+	/* Obtain the parameter string. */
+	pcParameter = FreeRTOS_CLIGetParameter
+					(
+						pcCommandString,		/* The command string itself. */
+						1,						/* Return the first parameter. */
+						&xParameterStringLength	/* Store the parameter string length. */
+					);
+
+	/* Sanity check something was returned. */
+	configASSERT( pcParameter );
+
+	/* Attempt to move to the requested directory. */
+	iReturned = ff_chdir( pcParameter );
+
+	if( iReturned == FF_ERR_NONE )
+	{
+		sprintf( pcWriteBuffer, "In: " );
+		xStringLength = strlen( pcWriteBuffer );
+		ff_getcwd( &( pcWriteBuffer[ xStringLength ] ), ( unsigned char ) ( xWriteBufferLen - xStringLength ) );
+	}
+	else
+	{
+		sprintf( pcWriteBuffer, "Error" );
+	}
+
+	strcat( pcWriteBuffer, cliNEW_LINE );
+
+	return pdFALSE;
+}
+
+static BaseType_t prvTYPECommand( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString )
+{
+const char *pcParameter;
+BaseType_t xParameterStringLength, xReturn = pdTRUE;
+static FF_FILE *pxFile = NULL;
+int iChar;
+size_t xByte;
+size_t xColumns = 50U;
+
+	/* Ensure there is always a null terminator after each character written. */
+	memset( pcWriteBuffer, 0x00, xWriteBufferLen );
+
+	/* Ensure the buffer leaves space for the \r\n. */
+	configASSERT( xWriteBufferLen > ( strlen( cliNEW_LINE ) * 2 ) );
+	xWriteBufferLen -= strlen( cliNEW_LINE );
+
+	if( xWriteBufferLen < xColumns )
+	{
+		/* Ensure the loop that uses xColumns as an end condition does not
+		write off the end of the buffer. */
+		xColumns = xWriteBufferLen;
+	}
+
+	if( pxFile == NULL )
+	{
+		/* The file has not been opened yet.  Find the file name. */
+		pcParameter = FreeRTOS_CLIGetParameter
+						(
+							pcCommandString,		/* The command string itself. */
+							1,						/* Return the first parameter. */
+							&xParameterStringLength	/* Store the parameter string length. */
+						);
+
+		/* Sanity check something was returned. */
+		configASSERT( pcParameter );
+
+		/* Attempt to open the requested file. */
+		pxFile = ff_fopen( pcParameter, "r" );
+	}
+
+	if( pxFile != NULL )
+	{
+		/* Read the next chunk of data from the file. */
+		for( xByte = 0; xByte < xColumns; xByte++ )
+		{
+			iChar = ff_fgetc( pxFile );
+
+			if( iChar == -1 )
+			{
+				/* No more characters to return. */
+				ff_fclose( pxFile );
+				pxFile = NULL;
+				break;
+			}
+			else
+			{
+				pcWriteBuffer[ xByte ] = ( char ) iChar;
+			}
+		}
+	}
+
+	if( pxFile == NULL )
+	{
+		/* Either the file was not opened, or all the data from the file has
+		been returned and the file is now closed. */
+		xReturn = pdFALSE;
+	}
+
+	strcat( pcWriteBuffer, cliNEW_LINE );
+
+	return xReturn;
+}
+
+static BaseType_t prvPWDCommand( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString )
+{
+	( void ) pcCommandString;
+
+	/* Copy the current working directory into the output buffer. */
+	ff_getcwd( pcWriteBuffer, xWriteBufferLen );
+	return pdFALSE;
 }

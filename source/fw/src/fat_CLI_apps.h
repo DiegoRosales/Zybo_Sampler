@@ -17,4 +17,19 @@ static BaseType_t sd_initialization_command( char *pcWriteBuffer, size_t xWriteB
  */
 static BaseType_t prvDIRCommand( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
 
+/*
+ * Implements the CD command.
+ */
+static BaseType_t prvCDCommand( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
+
+/*
+ * Implements the TYPE command.
+ */
+static BaseType_t prvTYPECommand( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
+
+/*
+ * Implements the PWD (print working directory) command.
+ */
+static BaseType_t prvPWDCommand( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
+
 #endif
