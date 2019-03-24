@@ -164,7 +164,7 @@ static void prvUARTCommandConsoleTask( void *pvParameters )
 // -------------
 // This function creates the prvUARTCommandConsoleTask
 // This is intended to be called in the initialization phases
-void vUARTCommandConsoleStart( uint16_t usStackSize, UBaseType_t uxPriority )
+void vUARTCommandConsoleStart( configSTACK_DEPTH_TYPE usStackSize, UBaseType_t uxPriority )
 {
 	/* Create the semaphore used to access the UART Tx. */
 	xTxMutex = xSemaphoreCreateMutex();

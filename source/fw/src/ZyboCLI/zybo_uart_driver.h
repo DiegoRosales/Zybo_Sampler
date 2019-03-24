@@ -19,7 +19,7 @@ available. */
 	#define configCLI_BAUD_RATE	115200
 #endif
 
-#define mainUART_COMMAND_CONSOLE_STACK_SIZE	( configMINIMAL_STACK_SIZE * 3UL )
+#define mainUART_COMMAND_CONSOLE_STACK_SIZE	( configMINIMAL_STACK_SIZE * 100UL )
 #define mainUART_COMMAND_CONSOLE_TASK_PRIORITY	( configMAX_PRIORITIES - 2 )
 
 static void prvUARTCommandConsoleTask( void *pvParameters );
