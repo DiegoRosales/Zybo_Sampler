@@ -28,12 +28,14 @@
 // Other
 #include "codec_utils.h"
 #include "nco.h"
+#include "sampler.h"
 
 #define NUM_OF_SINE_SAMPLES 0x100000
 
 nco_t sine_nco;
 static volatile audio_data_t output_stream_audio_data[ NUM_OF_SINE_SAMPLES ];
 FF_Disk_t *pxSDDisk;
+INSTRUMENT_INFORMATION_t *instrument_information = NULL;
 
 void main_rtos_program() {
 
@@ -43,6 +45,7 @@ void main_rtos_program() {
 
     register_codec_cli_commands();
     register_fat_cli_commands();
+    register_sampler_cli_commands();
 
     vTaskStartScheduler();
 
@@ -72,7 +75,7 @@ void sampler_init( void ) {
     xil_printf("Audio Data Address Start = 0x%x\n\r", sine_nco.audio_data);
     xil_printf("Done!\n\r");    
 
-
+    instrument_information = init_instrument_information(88, 1);
     /* Create the SD card disk. */
 	
 //    ////////

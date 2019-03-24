@@ -9,6 +9,15 @@
 #define SAMPLER_CONTROL_REGISTER_ACCESS ((volatile SAMPLER_REGISTERS_t *)(SAMPLER_BASE_ADDR))
 #define SAMPLER_DMA_REGISTER_ACCESS     ((volatile SAMPLER_DMA_REGISTERS_t *)(SAMPLER_DMA_BASE_ADDR))
 
+// Instrument information
+#define MAX_INST_FILE_SIZE  20000 // 20k Characters for the json file
+#define MAX_NUM_OF_KEYS     88    // 88 keys, although the MIDI spec allows for 128 keys
+#define MAX_NUM_OF_VELOCITY 128   // 7 bits of veolcity information according to the MIDI specification
+// Tokens
+#define MAX_CHAR_IN_TOKEN_STR     256
+#define INSTRUMENT_NAME_TOKEN_STR "instrument_name"
+#define INSTRUMENT_SAMPLES_TOKEN_STR "samples"
+
 #define GET_SAMPLER_FULL_ADDR(ADDR) ( SAMPLER_BASE_ADDR + (ADDR * 4) )
 //////////////////////////////////////////
 // Voice Information Data Structure
@@ -127,6 +136,35 @@ typedef struct {
     SAMPLER_DMA_t sampler_dma[MAX_VOICES]; // The number of registers depends on the number of voices
 } SAMPLER_DMA_REGISTERS_t;
 
+////////////////////////////////////////////////////////////
+// Instrument information
+////////////////////////////////////////////////////////////
+
+typedef struct {
+    uint8_t  velocity_min;                       // Lower end of the velocity curve
+    uint8_t  velocity_max;                       // Higher end of the velocity curve
+    uint32_t sample_addr;                        // Address of the sample that matches the Key+Velocity
+    uint32_t sample_size;                        // Size of the sample that matches the Key+Velocity
+    uint8_t  sample_path[MAX_CHAR_IN_TOKEN_STR] // Path of the sample relative to the information file
+} KEY_VOICE_INFORMATION_t;
+
+typedef struct {
+    uint8_t                  number_of_velocity_ranges; // Number of velocity ranges
+    KEY_VOICE_INFORMATION_t *key_voice_information[];   // Pointer to the first key voice information (the lowest velocity)
+} KEY_INFORMATION_t;
+
+typedef struct {
+    uint8_t           instrument_name[MAX_CHAR_IN_TOKEN_STR]; // 256 Characters
+    KEY_INFORMATION_t *key_information[];    // Pointer to the key information of key 0
+} INSTRUMENT_INFORMATION_t;
+
+
+// This structure is used to create the lookup table to correlate the JSON note names with the MIDI note numbers
+typedef struct {
+    uint8_t note_name[4]; // Example: "C3_S" (C3 Sharp)
+    uint8_t note_number;  // Example: 49
+} NOTE_LUT_STRUCT_t;
+
 uint32_t SamplerRegWr(uint32_t addr, uint32_t value, uint32_t check);
 uint32_t SamplerRegRd(uint32_t addr);
 
@@ -136,5 +174,8 @@ uint32_t stop_voice_playback( uint32_t voice_slot_number );
 uint32_t start_voice_playback( uint32_t sample_addr, uint32_t sample_size );
 
 uint32_t get_sampler_version();
+
+INSTRUMENT_INFORMATION_t* init_instrument_information( uint8_t number_of_keys, uint8_t number_of_velocity_ranges );
+uint32_t decode_instrument_information( uint8_t *instrument_info_buffer, INSTRUMENT_INFORMATION_t *instrument_info );
 
 #endif
