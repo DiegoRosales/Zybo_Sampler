@@ -247,13 +247,13 @@ size_t xColumns = 50U;
 	/* Ensure the buffer leaves space for the \r\n. */
 	configASSERT( xWriteBufferLen > ( strlen( cliNEW_LINE ) * 2 ) );
 	xWriteBufferLen -= strlen( cliNEW_LINE );
-
-	if( xWriteBufferLen < xColumns )
-	{
-		/* Ensure the loop that uses xColumns as an end condition does not
-		write off the end of the buffer. */
-		xColumns = xWriteBufferLen;
-	}
+	xColumns = xWriteBufferLen - 1;
+//	if( xWriteBufferLen < xColumns )
+//	{
+//		/* Ensure the loop that uses xColumns as an end condition does not
+//		write off the end of the buffer. */
+//		xColumns = xWriteBufferLen;
+//	}
 
 	if( pxFile == NULL )
 	{
