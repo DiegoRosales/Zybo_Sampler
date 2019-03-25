@@ -14,9 +14,13 @@
 #define MAX_NUM_OF_KEYS     88    // 88 keys, although the MIDI spec allows for 128 keys
 #define MAX_NUM_OF_VELOCITY 128   // 7 bits of veolcity information according to the MIDI specification
 // Tokens
-#define MAX_CHAR_IN_TOKEN_STR     256
-#define INSTRUMENT_NAME_TOKEN_STR "instrument_name"
+#define MAX_CHAR_IN_TOKEN_STR        256
+#define NUM_OF_SAMPLE_JSON_MEMBERS   3
+#define INSTRUMENT_NAME_TOKEN_STR    "instrument_name"
 #define INSTRUMENT_SAMPLES_TOKEN_STR "samples"
+#define SAMPLE_VEL_MIN_TOKEN_STR     "velocity_min"
+#define SAMPLE_VEL_MAX_TOKEN_STR     "velocity_max"
+#define SAMPLE_PATH_TOKEN_STR        "sample_file"
 
 #define GET_SAMPLER_FULL_ADDR(ADDR) ( SAMPLER_BASE_ADDR + (ADDR * 4) )
 //////////////////////////////////////////
@@ -150,12 +154,12 @@ typedef struct {
 
 typedef struct {
     uint8_t                  number_of_velocity_ranges; // Number of velocity ranges
-    KEY_VOICE_INFORMATION_t *key_voice_information[];   // Pointer to the first key voice information (the lowest velocity)
+    KEY_VOICE_INFORMATION_t  key_voice_information[];     // Pointer to the first key voice information (the lowest velocity)
 } KEY_INFORMATION_t;
 
 typedef struct {
     uint8_t           instrument_name[MAX_CHAR_IN_TOKEN_STR]; // 256 Characters
-    KEY_INFORMATION_t *key_information[];    // Pointer to the key information of key 0
+    KEY_INFORMATION_t key_information[];                     // Pointer to the key information of key 0
 } INSTRUMENT_INFORMATION_t;
 
 

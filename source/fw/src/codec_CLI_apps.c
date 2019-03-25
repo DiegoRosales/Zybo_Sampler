@@ -107,7 +107,7 @@ void register_codec_cli_commands( void ) {
 }
 
 // This function converts an string in int or hex to a uint32_t
-uint32_t str2int( char *input_string, BaseType_t input_string_length ) {
+static uint32_t str2int( char *input_string, BaseType_t input_string_length ) {
 
     char *start_char = input_string;
     char *end_char;

@@ -33,6 +33,25 @@ static uint32_t        sampler_voices[MAX_VOICES];
 static SAMPLER_VOICE_t sampler_voices_information[MAX_VOICES];
 
 
+// This function converts an string in int or hex to a uint32_t
+static uint32_t str2int( char *input_string, uint32_t input_string_length ) {
+
+    char *start_char = input_string;
+    char *end_char;
+    uint32_t output_int;
+
+    // Check if hex by identifying the '0x'
+    if( strncmp( start_char, (const char *) "0x", 2 ) == 0 ) {
+        start_char += 2; // Go forward 2 characters
+        output_int = (uint32_t)strtoul(start_char, &end_char, 16);
+    } else {
+        output_int = (uint32_t)strtoul(start_char, &end_char, 10);
+    }
+
+    return output_int;
+
+}
+
 static int jsoneq(const char *json, jsmntok_t *tok, const char *s) {
 	int token_end   = tok->end;
 	int token_start = tok->start;
@@ -157,11 +176,76 @@ INSTRUMENT_INFORMATION_t* init_instrument_information( uint8_t number_of_keys, u
 	if ( instrument_info == NULL ) {
 		xil_printf("[ERROR] - Memory allocation for the instrument info failed. Requested size = %d bytes", total_information_size);
 		return NULL;
+	} else {
+		xil_printf("[INFO] - Memory allocation for the instrument info succeeded. Memory location: 0x%x", instrument_info );
 	}
-	memset( instrument_info, '\0', total_information_size );
+	//memset( instrument_info, '\0', total_information_size );
 
 	return instrument_info;
 }
+
+uint8_t get_midi_note_number( jsmntok_t *tok, uint8_t *instrument_info_buffer ) {
+	uint8_t midi_note = 0;
+
+	uint8_t *note_letter_addr = instrument_info_buffer + tok->start;
+	uint8_t *note_number_addr = note_letter_addr + 1;
+	uint8_t *sharp_flag_addr  = note_letter_addr + 3;
+
+	uint8_t note_letter = *note_letter_addr;
+	uint8_t note_number = *note_number_addr;
+	uint8_t sharp_flag  = *sharp_flag_addr;
+
+	uint32_t note_number_int = str2int( &note_number, 1 );
+
+	for( int i = 0; i < 12; i++ ) {
+		if( MIDI_NOTES_LUT[i].note_name[0] == note_letter ) {
+			if( note_letter != 'A' && note_letter != 'B' ) {
+				note_number_int--;
+			}
+			midi_note = MIDI_NOTES_LUT[i].note_number + (12 * note_number_int);
+			if ( sharp_flag == 'S' ) {
+				midi_note++;
+			}
+			return midi_note;
+		}
+	}
+	return 0;
+}
+
+// This function will extract the sample paths from the information file
+uint32_t extract_sample_paths( uint32_t sample_start_token_index, uint32_t number_of_samples, jsmntok_t *tokens, uint8_t *instrument_info_buffer, INSTRUMENT_INFORMATION_t *instrument_info ) {
+	uint8_t midi_note;
+	uint8_t *sample_path_addr;
+	uint32_t note_name_index;
+	uint32_t key_info_index;
+
+	//for( int i = sample_start_token_index; i < (number_of_samples * NUM_OF_SAMPLE_JSON_MEMBERS * 2); i = i + (NUM_OF_SAMPLE_JSON_MEMBERS * 2) + 1 ) {
+	for( int i = 0; i < number_of_samples ; i++) {
+		note_name_index = sample_start_token_index + (i * (NUM_OF_SAMPLE_JSON_MEMBERS + 1) * 2);
+		key_info_index  = note_name_index + 2;
+		// Get the MIDI note
+		midi_note = get_midi_note_number(&tokens[note_name_index], instrument_info_buffer);
+
+		if ( midi_note < 88 ) {
+			sample_path_addr = &instrument_info->key_information[midi_note].key_voice_information[0].sample_path[0];
+			// Get the rest of the information
+			for( int j = key_info_index; j < ( key_info_index + (NUM_OF_SAMPLE_JSON_MEMBERS * 2) ); j += 2 ) {
+				if( jsoneq( (const char *)instrument_info_buffer, &tokens[j], SAMPLE_VEL_MIN_TOKEN_STR ) ) {
+					instrument_info->key_information[midi_note].key_voice_information[0].velocity_min = str2int( (char *)(instrument_info_buffer + tokens[j + 1].start), ( tokens[j + 1].end - tokens[j + 1].start ) );
+					//xil_printf("KEY[%d]: velocity_min = %d\n\r", midi_note, instrument_info->key_information[midi_note].key_voice_information[0].velocity_min);
+				} else if( jsoneq( (const char *)instrument_info_buffer, &tokens[j], SAMPLE_VEL_MAX_TOKEN_STR ) ) {
+					instrument_info->key_information[midi_note].key_voice_information[0].velocity_max = str2int( (char *)(instrument_info_buffer + tokens[j + 1].start), ( tokens[j + 1].end - tokens[j + 1].start ) );
+					//xil_printf("KEY[%d]: velocity_max = %d\n\r", midi_note, instrument_info->key_information[midi_note].key_voice_information[0].velocity_max);
+				} else if( jsoneq( (const char *)instrument_info_buffer, &tokens[j], SAMPLE_PATH_TOKEN_STR ) ) {
+					json_snprintf( (const char *)instrument_info_buffer, &tokens[j + 1], (char *)sample_path_addr );
+					//xil_printf("KEY[%d]: sample_path = %s\n\r", midi_note, instrument_info->key_information[midi_note].key_voice_information[0].sample_path);
+				}
+			}
+		}
+	}
+
+}
+
 
 // This function will decode the JSON file containing the
 // instrument information and will populate the instrument data structures
@@ -169,6 +253,8 @@ uint32_t decode_instrument_information( uint8_t *instrument_info_buffer, INSTRUM
 	jsmn_parser parser;
 	jsmntok_t tokens[1000];
 	int parser_result;
+	uint32_t number_of_samples;
+	uint32_t sample_start_token_index;
 
 	// Step 1 - Initialize the parser
 	jsmn_init(&parser);
@@ -194,8 +280,19 @@ uint32_t decode_instrument_information( uint8_t *instrument_info_buffer, INSTRUM
 	for ( int i = 0; i < parser_result ; i++ ) {
 		if ( jsoneq( instrument_info_buffer, &tokens[i], INSTRUMENT_NAME_TOKEN_STR ) ) {
 			json_snprintf(instrument_info_buffer, &tokens[i + 1], instrument_info->instrument_name );
-			xil_printf("Instrument Name: %s", instrument_info->instrument_name);
+			xil_printf("Instrument Name: %s", instrument_info->instrument_name );
 			xil_printf("\n\r");
+			break;
+		}
+	}
+
+	// Step 4.2 - Extract the sample paths
+	for ( int i = 0; i < parser_result ; i++ ) {
+		if ( jsoneq( instrument_info_buffer, &tokens[i], INSTRUMENT_SAMPLES_TOKEN_STR ) ) {
+			number_of_samples        = (uint32_t) tokens[i + 1].size;
+			sample_start_token_index = i + 2;
+			xil_printf("Number of samples: %d\n\r", number_of_samples );
+			extract_sample_paths( sample_start_token_index, number_of_samples, tokens, instrument_info_buffer, instrument_info );
 			break;
 		}
 	}
