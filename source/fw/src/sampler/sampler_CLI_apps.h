@@ -8,7 +8,7 @@
 void register_sampler_cli_commands( void );
 
 
-
+static BaseType_t test_notification( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
 static BaseType_t load_instrument_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
 
 
