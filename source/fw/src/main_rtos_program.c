@@ -25,6 +25,9 @@
 #include "ff_ramdisk.h"
 #include "ff_sddisk.h"
 
+// FreeRTOS Taksk
+#include "sampler_FreeRTOS_tasks.h"
+
 // Other
 #include "codec_utils.h"
 #include "nco.h"
@@ -35,12 +38,14 @@
 nco_t sine_nco;
 static volatile audio_data_t output_stream_audio_data[ NUM_OF_SINE_SAMPLES ];
 FF_Disk_t *pxSDDisk;
-INSTRUMENT_INFORMATION_t *instrument_information = NULL;
+//INSTRUMENT_INFORMATION_t *instrument_information = NULL;
 
 void main_rtos_program() {
 
     sampler_init();
 
+    create_sampler_tasks();
+    
     vUARTCommandConsoleStart( mainUART_COMMAND_CONSOLE_STACK_SIZE, mainUART_COMMAND_CONSOLE_TASK_PRIORITY );
 
     register_codec_cli_commands();
@@ -75,7 +80,7 @@ void sampler_init( void ) {
     xil_printf("Audio Data Address Start = 0x%x\n\r", sine_nco.audio_data);
     xil_printf("Done!\n\r");    
 
-    instrument_information = init_instrument_information(88, 1);
+    //instrument_information = init_instrument_information(88, 1);
     /* Create the SD card disk. */
 	
 //    ////////
