@@ -186,6 +186,11 @@ void load_instrument_task( void *pvParameters ) {
 
                 xil_printf("Step 3 - Done!\n\r");
 
+                // Step 4 - Decode the JSON file using JSMN
+                xil_printf("Step 4 - Decoding the instrument information...\n\r");
+                decode_instrument_information( &instrument_info_buffer, instrument_information);
+                xil_printf("Step 4 - Done!\n\r");
+
 
                 xQueueSend(path->return_handle, &return_value, 1000);
             }
