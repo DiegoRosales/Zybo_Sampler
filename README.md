@@ -40,9 +40,11 @@ You can find more about the board over at https://reference.digilentinc.com/refe
 
 ## Phase 2 [**IN PROGRESS**]: Enable and test advanced IO
 
+[**DONE**] Enable FreeRTOS+FAT to access the SD card
+
 [**IN PROGRESS**] Custom DMA engine to support up to 64 different DMA regions (64 voices)
 
-[**IN PROGRESS**] Enable FreeRTOS+FAT to download samples to memory from an SD Card
+[**IN PROGRESS**] Develop application to download samples to memory from an SD Card
 
 [**NOT STARTED**] Enable a MIDI bridge using UART
 
@@ -122,4 +124,75 @@ To interact with the CLI, open a serial terminal (using a program like PuTTY) an
 
 Once the settings have been configured, open the serial connection. You should be greeted with a screen like this one. You can type `help` to see the commands available.
 
+## Example
+
+### Hello Screen
+
 ![SerialHello](https://i.imgur.com/oDWW7r2.png)
+
+### SD Card Initialization
+Command
+```>> sd_init```
+
+![sd_init](https://i.imgur.com/Yg0IEvA.png)
+
+### Show files in current directory
+Command (after sd_init)
+```>> dir```
+
+![dir](https://i.imgur.com/YUeOLMs.png)
+
+# Instrument Definition
+The sampler currently supports only one instrument at a time. Each instrument should be defined using a file in JSON format. The structure of such file is the following
+
+## Instrument name
+The instrument name should be located in the first layer of the JSON file (preferrably at the beginning) like this
+```json
+{
+    "instrument_name": "My Piano Library",
+    ...
+}
+```
+
+## Sample definition
+The samples related to this instrument should be defined in a second layer called "samples" like this
+```json
+{
+    ...
+    "samples": {
+        ...
+    }
+}
+```
+
+Inside this section, the samples for each note should be defined as follows
+```<NOTE_NAME><NOTE_NUMBER>(_S)```
+where:
+- ```<NOTE_NAME>``` Is the name of the note (A to G).
+- ```<NOTE_NUMBER>``` Is note number (0 to 8).
+- ```(_S)``` Is optional. It represents a "sharp" note
+
+Example: "```A4_S```" is equivalent to A4#
+
+Each has its own sub_fields, such as sample path (relative to the .json file) and minimum and maximum velocities (Note. Right now only 1 velocity range is supported, but this will be expanded for multi-sampled instruments). The field names are:
+
+- ```sample_file``` This points to the sample file relative to the .json file
+- ```velocity_min``` Minimum velocity
+- ```velocity_max``` Maximum velocity
+
+Example:
+
+```json
+{
+    ...
+    "samples": {
+        ...
+        "C3_S": {
+            "sample_file": "samples/piano_c3_sharp.wav",
+            "velocity_min": 0,
+            "velocity_max": 255,
+        }
+        ...
+    }
+}
+```
