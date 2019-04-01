@@ -170,14 +170,14 @@ uint32_t stop_voice_playback( uint32_t voice_slot ) {
 INSTRUMENT_INFORMATION_t* init_instrument_information( uint8_t number_of_keys, uint8_t number_of_velocity_ranges ) {
 	uint32_t total_size_of_keys            = (uint32_t) number_of_keys * sizeof( KEY_INFORMATION_t );
 	uint32_t total_size_of_velocity_ranges = (uint32_t) number_of_velocity_ranges * sizeof( KEY_VOICE_INFORMATION_t );
-	uint32_t total_information_size = (total_size_of_keys * total_size_of_velocity_ranges) + sizeof(INSTRUMENT_INFORMATION_t);
+	uint32_t total_information_size        = (total_size_of_keys * total_size_of_velocity_ranges) + sizeof(INSTRUMENT_INFORMATION_t);
 
 	INSTRUMENT_INFORMATION_t* instrument_info = malloc( total_information_size );
 	if ( instrument_info == NULL ) {
-		xil_printf("[ERROR] - Memory allocation for the instrument info failed. Requested size = %d bytes", total_information_size);
+		xil_printf("[ERROR] - Memory allocation for the instrument info failed. Requested size = %d bytes\n\r", total_information_size);
 		return NULL;
 	} else {
-		xil_printf("[INFO] - Memory allocation for the instrument info succeeded. Memory location: 0x%x", instrument_info );
+		xil_printf("[INFO] - Memory allocation for the instrument info succeeded. Memory location: 0x%x\n\r", instrument_info );
 	}
 	//memset( instrument_info, '\0', total_information_size );
 
