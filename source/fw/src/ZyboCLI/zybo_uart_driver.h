@@ -2,7 +2,7 @@
 #define ZYBO_UART_DRIVER_h
 
 /* Dimensions the buffer into which input characters are placed. */
-#define cmdMAX_INPUT_SIZE		50
+#define cmdMAX_INPUT_SIZE		100
 
 /* Dimentions a buffer to be used by the UART driver, if the UART driver uses a
 buffer at all. */
@@ -19,7 +19,7 @@ available. */
 	#define configCLI_BAUD_RATE	115200
 #endif
 
-#define mainUART_COMMAND_CONSOLE_STACK_SIZE	( configMINIMAL_STACK_SIZE * 100UL )
+#define mainUART_COMMAND_CONSOLE_STACK_SIZE	( configMINIMAL_STACK_SIZE * 300UL )
 #define mainUART_COMMAND_CONSOLE_TASK_PRIORITY	( configMAX_PRIORITIES - 2 )
 
 static void prvUARTCommandConsoleTask( void *pvParameters );

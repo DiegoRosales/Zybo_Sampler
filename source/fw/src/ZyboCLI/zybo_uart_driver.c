@@ -101,6 +101,7 @@ static void prvUARTCommandConsoleTask( void *pvParameters )
 				command interpreter is called repeatedly until it returns
 				pdFALSE	(indicating there is no more output) as it might
 				generate more than one string. */
+				memset(pcOutputString, '\0', configCOMMAND_INT_MAX_OUTPUT_SIZE);
 				do
 				{
 
