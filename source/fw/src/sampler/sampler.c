@@ -18,15 +18,24 @@ static const NOTE_LUT_STRUCT_t MIDI_NOTES_LUT[12] = {
 	{"Ax",   21}, // Starts from A0
 	{"Ax_S", 22},
 	{"Bx",   23}, // Starts from B0
-	{"Cx",   24}, // Starts From C1
-	{"Cx_S", 25},
-	{"Dx",   26},
-	{"Dx_S", 27},
-	{"Ex",   28},
-	{"Fx",   29},
-	{"Fx_S", 30},
-	{"Gx",   31},
-	{"Gx_S", 32}
+	{"Cx",   12}, // Starts From C1
+	{"Cx_S", 13},
+	{"Dx",   14},
+	{"Dx_S", 15},
+	{"Ex",   16},
+	{"Fx",   17},
+	{"Fx_S", 18},
+	{"Gx",   19},
+	{"Gx_S", 20}	
+//	{"Cx",   24}, // Starts From C1
+//	{"Cx_S", 25},
+//	{"Dx",   26},
+//	{"Dx_S", 27},
+//	{"Ex",   28},
+//	{"Fx",   29},
+//	{"Fx_S", 30},
+//	{"Gx",   31},
+//	{"Gx_S", 32}
 };
 
 static uint32_t        sampler_voices[MAX_VOICES];
@@ -83,7 +92,7 @@ static int json_snprintf(const char *json, jsmntok_t *tok, char *output_buffer) 
 	int token_len        = token_end - token_start + 1;
 	memset( output_buffer, 0x00, MAX_CHAR_IN_TOKEN_STR );
 
-	if ( ( tok->type == JSMN_STRING ) && ( token_len <= 256 ) ) {
+	if ( ( tok->type == JSMN_STRING ) && ( token_len < MAX_CHAR_IN_TOKEN_STR ) ) {
 		snprintf( output_buffer, token_len, json + token_start );
 		return 0;
 	}
@@ -170,7 +179,7 @@ uint32_t stop_voice_playback( uint32_t voice_slot ) {
 INSTRUMENT_INFORMATION_t* init_instrument_information( uint8_t number_of_keys, uint8_t number_of_velocity_ranges ) {
 	uint32_t total_size_of_keys            = (uint32_t) number_of_keys * sizeof( KEY_INFORMATION_t );
 	uint32_t total_size_of_velocity_ranges = (uint32_t) number_of_velocity_ranges * sizeof( KEY_VOICE_INFORMATION_t );
-	uint32_t total_information_size        = (total_size_of_keys * total_size_of_velocity_ranges) + sizeof(INSTRUMENT_INFORMATION_t);
+	uint32_t total_information_size        = sizeof(INSTRUMENT_INFORMATION_t); //(total_size_of_keys * total_size_of_velocity_ranges) + sizeof(INSTRUMENT_INFORMATION_t);
 
 	INSTRUMENT_INFORMATION_t* instrument_info = malloc( total_information_size );
 	if ( instrument_info == NULL ) {
@@ -178,6 +187,56 @@ INSTRUMENT_INFORMATION_t* init_instrument_information( uint8_t number_of_keys, u
 		return NULL;
 	} else {
 		xil_printf("[INFO] - Memory allocation for the instrument info succeeded. Memory location: 0x%x\n\r", instrument_info );
+		int key       = 0;
+		int vel_range = 0;
+
+		// Initialize the structure
+		memset( &instrument_info->instrument_name, "\00" , MAX_CHAR_IN_TOKEN_STR );
+
+		for (key = 0; key < MAX_NUM_OF_KEYS; key++) {
+
+			// If the key number exceeds the maximum requested, assign the address to 0
+			if ( key >= number_of_keys ) {
+				instrument_info->key_information[key] = NULL;
+			} else {
+				// Allocate a memory section for the key information
+				instrument_info->key_information[key] = malloc( sizeof( KEY_INFORMATION_t ) );
+
+				// If the memory allocation failed, throw an error
+				if ( instrument_info->key_information[key] == NULL ) {
+					xil_printf("[ERROR] - Memory allocation for the instrument info KEY[%d] failed. Requested size = %d bytes\n\r", key, sizeof( KEY_INFORMATION_t ));
+					return NULL;	
+				}
+
+				// Allocate memory for each one of the velocity ranges
+				for (vel_range = 0; vel_range < MAX_NUM_OF_VELOCITY; vel_range++) {
+
+					// If the velocity range exceeds the one requested, assign the address to 0
+					if ( vel_range >= number_of_velocity_ranges ) {
+						instrument_info->key_information[key]->key_voice_information[vel_range] = NULL;
+					} else {
+						// Allocate a memory section for the sample information related to the velocity range
+						instrument_info->key_information[key]->key_voice_information[vel_range] = malloc( sizeof( KEY_VOICE_INFORMATION_t ) );
+
+						// If the memory allocation failed, throw an error
+						if ( instrument_info->key_information[key]->key_voice_information[vel_range] == NULL ) {
+							xil_printf("[ERROR] - Memory allocation for the instrument info KEY[%d][%d] failed. Requested size = %d bytes\n\r", key, vel_range, sizeof( KEY_VOICE_INFORMATION_t ));
+							return NULL;	
+						}
+
+						// Initialize the data structure
+						instrument_info->key_information[key]->key_voice_information[vel_range]->sample_present = 0;
+						instrument_info->key_information[key]->key_voice_information[vel_range]->velocity_min   = 0;
+						instrument_info->key_information[key]->key_voice_information[vel_range]->velocity_max   = 0;
+						instrument_info->key_information[key]->key_voice_information[vel_range]->sample_addr    = 0;
+						instrument_info->key_information[key]->key_voice_information[vel_range]->sample_size    = 0;
+						memset( &instrument_info->key_information[key]->key_voice_information[vel_range]->sample_path, "\00", MAX_CHAR_IN_TOKEN_STR );
+					}
+				}
+			}
+		}
+
+		xil_printf("[INFO] - Data Structure Initialized. Maximum number of keys = %d | Maximum number of velocity ranges = %d\n\r", number_of_keys, number_of_velocity_ranges );
 	}
 	//memset( instrument_info, '\0', total_information_size );
 
@@ -199,9 +258,9 @@ uint8_t get_midi_note_number( jsmntok_t *tok, uint8_t *instrument_info_buffer ) 
 
 	for( int i = 0; i < 12; i++ ) {
 		if( MIDI_NOTES_LUT[i].note_name[0] == note_letter ) {
-			if( note_letter != 'A' && note_letter != 'B' ) {
-				note_number_int--;
-			}
+			//if( note_letter != 'A' && note_letter != 'B' ) {
+			//	note_number_int--;
+			//}
 			midi_note = MIDI_NOTES_LUT[i].note_number + (12 * note_number_int);
 			if ( sharp_flag == 'S' ) {
 				midi_note++;
@@ -227,18 +286,19 @@ uint32_t extract_sample_paths( uint32_t sample_start_token_index, uint32_t numbe
 		midi_note = get_midi_note_number(&tokens[note_name_index], instrument_info_buffer);
 
 		if ( midi_note < 88 ) {
-			sample_path_addr = &instrument_info->key_information[midi_note].key_voice_information[0].sample_path[0];
+			sample_path_addr = &instrument_info->key_information[midi_note]->key_voice_information[0]->sample_path;
 			// Get the rest of the information
 			for( int j = key_info_index; j < ( key_info_index + (NUM_OF_SAMPLE_JSON_MEMBERS * 2) ); j += 2 ) {
 				if( jsoneq( (const char *)instrument_info_buffer, &tokens[j], SAMPLE_VEL_MIN_TOKEN_STR ) ) {
-					instrument_info->key_information[midi_note].key_voice_information[0].velocity_min = str2int( (char *)(instrument_info_buffer + tokens[j + 1].start), ( tokens[j + 1].end - tokens[j + 1].start ) );
+					instrument_info->key_information[midi_note]->key_voice_information[0]->velocity_min = str2int( (char *)(instrument_info_buffer + tokens[j + 1].start), ( tokens[j + 1].end - tokens[j + 1].start ) );
 					//xil_printf("KEY[%d]: velocity_min = %d\n\r", midi_note, instrument_info->key_information[midi_note].key_voice_information[0].velocity_min);
 				} else if( jsoneq( (const char *)instrument_info_buffer, &tokens[j], SAMPLE_VEL_MAX_TOKEN_STR ) ) {
-					instrument_info->key_information[midi_note].key_voice_information[0].velocity_max = str2int( (char *)(instrument_info_buffer + tokens[j + 1].start), ( tokens[j + 1].end - tokens[j + 1].start ) );
+					instrument_info->key_information[midi_note]->key_voice_information[0]->velocity_max = str2int( (char *)(instrument_info_buffer + tokens[j + 1].start), ( tokens[j + 1].end - tokens[j + 1].start ) );
 					//xil_printf("KEY[%d]: velocity_max = %d\n\r", midi_note, instrument_info->key_information[midi_note].key_voice_information[0].velocity_max);
 				} else if( jsoneq( (const char *)instrument_info_buffer, &tokens[j], SAMPLE_PATH_TOKEN_STR ) ) {
+					instrument_info->key_information[midi_note]->key_voice_information[0]->sample_present = 1;
 					json_snprintf( (const char *)instrument_info_buffer, &tokens[j + 1], (char *)sample_path_addr );
-					//xil_printf("KEY[%d]: sample_path = %s\n\r", midi_note, instrument_info->key_information[midi_note].key_voice_information[0].sample_path);
+					xil_printf("KEY[%d]: sample_path = %s\n\r", midi_note, instrument_info->key_information[midi_note]->key_voice_information[0]->sample_path);
 				}
 			}
 		}

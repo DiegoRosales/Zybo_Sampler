@@ -11,7 +11,7 @@
 
 // Instrument information
 #define MAX_INST_FILE_SIZE  20000 // 20k Characters for the json file
-#define MAX_NUM_OF_KEYS     88    // 88 keys, although the MIDI spec allows for 128 keys
+#define MAX_NUM_OF_KEYS     128   // The MIDI spec allows for 128 keys
 #define MAX_NUM_OF_VELOCITY 128   // 7 bits of veolcity information according to the MIDI specification
 // Tokens
 #define MAX_CHAR_IN_TOKEN_STR        256
@@ -149,17 +149,18 @@ typedef struct {
     uint8_t  velocity_max;                       // Higher end of the velocity curve
     uint32_t sample_addr;                        // Address of the sample that matches the Key+Velocity
     uint32_t sample_size;                        // Size of the sample that matches the Key+Velocity
-    uint8_t  sample_path[MAX_CHAR_IN_TOKEN_STR] // Path of the sample relative to the information file
+    uint8_t  sample_present;                     // A sample is present
+    uint8_t  sample_path[MAX_CHAR_IN_TOKEN_STR]  // Path of the sample relative to the information file
 } KEY_VOICE_INFORMATION_t;
 
 typedef struct {
     uint8_t                  number_of_velocity_ranges; // Number of velocity ranges
-    KEY_VOICE_INFORMATION_t  key_voice_information[];     // Pointer to the first key voice information (the lowest velocity)
+    KEY_VOICE_INFORMATION_t  *key_voice_information[MAX_NUM_OF_VELOCITY];     // Pointer to the first key voice information (the lowest velocity)
 } KEY_INFORMATION_t;
 
 typedef struct {
     uint8_t           instrument_name[MAX_CHAR_IN_TOKEN_STR]; // 256 Characters
-    KEY_INFORMATION_t key_information[];                     // Pointer to the key information of key 0
+    KEY_INFORMATION_t *key_information[MAX_NUM_OF_KEYS];                     // Pointer to the key information of key 0
 } INSTRUMENT_INFORMATION_t;
 
 
