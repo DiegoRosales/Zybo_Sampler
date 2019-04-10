@@ -150,7 +150,8 @@ typedef struct {
     uint32_t sample_addr;                        // Address of the sample that matches the Key+Velocity
     uint32_t sample_size;                        // Size of the sample that matches the Key+Velocity
     uint8_t  sample_present;                     // A sample is present
-    uint8_t  sample_path[MAX_CHAR_IN_TOKEN_STR]  // Path of the sample relative to the information file
+    uint8_t  sample_path[MAX_CHAR_IN_TOKEN_STR]; // Path of the sample relative to the information file
+    uint8_t *sample_buffer                       // Pointer to the sample buffer where the sample will be loaded
 } KEY_VOICE_INFORMATION_t;
 
 typedef struct {

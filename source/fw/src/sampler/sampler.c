@@ -230,6 +230,7 @@ INSTRUMENT_INFORMATION_t* init_instrument_information( uint8_t number_of_keys, u
 						instrument_info->key_information[key]->key_voice_information[vel_range]->velocity_max   = 0;
 						instrument_info->key_information[key]->key_voice_information[vel_range]->sample_addr    = 0;
 						instrument_info->key_information[key]->key_voice_information[vel_range]->sample_size    = 0;
+						instrument_info->key_information[key]->key_voice_information[vel_range]->sample_buffer  = NULL;
 						memset( &instrument_info->key_information[key]->key_voice_information[vel_range]->sample_path, "\00", MAX_CHAR_IN_TOKEN_STR );
 					}
 				}
