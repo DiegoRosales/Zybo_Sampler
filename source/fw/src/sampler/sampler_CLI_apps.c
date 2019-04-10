@@ -104,17 +104,22 @@ static BaseType_t load_instrument_command( char *pcWriteBuffer, size_t xWriteBuf
     configASSERT( ! (xParameterStringLength > MAX_PATH_LEN) );
 
     // Initialize the path
-    memset( &my_file_path.file_path, 0x00, MAX_PATH_LEN );
+    memset( my_file_path.file_path, 0x00, MAX_PATH_LEN );
+    memset( my_file_path.file_dir, 0x00, MAX_PATH_LEN );
     // Copy the Path
     if ( pcParameter[0] != '/' ) {
-        ff_getcwd( &my_file_path.file_path, MAX_PATH_LEN );
-        xil_printf( "CWD: %s\n\r", my_file_path.file_path);
-        cwd_path_len = strlen( &my_file_path.file_path );
+        // 1 - Get the current directory
+        ff_getcwd( my_file_path.file_dir, MAX_PATH_LEN );
+        xil_printf( "CWD: %s\n\r", my_file_path.file_dir);
+
+        // 2 - Assemble the full path
+        cwd_path_len = strlen( my_file_path.file_dir );
         configASSERT( ! ( (cwd_path_len + xParameterStringLength + 1) > MAX_PATH_LEN) );
-        strncat(&my_file_path.file_path, "/", 1);
-        strncat( &my_file_path.file_path, pcParameter, xParameterStringLength );
+        strncat( my_file_path.file_path, my_file_path.file_dir, cwd_path_len);
+        strncat( my_file_path.file_path, "/", 1);
+        strncat( my_file_path.file_path, pcParameter, xParameterStringLength );
     } else {
-        sprintf(&my_file_path.file_path, "%s", pcParameter);
+        sprintf(my_file_path.file_path, "%s", pcParameter);
     }
 
     //memcpy( &my_file_path.file_path, pcParameter, xParameterStringLength );
