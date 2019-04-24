@@ -10,9 +10,10 @@
 #define SAMPLER_DMA_REGISTER_ACCESS     ((volatile SAMPLER_DMA_REGISTERS_t *)(SAMPLER_DMA_BASE_ADDR))
 
 // Instrument information
-#define MAX_INST_FILE_SIZE  20000 // 20k Characters for the json file
-#define MAX_NUM_OF_KEYS     128   // The MIDI spec allows for 128 keys
-#define MAX_NUM_OF_VELOCITY 128   // 7 bits of veolcity information according to the MIDI specification
+#define MAX_INST_FILE_SIZE  20000     // 20k Characters for the json file
+#define MAX_SAMPLE_SIZE     0x1F00000 // 32MB
+#define MAX_NUM_OF_KEYS     128       // The MIDI spec allows for 128 keys
+#define MAX_NUM_OF_VELOCITY 128       // 7 bits of veolcity information according to the MIDI specification
 // Tokens
 #define MAX_CHAR_IN_TOKEN_STR        256
 #define NUM_OF_SAMPLE_JSON_MEMBERS   3
@@ -148,7 +149,7 @@ typedef struct {
     uint8_t  velocity_min;                       // Lower end of the velocity curve
     uint8_t  velocity_max;                       // Higher end of the velocity curve
     uint32_t sample_addr;                        // Address of the sample that matches the Key+Velocity
-    uint32_t sample_size;                        // Size of the sample that matches the Key+Velocity
+    size_t   sample_size;                        // Size of the sample that matches the Key+Velocity
     uint8_t  sample_present;                     // A sample is present
     uint8_t  sample_path[MAX_CHAR_IN_TOKEN_STR]; // Path of the sample relative to the information file
     uint8_t *sample_buffer                       // Pointer to the sample buffer where the sample will be loaded
