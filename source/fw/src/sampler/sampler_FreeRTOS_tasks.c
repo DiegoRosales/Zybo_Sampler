@@ -20,7 +20,7 @@ static INSTRUMENT_INFORMATION_t *instrument_information = NULL;
 static uint8_t                   instrument_info_buffer[MAX_INST_FILE_SIZE];
 
 
-void file_to_buffer( FF_FILE *pxFile, uint8_t *buffer, uint32_t buffer_len ) {
+void file_to_buffer( FF_FILE *pxFile, uint8_t *buffer, size_t buffer_len ) {
     size_t xByte;
     int    iChar;
 
@@ -89,11 +89,12 @@ uint32_t load_file_to_memory( char *file_name, uint8_t *buffer, uint32_t buffer_
 }
 
 // This functions loads a file into memory. You need to provide the full file path
-// This function can perform a memory allocation in case the buffer is new
-uint32_t load_file_to_memory_malloc( char *file_name, uint8_t *buffer, uint32_t buffer_len ) {
+// This function performs memory allocation based on the file size
+size_t load_file_to_memory_malloc( char *file_name, uint8_t ** buffer, size_t max_buffer_len ) {
     FF_FILE *pxFile = NULL;
     size_t file_size;
-    uint8_t *new_buffer;
+    uint8_t *new_buffer = NULL;
+    *buffer = NULL;
 
     // Step 1 - Open the file
     xil_printf("[INFO] - Opening the file: \"%s\"\n\r", file_name);
@@ -109,8 +110,8 @@ uint32_t load_file_to_memory_malloc( char *file_name, uint8_t *buffer, uint32_t 
     file_size = ff_filelength( pxFile );
 
     // If the file is too big, give an error
-    if ( file_size > buffer_len ) {
-        xil_printf( "[ERROR] - The File is too large. File = %d bytes | Buffer Size = %d bytes\n\r", file_size, buffer_len );
+    if ( file_size > max_buffer_len ) {
+        xil_printf( "[ERROR] - The File is too large. File = %d bytes | Max Buffer Size = %d bytes\n\r", file_size, max_buffer_len );
         xil_printf( cliNEW_LINE );
         return 0;
     }
@@ -130,7 +131,7 @@ uint32_t load_file_to_memory_malloc( char *file_name, uint8_t *buffer, uint32_t 
     }
 
     // Step 2 - Load the file into memory
-    file_to_buffer( pxFile, new_buffer, buffer_len );
+    file_to_buffer( pxFile, new_buffer, file_size );
 
     *buffer = new_buffer;
 
@@ -211,6 +212,14 @@ void load_instrument_task( void *pvParameters ) {
     file_path_t       *path;
     uint32_t          return_value = 1;
 
+    // Variables for the sample loading
+    uint32_t key        = 0;
+    uint32_t vel_range  = 0;
+    uint32_t total_keys = 0;
+    size_t   file_size  = 0;
+    size_t   total_size = 0;
+    char     full_path[MAX_PATH_LEN];
+
     for( ;; )
     {
         get_notification: 
@@ -260,11 +269,11 @@ void load_instrument_task( void *pvParameters ) {
                 xil_printf("Step 4 - Done!\n\r");
 
                 // Step 5 - Load all the samples into memory
+                // Initialize the variables
+                file_size  = 0;
+                total_size = 0;
+                total_keys = 0;
                 xil_printf("Step 5 - Loading samples into memory...\n\r");
-                int key       = 0;
-		        int vel_range = 0;
-                char full_path[MAX_PATH_LEN];
-                uint32_t file_size;
                 for (key = 0; key < MAX_NUM_OF_KEYS; key++) {
                     for (vel_range = 0; vel_range < 1; vel_range++) {
                         if ( instrument_information->key_information[key]->key_voice_information[vel_range]->sample_present != 0 ) {
@@ -281,8 +290,11 @@ void load_instrument_task( void *pvParameters ) {
                             xil_printf("[INFO] - [%d][%d]Loading Sample \"%s\"\n\r", key, vel_range, instrument_information->key_information[key]->key_voice_information[vel_range]->sample_path );
                             file_size = load_file_to_memory_malloc( full_path, \
                                                                     &instrument_information->key_information[key]->key_voice_information[vel_range]->sample_buffer, \
-                                                                    0x100000 );
+                                                                    (size_t) MAX_SAMPLE_SIZE );
                             
+                            instrument_information->key_information[key]->key_voice_information[vel_range]->sample_size = file_size;
+                            total_size += file_size;
+                            total_keys++;
                             if ( instrument_information->key_information[key]->key_voice_information[vel_range]->sample_buffer == NULL || file_size == 0 ) {
                                 xil_printf("[ERROR] - There was a problem when loading the samples into memory!!\n\r");
                                 return_value = 1;
@@ -292,6 +304,10 @@ void load_instrument_task( void *pvParameters ) {
                         }
                     }
                 }
+                xil_printf("---\n\r");
+                xil_printf("[INFO] - Loaded %d keys\n\r", total_keys);
+                xil_printf("[INFO] - Total Memory Used = %d bytes\n\r", total_size);
+                xil_printf("Step 5 - Done!\n\r");
 
                 xQueueSend(path->return_handle, &return_value, 1000);
             }
