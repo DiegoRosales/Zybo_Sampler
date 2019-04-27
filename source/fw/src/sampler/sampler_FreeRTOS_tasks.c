@@ -20,123 +20,6 @@ static INSTRUMENT_INFORMATION_t *instrument_information = NULL;
 static uint8_t                   instrument_info_buffer[MAX_INST_FILE_SIZE];
 
 
-void file_to_buffer( FF_FILE *pxFile, uint8_t *buffer, size_t buffer_len ) {
-    size_t xByte;
-    int    iChar;
-
-
-    xil_printf("[INFO] - Loading the file into memory\n\r");
-    memset( buffer, 0x00, buffer_len );
-    /* Read the next chunk of data from the file. */
-//    for( xByte = 0; xByte < buffer_len; xByte++ )
-//    {
-//        iChar = ff_fgetc( pxFile ); // Get byte
-//
-//        if( iChar == -1 )
-//        {
-//            /* No more characters to return. */
-//            ff_fclose( pxFile );
-//            pxFile = NULL;
-//            break;
-//        }
-//        else
-//        {
-//            buffer[ xByte ] = ( uint8_t ) iChar;
-//        }
-//    }
-    ff_fread( buffer, buffer_len, 1, pxFile );
-    Xil_DCacheFlushRange( buffer, buffer_len );
-    xil_printf("[INFO] - File succesfully loaded into memory. Loaded %d bytes. Address = 0x%x\n\r", buffer_len, buffer);
-}
-
-// This functions loads a file into memory. You need to provide the full file path
-uint32_t load_file_to_memory( char *file_name, uint8_t *buffer, uint32_t buffer_len ) {
-    FF_FILE *pxFile = NULL;
-    size_t file_size;
-
-    // Step 0 - Check the inputs
-    if ( buffer == NULL ) {
-        xil_printf("[ERROR] - Pointer to the buffer is NULL! Enable do_malloc option to allocate a new pointer.\n\r");
-        return 0;
-    }
-
-    // Step 1 - Open the file
-    xil_printf("[INFO] - Opening the file: \"%s\"\n\r", file_name);
-    pxFile = ff_fopen( file_name, "r" );
-
-    // Throw an error if the file cannot be opened
-    if ( pxFile == NULL ) {
-        xil_printf("[ERROR] - File %s could not be opened!\n\r", file_name);
-        return 0;
-    }
-
-    // Get the size of the file
-    file_size = ff_filelength( pxFile );
-
-    // If the file is too big, give an error
-    if ( file_size > buffer_len ) {
-        xil_printf( "[ERROR] - The File is too large. File = %d bytes | Buffer Size = %d bytes\n\r", file_size, buffer_len );
-        xil_printf( cliNEW_LINE );
-        return 0;
-    }
-
-    xil_printf("[INFO] - File opened succesfully. File Size = %d bytes\n\r", file_size);
-
-    // Step 2 - Load the file into memory
-    file_to_buffer( pxFile, buffer, buffer_len );
-
-    return file_size;
-}
-
-// This functions loads a file into memory. You need to provide the full file path
-// This function performs memory allocation based on the file size
-size_t load_file_to_memory_malloc( char *file_name, uint8_t ** buffer, size_t max_buffer_len ) {
-    FF_FILE *pxFile = NULL;
-    size_t file_size;
-    uint8_t *new_buffer = NULL;
-    *buffer = NULL;
-
-    // Step 1 - Open the file
-    xil_printf("[INFO] - Opening the file: \"%s\"\n\r", file_name);
-    pxFile = ff_fopen( file_name, "r" );
-
-    // Throw an error if the file cannot be opened
-    if ( pxFile == NULL ) {
-        xil_printf("[ERROR] - File %s could not be opened!\n\r", file_name);
-        return 0;
-    }
-
-    // Get the size of the file
-    file_size = ff_filelength( pxFile );
-
-    // If the file is too big, give an error
-    if ( file_size > max_buffer_len ) {
-        xil_printf( "[ERROR] - The File is too large. File = %d bytes | Max Buffer Size = %d bytes\n\r", file_size, max_buffer_len );
-        xil_printf( cliNEW_LINE );
-        return 0;
-    }
-
-    xil_printf("[INFO] - File opened succesfully. File Size = %d bytes\n\r", file_size);
-
-    // Perform memory allocation for the buffer
-    xil_printf( "[INFO] - Performing memory allocation for the buffer. Requesting %d bytes\n\r", file_size );
-    new_buffer = pvPortMalloc( file_size );
-    //new_buffer = malloc( file_size );
-    // Check if malloc was succesfull
-    if ( new_buffer == NULL ) {
-        xil_printf( "[ERROR] - Memory allocation failed. Requested %d bytes\n\r", file_size );
-        return 0;
-    } else {
-        xil_printf( "[INFO] - Memory allocation was succesfull. Buffer address =  0x%x\n\r", new_buffer );
-    }
-
-    // Step 2 - Load the file into memory
-    file_to_buffer( pxFile, new_buffer, file_size );
-
-    *buffer = new_buffer;
-
-    return file_size;
-}
 
 void create_sampler_tasks ( void ) {
 
@@ -243,10 +126,10 @@ void load_instrument_task( void *pvParameters ) {
 
                 // Step 1 - Open the json file containing the instrument information
                 xil_printf("Step 1 - Load the JSON File\n\r");
-                load_file_to_memory( &path->file_path, instrument_info_buffer, MAX_INST_FILE_SIZE );
+                load_file_to_memory( &path->file_path, instrument_info_buffer, (size_t) MAX_INST_FILE_SIZE );
 
-                // Step 3 - Initialize the instrument information
-                xil_printf("Step 3 - Initializing the instrument information\n\r");
+                // Step 2 - Initialize the instrument information
+                xil_printf("Step 2 - Initializing the instrument information\n\r");
                 if ( instrument_information == NULL ){
                     instrument_information = init_instrument_information(MAX_NUM_OF_KEYS, 1);
 
@@ -261,19 +144,19 @@ void load_instrument_task( void *pvParameters ) {
                     xil_printf("[INFO] - Instrument information was already initialized at 0x%x\n\r", instrument_information);
                 }
 
+                xil_printf("Step 2 - Done!\n\r");
+
+                // Step 3 - Decode the JSON file using JSMN
+                xil_printf("Step 3 - Decoding the instrument information...\n\r");
+                decode_instrument_information( &instrument_info_buffer, instrument_information);
                 xil_printf("Step 3 - Done!\n\r");
 
-                // Step 4 - Decode the JSON file using JSMN
-                xil_printf("Step 4 - Decoding the instrument information...\n\r");
-                decode_instrument_information( &instrument_info_buffer, instrument_information);
-                xil_printf("Step 4 - Done!\n\r");
-
-                // Step 5 - Load all the samples into memory
+                // Step 4 - Load all the samples into memory
                 // Initialize the variables
                 file_size  = 0;
                 total_size = 0;
                 total_keys = 0;
-                xil_printf("Step 5 - Loading samples into memory...\n\r");
+                xil_printf("Step 4 - Loading samples into memory...\n\r");
                 for (key = 0; key < MAX_NUM_OF_KEYS; key++) {
                     for (vel_range = 0; vel_range < 1; vel_range++) {
                         if ( instrument_information->key_information[key]->key_voice_information[vel_range]->sample_present != 0 ) {
@@ -307,6 +190,12 @@ void load_instrument_task( void *pvParameters ) {
                 xil_printf("---\n\r");
                 xil_printf("[INFO] - Loaded %d keys\n\r", total_keys);
                 xil_printf("[INFO] - Total Memory Used = %d bytes\n\r", total_size);
+                xil_printf("Step 4 - Done!\n\r");
+
+                xil_printf("Step 5 - Populating the sampler data structures...\n\r");
+
+                load_sample_information( instrument_information );
+
                 xil_printf("Step 5 - Done!\n\r");
 
                 xQueueSend(path->return_handle, &return_value, 1000);
