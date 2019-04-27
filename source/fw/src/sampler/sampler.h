@@ -167,27 +167,49 @@ typedef struct {
 // Sample information (RIFF/WAV)
 ////////////////////////////////////////////////////////////
 
-// Canonical RIFF data structure
-typedef struct {
-    // RIFF Descriptor
-    uint32_t ChunkID;          // "RIFF"
-    uint32_t ChunkSize;        // (little endian) | 4 + (8 + SubChunk1Size) + (8 + SubChunk2Size) 
-    uint32_t Format;           // Contains the letters "WAVE" (0x57415645 big-endian form)
-    // "fmt " sub-chunk
-    uint32_t Subchunk1ID;      // Contains the letters "fmt " (0x666d7420 big-endian form)
-    uint32_t Subchunk1Size;    // (little endian) | 16 for PCM.  This is the size of the rest of the Subchunk which follows this number.
-    uint16_t AudioFormat;      // (little endian) | PCM = 1 (i.e. Linear quantization). Values other than 1 indicate some form of compression
-    uint16_t NumChannels;      // (little endian) | Mono = 1, Stereo = 2, etc.
-    uint32_t SampleRate;       // (little endian) | 8000, 44100, etc.
-    uint32_t ByteRate;         // (little endian) | == SampleRate * NumChannels * BitsPerSample/8
-    uint16_t BlockAlign;       // (little endian) | == NumChannels * BitsPerSample/8. The number of bytes for one sample including all channels. I wonder what happens when this number isn't an integer?
-    uint16_t BitsPerSample;    // (little endian) | 8 bits = 8, 16 bits = 16, etc.
-} WAVE_FORMAT_t;
 
 typedef struct {
     uint32_t ChunkID;   // Big Endian
     uint32_t ChunkSize; // Little Endian
 } WAVE_BASE_CHUNK_t;
+
+typedef struct {
+    WAVE_BASE_CHUNK_t BaseChunk; // ID ("RIFF") and Size
+    uint32_t          Format;    // Contains the letters "WAVE" (0x57415645 big-endian form)
+} RIFF_DESCRIPTOR_CHUNK_t;
+
+typedef struct {
+    WAVE_BASE_CHUNK_t BaseChunk; // ID ("fmt ") and Size
+    uint16_t AudioFormat;        // (little endian) | PCM = 1 (i.e. Linear quantization). Values other than 1 indicate some form of compression
+    uint16_t NumChannels;        // (little endian) | Mono = 1, Stereo = 2, etc.
+    uint32_t SampleRate;         // (little endian) | 8000, 44100, etc.
+    uint32_t ByteRate;           // (little endian) | == SampleRate * NumChannels * BitsPerSample/8
+    uint16_t BlockAlign;         // (little endian) | == NumChannels * BitsPerSample/8. The number of bytes for one sample including all channels. I wonder what happens when this number isn't an integer?
+    uint16_t BitsPerSample;      // (little endian) | 8 bits = 8, 16 bits = 16, etc.
+} FORMAT_DESCRIPTOR_CHUNK_t;
+
+// Canonical RIFF data structure
+typedef struct {
+    // RIFF Descriptor
+    RIFF_DESCRIPTOR_CHUNK_t   RiffDescriptor;          // "RIFF"
+    // Format Descriptor
+    FORMAT_DESCRIPTOR_CHUNK_t FormatDescriptor;        // (little endian) | 4 + (8 + SubChunk1Size) + (8 + SubChunk2Size) 
+} WAVE_FORMAT_t;
+// typedef struct {
+//     // RIFF Descriptor
+//     uint32_t ChunkID;          // "RIFF"
+//     uint32_t ChunkSize;        // (little endian) | 4 + (8 + SubChunk1Size) + (8 + SubChunk2Size) 
+//     uint32_t Format;           // Contains the letters "WAVE" (0x57415645 big-endian form)
+//     // "fmt " sub-chunk
+//     uint32_t Subchunk1ID;      // Contains the letters "fmt " (0x666d7420 big-endian form)
+//     uint32_t Subchunk1Size;    // (little endian) | 16 for PCM.  This is the size of the rest of the Subchunk which follows this number.
+//     uint16_t AudioFormat;      // (little endian) | PCM = 1 (i.e. Linear quantization). Values other than 1 indicate some form of compression
+//     uint16_t NumChannels;      // (little endian) | Mono = 1, Stereo = 2, etc.
+//     uint32_t SampleRate;       // (little endian) | 8000, 44100, etc.
+//     uint32_t ByteRate;         // (little endian) | == SampleRate * NumChannels * BitsPerSample/8
+//     uint16_t BlockAlign;       // (little endian) | == NumChannels * BitsPerSample/8. The number of bytes for one sample including all channels. I wonder what happens when this number isn't an integer?
+//     uint16_t BitsPerSample;    // (little endian) | 8 bits = 8, 16 bits = 16, etc.
+// } WAVE_FORMAT_t;
 
 typedef struct {
     uint16_t audio_format;       // PCM = 1 (i.e. Linear quantization). Values other than 1 indicate some form of compression

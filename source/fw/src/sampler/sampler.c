@@ -385,36 +385,36 @@ uint32_t get_riff_information( uint8_t *sample_buffer, size_t sample_size, SAMPL
     memcpy( &wave_format_data, sample_buffer, sizeof( WAVE_FORMAT_t ) );
 
     // Step 3 - Check that this is a RIFF file with proper format
-    if( wave_format_data.ChunkID != RIFF_ASCII_TOKEN ) {
+    if( wave_format_data.RiffDescriptor.BaseChunk.ChunkID != RIFF_ASCII_TOKEN ) {
         xil_printf("[ERROR] - Error while parsing the RIFF information. Buffer is not RIFF.\n\r");
         return 2;
     }
 
-    if( wave_format_data.Format != FORMAT_ASCII_TOKEN ) {
+    if( wave_format_data.RiffDescriptor.Format != FORMAT_ASCII_TOKEN ) {
         xil_printf("[ERROR] - Error while parsing the RIFF information. Buffer format is not WAVE.\n\r");
         return 2;       
     }
 
-    if( wave_format_data.Subchunk1ID != FMT_ASCII_TOKEN ) {
+    if( wave_format_data.FormatDescriptor.BaseChunk.ChunkID != FMT_ASCII_TOKEN ) {
         xil_printf("[ERROR] - Error while parsing the RIFF information. Subc Chunk 1 is not \"fmt \".\n\r");
         return 2;       
     }
 
 
     // Step 4 - Extract the base information
-    riff_information->audio_format       = wave_format_data.AudioFormat;
-    riff_information->number_of_channels = wave_format_data.NumChannels;
-    riff_information->sample_rate        = wave_format_data.SampleRate;
-    riff_information->byte_rate          = wave_format_data.ByteRate;
-    riff_information->block_align        = wave_format_data.BlockAlign;
-    riff_information->bits_per_sample    = wave_format_data.BitsPerSample;
+    riff_information->audio_format       = wave_format_data.FormatDescriptor.AudioFormat;
+    riff_information->number_of_channels = wave_format_data.FormatDescriptor.NumChannels;
+    riff_information->sample_rate        = wave_format_data.FormatDescriptor.SampleRate;
+    riff_information->byte_rate          = wave_format_data.FormatDescriptor.ByteRate;
+    riff_information->block_align        = wave_format_data.FormatDescriptor.BlockAlign;
+    riff_information->bits_per_sample    = wave_format_data.FormatDescriptor.BitsPerSample;
     riff_information->audio_data_size    = 0;    // Initialize to 0
     riff_information->data_start_ptr     = NULL; // Initialize to 0   
 
     // Step 5 - Find the "DATA" chunk and get the pointer
 
     // Current index is where the Format chunk finished
-    sample_buffer_idx = sample_buffer + sizeof( WAVE_FORMAT_t );
+    sample_buffer_idx = sample_buffer + wave_format_data.FormatDescriptor.BaseChunk.ChunkSize + sizeof( RIFF_DESCRIPTOR_CHUNK_t ) + sizeof( WAVE_BASE_CHUNK_t );
     memcpy( &current_chunk, sample_buffer_idx, sizeof( WAVE_BASE_CHUNK_t ) );
 
     // Check the entire file for the "DATA" ID token
