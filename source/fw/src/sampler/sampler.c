@@ -75,10 +75,10 @@ static int jsonprint(const char *json, jsmntok_t *tok) {
 	int token_end        = tok->end;
 	int token_start      = tok->start;
 	int token_len        = token_end - token_start + 1;
-	char *token_str[256];
-	memset( token_str, 0x00, 256 );
+	char *token_str[MAX_CHAR_IN_TOKEN_STR];
+	memset( token_str, 0x00, (MAX_CHAR_IN_TOKEN_STR * sizeof(char)) );
 
-	if ( ( tok->type == JSMN_STRING ) && ( token_len <= 256 ) ) {
+	if ( ( tok->type == JSMN_STRING ) && ( token_len <= MAX_CHAR_IN_TOKEN_STR ) ) {
 		snprintf( token_str, token_len, json + token_start );
 		xil_printf( token_str );
 		return 0;
@@ -177,8 +177,6 @@ uint32_t stop_voice_playback( uint32_t voice_slot ) {
 
 // This function will initialize the data structure of an instrument
 INSTRUMENT_INFORMATION_t* init_instrument_information( uint8_t number_of_keys, uint8_t number_of_velocity_ranges ) {
-	uint32_t total_size_of_keys            = (uint32_t) number_of_keys * sizeof( KEY_INFORMATION_t );
-	uint32_t total_size_of_velocity_ranges = (uint32_t) number_of_velocity_ranges * sizeof( KEY_VOICE_INFORMATION_t );
 	uint32_t total_information_size        = sizeof(INSTRUMENT_INFORMATION_t); //(total_size_of_keys * total_size_of_velocity_ranges) + sizeof(INSTRUMENT_INFORMATION_t);
 
 	INSTRUMENT_INFORMATION_t* instrument_info = malloc( total_information_size );
@@ -251,9 +249,9 @@ uint8_t get_midi_note_number( jsmntok_t *tok, uint8_t *instrument_info_buffer ) 
 	uint8_t *note_number_addr = note_letter_addr + 1;
 	uint8_t *sharp_flag_addr  = note_letter_addr + 3;
 
-	uint8_t note_letter = *note_letter_addr;
-	uint8_t note_number = *note_number_addr;
-	uint8_t sharp_flag  = *sharp_flag_addr;
+	char note_letter = (char) *note_letter_addr;
+	char note_number = (char) *note_number_addr;
+	char sharp_flag  = (char) *sharp_flag_addr;
 
 	uint32_t note_number_int = str2int( &note_number, 1 );
 
@@ -358,4 +356,118 @@ uint32_t decode_instrument_information( uint8_t *instrument_info_buffer, INSTRUM
 		}
 	}
 
+}
+
+// This function will extract the information based on the canonical wave format
+uint32_t get_riff_information( uint8_t *sample_buffer, size_t sample_size, SAMPLE_FORMAT_t *riff_information ) {
+
+    WAVE_FORMAT_t     wave_format_data;
+    WAVE_BASE_CHUNK_t current_chunk;
+    uint8_t          *sample_buffer_idx = NULL;
+
+    // Step 1 - Check that the inputs are valid
+    if( sample_buffer == NULL ) {
+        xil_printf("[ERROR] - Error while extracting the RIFF information. Sample buffer = NULL\n\r");
+        return 1;
+    }
+
+    if( sample_size <= (sizeof( WAVE_FORMAT_t ) + sizeof( WAVE_BASE_CHUNK_t ) ) ) {
+        xil_printf("[ERROR] - Error while extracting the RIFF information. Sample buffer size is too small. Sample size = %d\n\r", sample_size);
+        return 1;
+    }
+
+    if( riff_information == NULL ) {
+        xil_printf("[ERROR] - Error while extracting the RIFF information. Pointer to the riff information = NULL\n\r");
+        return 1;
+    }
+
+    // Step 2 - Copy the base information
+    memcpy( &wave_format_data, sample_buffer, sizeof( WAVE_FORMAT_t ) );
+
+    // Step 3 - Check that this is a RIFF file with proper format
+    if( wave_format_data.ChunkID != RIFF_ASCII_TOKEN ) {
+        xil_printf("[ERROR] - Error while parsing the RIFF information. Buffer is not RIFF.\n\r");
+        return 2;
+    }
+
+    if( wave_format_data.Format != FORMAT_ASCII_TOKEN ) {
+        xil_printf("[ERROR] - Error while parsing the RIFF information. Buffer format is not WAVE.\n\r");
+        return 2;       
+    }
+
+    if( wave_format_data.Subchunk1ID != FMT_ASCII_TOKEN ) {
+        xil_printf("[ERROR] - Error while parsing the RIFF information. Subc Chunk 1 is not \"fmt \".\n\r");
+        return 2;       
+    }
+
+
+    // Step 4 - Extract the base information
+    riff_information->audio_format       = wave_format_data.AudioFormat;
+    riff_information->number_of_channels = wave_format_data.NumChannels;
+    riff_information->sample_rate        = wave_format_data.SampleRate;
+    riff_information->byte_rate          = wave_format_data.ByteRate;
+    riff_information->block_align        = wave_format_data.BlockAlign;
+    riff_information->bits_per_sample    = wave_format_data.BitsPerSample;
+    riff_information->audio_data_size    = 0;    // Initialize to 0
+    riff_information->data_start_ptr     = NULL; // Initialize to 0   
+
+    // Step 5 - Find the "DATA" chunk and get the pointer
+
+    // Current index is where the Format chunk finished
+    sample_buffer_idx = sample_buffer + sizeof( WAVE_FORMAT_t );
+    memcpy( &current_chunk, sample_buffer_idx, sizeof( WAVE_BASE_CHUNK_t ) );
+
+    // Check the entire file for the "DATA" ID token
+    while( sample_buffer_idx <= ( sample_buffer + sample_size ) ){
+
+        // If the token is found, copy the pointers and information
+        if( current_chunk.ChunkID == DATA_ASCII_TOKEN ) {
+            riff_information->audio_data_size = current_chunk.ChunkSize;
+            riff_information->data_start_ptr  = sample_buffer_idx + sizeof( WAVE_BASE_CHUNK_t );
+            break;
+        } 
+        // If the token is not found, go to the next chunk
+        else {
+            sample_buffer_idx += current_chunk.ChunkSize + sizeof( WAVE_BASE_CHUNK_t );
+            if( sample_buffer_idx <= ( sample_buffer + sample_size ) ){
+                memcpy( &current_chunk, sample_buffer_idx, sizeof( WAVE_BASE_CHUNK_t ) );
+            }
+        }
+    }
+
+    if( riff_information->data_start_ptr == NULL ) {
+        xil_printf("[ERROR] - Couldn't find the DATA chunk!\n\r");
+        return 3;
+    } else if ( riff_information->audio_data_size == 0 ) {
+        xil_printf("[ERROR] - Audio Data Size = 0!\n\r");
+        return 3;
+    }
+
+    return 0;
+
+}
+
+// This function populates the data structure that is going to be read via DMA
+// by the PL to get the sample information
+uint32_t load_sample_information( INSTRUMENT_INFORMATION_t *instrument_information ) {
+    int key        = 0;
+    int vel_range  = 0;
+    uint32_t error = 0;
+
+    for (key = 0; key < MAX_NUM_OF_KEYS; key++) {
+        for (vel_range = 0; vel_range < 1; vel_range++) {
+            if ( instrument_information->key_information[key]->key_voice_information[vel_range]->sample_present != 0 ) {
+                error = get_riff_information(
+                                                instrument_information->key_information[key]->key_voice_information[vel_range]->sample_buffer,
+                                                instrument_information->key_information[key]->key_voice_information[vel_range]->sample_size,
+                                                &instrument_information->key_information[key]->key_voice_information[vel_range]->sample_format
+                                            );
+                if ( error != 0 ) {
+                    return error;
+                }
+            }
+        }
+    }
+
+    return error;
 }
