@@ -15,6 +15,7 @@ typedef struct {
     xQueueHandle return_handle;
 } file_path_t;
 
+uint32_t load_samples_into_memory( INSTRUMENT_INFORMATION_t *instrument_information, char *json_file_root_dir );
 
 void notification_test_task( void *pvParameters );
 void load_instrument_task( void *pvParameters );

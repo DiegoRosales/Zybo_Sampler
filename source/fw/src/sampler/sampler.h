@@ -244,6 +244,9 @@ typedef struct {
 
 typedef struct {
     uint8_t            instrument_name[MAX_CHAR_IN_TOKEN_STR]; // 256 Characters
+    uint8_t            instrument_loaded;                      // Indicates that the instrument has been loaded
+    uint32_t           total_size;                             // Indicates the memory consumption for the instrument
+    uint32_t           total_keys;                             // Indicates the number of keys loaded
     KEY_INFORMATION_t *key_information[MAX_NUM_OF_KEYS];       // Pointer to the key information of key 0
 } INSTRUMENT_INFORMATION_t;
 

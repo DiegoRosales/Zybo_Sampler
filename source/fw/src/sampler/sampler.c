@@ -191,6 +191,7 @@ INSTRUMENT_INFORMATION_t* init_instrument_information( uint8_t number_of_keys, u
 		// Initialize the structure
 		memset( &instrument_info->instrument_name, "\00" , MAX_CHAR_IN_TOKEN_STR );
 
+		// TODO: Don't malloc for a preset number of keys. Dynamically malloc based on the samples available in the json file
 		for (key = 0; key < MAX_NUM_OF_KEYS; key++) {
 
 			// If the key number exceeds the maximum requested, assign the address to 0
