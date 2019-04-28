@@ -25,6 +25,36 @@
 static xQueueHandle my_filename_queue_handler;
 static xQueueHandle my_return_queue_handler;
 
+static xQueueHandle my_key_parameters_queue_handler;
+
+// This function converts an string in int or hex to a uint32_t
+static uint32_t str2int( char *input_string, BaseType_t input_string_length ) {
+
+    char *start_char = input_string;
+    char *end_char;
+    uint32_t output_int;
+
+    // Check if hex by identifying the '0x'
+    if( strncmp( start_char, (const char *) "0x", 2 ) == 0 ) {
+        start_char += 2; // Go forward 2 characters
+        output_int = (uint32_t)strtoul(start_char, &end_char, 16);
+    } else {
+        output_int = (uint32_t)strtoul(start_char, &end_char, 10);
+    }
+
+    return output_int;
+
+}
+
+// Structure defining the key playback command
+static const CLI_Command_Definition_t play_key_command_definition =
+{
+    "play_key", /* The command string to type. */
+    "\r\nplay_key <key> <velocity>:\r\n Starts the key playback\n\r",
+    play_key_command, /* The function to run. */
+    2 /* One parameter is expected. */
+};
+
 // Structure defining the instrument loader command
 static const CLI_Command_Definition_t test_notification_definition =
 {
@@ -45,8 +75,10 @@ static const CLI_Command_Definition_t load_instrument_command_definition =
 
 // This function registers all the CLI applications
 void register_sampler_cli_commands( void ) {
-    my_filename_queue_handler = xQueueCreate(1, sizeof(file_path_t));
-    my_return_queue_handler   = xQueueCreate(1, sizeof(uint32_t));
+    my_filename_queue_handler       = xQueueCreate(1, sizeof(file_path_t));
+    my_return_queue_handler         = xQueueCreate(1, sizeof(uint32_t));
+    my_key_parameters_queue_handler = xQueueCreate(1, sizeof(uint32_t));
+    FreeRTOS_CLIRegisterCommand( &play_key_command_definition );
     FreeRTOS_CLIRegisterCommand( &load_instrument_command_definition );
     FreeRTOS_CLIRegisterCommand( &test_notification_definition );
 
@@ -72,6 +104,64 @@ static BaseType_t test_notification( char *pcWriteBuffer, size_t xWriteBufferLen
         xil_printf("Done! Return Value = %d\n\r", return_value);
     }
 
+    return pdFALSE;
+
+}
+
+static BaseType_t play_key_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString ) {
+
+    const char *key;
+    const char *velocity;
+
+    BaseType_t xParameter1StringLength;
+    BaseType_t xParameter2StringLength;
+
+    // Variables for the key playback task
+    TaskHandle_t     key_playback_task_hanle = xTaskGetHandle( KEY_PLAYBACK_TASK_NAME );
+    key_parameters_t key_parameters;
+
+    // First parameter
+    key = FreeRTOS_CLIGetParameter
+                    (
+                        pcCommandString,		/* The command string itself. */
+                        1,						/* Return the first parameter. */
+                        &xParameter1StringLength	/* Store the parameter string length. */
+                    );
+
+    // Second Parameter
+    velocity = FreeRTOS_CLIGetParameter
+                    (
+                        pcCommandString,		/* The command string itself. */
+                        2,						/* Return the first parameter. */
+                        &xParameter2StringLength	/* Store the parameter string length. */
+                    );
+
+
+    if ( ( xParameter1StringLength != 2 ) && ( xParameter1StringLength != 4 ) ) {
+        xil_printf("[ERROR] - Incorrect key format.\n\rExample 1: f2\n\rExample 2: a5_s\n\r");
+        return pdFALSE;
+    }
+
+    // Get the Key number and the velocity in uint8_t form
+    key_parameters.key      = get_midi_note_number( key );
+    key_parameters.velocity = str2int( velocity, xParameter2StringLength );
+
+    if( key_parameters.key == 0 || key_parameters.velocity == 0 ) {
+        xil_printf("[ERROR] - Bad key or velocity.\n\r");
+        return pdFALSE;
+    }
+
+    xil_printf("Playing back Key %d, Velocity: %d", key_parameters.key, key_parameters.velocity);
+
+
+    xQueueSend(my_key_parameters_queue_handler, &key_parameters , 1000);
+
+    // Wake up the task and send the queue handler of the parameters
+    xTaskNotify( key_playback_task_hanle,
+                 my_key_parameters_queue_handler,
+                 eSetValueWithOverwrite );
+
+    // Don't wait for any feedback
     return pdFALSE;
 
 }

@@ -130,7 +130,7 @@ size_t load_file_to_memory( char *file_name, uint8_t *buffer, size_t buffer_len 
 
 // This functions loads a file into memory. You need to provide the full file path
 // This function performs memory allocation based on the file size
-size_t load_file_to_memory_malloc( char *file_name, uint8_t ** buffer, size_t max_buffer_len ) {
+size_t load_file_to_memory_malloc( char *file_name, uint8_t ** buffer, size_t max_buffer_len, size_t overhead ) {
     FF_FILE *pxFile = NULL;
     size_t file_size;
     uint8_t *new_buffer = NULL;
@@ -160,7 +160,7 @@ size_t load_file_to_memory_malloc( char *file_name, uint8_t ** buffer, size_t ma
 
     // Perform memory allocation for the buffer
     xil_printf( "[INFO] - Performing memory allocation for the buffer. Requesting %d bytes\n\r", file_size );
-    new_buffer = pvPortMalloc( file_size );
+    new_buffer = pvPortMalloc( file_size + overhead ); // Added overhead
     //new_buffer = malloc( file_size );
     // Check if malloc was succesfull
     if ( new_buffer == NULL ) {

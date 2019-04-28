@@ -1,6 +1,8 @@
 #ifndef SAMPLER_H
 #define SAMPLER_H
 
+#include "jsmn.h"
+
 #define SAMPLER_BASE_ADDR     XPAR_AUDIO_SAMPLER_INST_AXI_LITE_SLAVE_BASEADDR
 #define SAMPLER_DMA_BASE_ADDR SAMPLER_BASE_ADDR + (0x40)
 #define MAX_VOICES 4
@@ -227,6 +229,8 @@ typedef struct {
 ////////////////////////////////////////////////////////////
 
 typedef struct {
+    uint8_t          current_status;                     // 1 = Currently in playback, 0 = Idle
+    uint8_t          current_slot;                       // Current slot
     uint8_t          velocity_min;                       // Lower end of the velocity curve
     uint8_t          velocity_max;                       // Higher end of the velocity curve
     uint32_t         sample_addr;                        // Address of the sample that matches the Key+Velocity
@@ -267,9 +271,15 @@ uint32_t start_voice_playback( uint32_t sample_addr, uint32_t sample_size );
 
 uint32_t get_sampler_version();
 
+uint8_t get_json_midi_note_number( jsmntok_t *tok, uint8_t *instrument_info_buffer );
+uint8_t get_midi_note_number( char *note_name );
+
+uint32_t play_instrument_key( uint8_t key, uint8_t velocity, INSTRUMENT_INFORMATION_t *instrument_information );
+
 INSTRUMENT_INFORMATION_t* init_instrument_information( uint8_t number_of_keys, uint8_t number_of_velocity_ranges );
 uint32_t decode_instrument_information( uint8_t *instrument_info_buffer, INSTRUMENT_INFORMATION_t *instrument_info );
 uint32_t load_sample_information( INSTRUMENT_INFORMATION_t *instrument_information );
 uint32_t get_riff_information( uint8_t *sample_buffer, size_t sample_size, SAMPLE_FORMAT_t *riff_information );
+uint32_t realign_audio_data( KEY_VOICE_INFORMATION_t *voice_information );
 
 #endif
