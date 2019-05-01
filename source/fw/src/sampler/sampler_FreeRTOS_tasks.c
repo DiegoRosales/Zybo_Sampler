@@ -26,8 +26,7 @@ uint32_t load_samples_into_memory( INSTRUMENT_INFORMATION_t *instrument_informat
     uint32_t key        = 0;
     uint32_t vel_range  = 0;    
     uint32_t file_size  = 0;
-    //size_t   total_size = 0;
-    //size_t   total_keys = 0;
+
     char     full_path[MAX_PATH_LEN]; // Path to the sample
 
     instrument_information->total_size = 0;
@@ -272,9 +271,7 @@ void load_instrument_task( void *pvParameters ) {
 
                 // Step 4 - Load all the samples into memory
                 // Initialize the variables
-//                file_size  = 0;
-//                total_size = 0;
-//                total_keys = 0;
+
                 xil_printf("Step 4 - Loading samples into memory...\n\r");
                 error = load_samples_into_memory( instrument_information, &path->file_dir );
                 if ( error ) {
@@ -283,36 +280,7 @@ void load_instrument_task( void *pvParameters ) {
                     xQueueSend(path->return_handle, &return_value, 1000);
                     goto get_notification;                                
                 }                
-//                for (key = 0; key < MAX_NUM_OF_KEYS; key++) {
-//                    for (vel_range = 0; vel_range < 1; vel_range++) {
-//                        if ( instrument_information->key_information[key]->key_voice_information[vel_range]->sample_present != 0 ) {
-//
-//                            // Copy the full path
-//                            memset( full_path, 0x00, MAX_PATH_LEN );
-//                            strncat( full_path, path->file_dir, strlen( path->file_dir ));
-//                            strncat( full_path, "/", 1);
-//                            strncat( full_path, \
-//                                     instrument_information->key_information[key]->key_voice_information[vel_range]->sample_path, \
-//                                     strlen(instrument_information->key_information[key]->key_voice_information[vel_range]->sample_path) );
-//
-//                            instrument_information->key_information[key]->key_voice_information[vel_range]->sample_buffer = NULL;
-//                            xil_printf("[INFO] - [%d][%d]Loading Sample \"%s\"\n\r", key, vel_range, instrument_information->key_information[key]->key_voice_information[vel_range]->sample_path );
-//                            file_size = load_file_to_memory_malloc( full_path, \
-//                                                                    &instrument_information->key_information[key]->key_voice_information[vel_range]->sample_buffer, \
-//                                                                    (size_t) MAX_SAMPLE_SIZE );
-//                            
-//                            instrument_information->key_information[key]->key_voice_information[vel_range]->sample_size = file_size;
-//                            total_size += file_size;
-//                            total_keys++;
-//                            if ( instrument_information->key_information[key]->key_voice_information[vel_range]->sample_buffer == NULL || file_size == 0 ) {
-//                                xil_printf("[ERROR] - There was a problem when loading the samples into memory!!\n\r");
-//                                return_value = 1;
-//                                xQueueSend(path->return_handle, &return_value, 1000);
-//                                goto get_notification;                                
-//                            }
-//                        }
-//                    }
-//                }
+
                 xil_printf("---\n\r");
                 xil_printf("[INFO] - Loaded %d keys\n\r", instrument_information->total_keys);
                 xil_printf("[INFO] - Total Memory Used = %d bytes\n\r", instrument_information->total_size);

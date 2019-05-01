@@ -12,16 +12,7 @@
 #define SAMPLER_DMA_REGISTER_ACCESS     ((volatile SAMPLER_DMA_REGISTERS_t *)(SAMPLER_DMA_BASE_ADDR))
 
 // Endinaness conversion
-//// 12_34 -> 34_12
-//#define TO_BIG_ENDIAN_16(__DATA__)(( (__DATA__ & 0xff00) >> 8 ) |\ // 12_00 -> 00_12
-//                                   ( (__DATA__ & 0xff  ) << 8 ))     // 00_34 -> 34_00
-//
-//// 12_34_56_78 -> 78_56_34_12
-//#define TO_BIG_ENDIAN_32(__DATA__) (( ( __DATA__ & 0xff000000) >> 24 ) |\ // 12_00_00_00 -> 00_00_00_12
-//                                    ( ( __DATA__ & 0xff0000  ) >> 8  ) |\ // 00_34_00_00 -> 00_00_34_00
-//                                    ( ( __DATA__ & 0xff00    ) << 8  ) |\ // 00_00_56_00 -> 00_56_00_00
-//                                    ( ( __DATA__ & 0xff      ) << 24 ))   // 00_00_00_78 -> 78_00_00_00
-//
+
 // 12_34 -> 34_12
 #define TOGGLE_ENDIAN_16(__DATA__)( ( (__DATA__ & 0xff00) >> 8 ) | ( (__DATA__ & 0xff  ) << 8 ) )
 
@@ -197,21 +188,6 @@ typedef struct {
     // Format Descriptor
     FORMAT_DESCRIPTOR_CHUNK_t FormatDescriptor;        // (little endian) | 4 + (8 + SubChunk1Size) + (8 + SubChunk2Size) 
 } WAVE_FORMAT_t;
-// typedef struct {
-//     // RIFF Descriptor
-//     uint32_t ChunkID;          // "RIFF"
-//     uint32_t ChunkSize;        // (little endian) | 4 + (8 + SubChunk1Size) + (8 + SubChunk2Size) 
-//     uint32_t Format;           // Contains the letters "WAVE" (0x57415645 big-endian form)
-//     // "fmt " sub-chunk
-//     uint32_t Subchunk1ID;      // Contains the letters "fmt " (0x666d7420 big-endian form)
-//     uint32_t Subchunk1Size;    // (little endian) | 16 for PCM.  This is the size of the rest of the Subchunk which follows this number.
-//     uint16_t AudioFormat;      // (little endian) | PCM = 1 (i.e. Linear quantization). Values other than 1 indicate some form of compression
-//     uint16_t NumChannels;      // (little endian) | Mono = 1, Stereo = 2, etc.
-//     uint32_t SampleRate;       // (little endian) | 8000, 44100, etc.
-//     uint32_t ByteRate;         // (little endian) | == SampleRate * NumChannels * BitsPerSample/8
-//     uint16_t BlockAlign;       // (little endian) | == NumChannels * BitsPerSample/8. The number of bytes for one sample including all channels. I wonder what happens when this number isn't an integer?
-//     uint16_t BitsPerSample;    // (little endian) | 8 bits = 8, 16 bits = 16, etc.
-// } WAVE_FORMAT_t;
 
 typedef struct {
     uint16_t audio_format;       // PCM = 1 (i.e. Linear quantization). Values other than 1 indicate some form of compression

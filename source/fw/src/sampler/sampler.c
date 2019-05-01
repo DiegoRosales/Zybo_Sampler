@@ -27,15 +27,6 @@ static const NOTE_LUT_STRUCT_t MIDI_NOTES_LUT[12] = {
     {"Fx_S", 18},
     {"Gx",   19},
     {"Gx_S", 20}	
-//	{"Cx",   24}, // Starts From C1
-//	{"Cx_S", 25},
-//	{"Dx",   26},
-//	{"Dx_S", 27},
-//	{"Ex",   28},
-//	{"Fx",   29},
-//	{"Fx_S", 30},
-//	{"Gx",   31},
-//	{"Gx_S", 32}
 };
 
 static uint32_t        sampler_voices[MAX_VOICES];
@@ -344,10 +335,6 @@ uint8_t get_json_midi_note_number( jsmntok_t *tok, uint8_t *instrument_info_buff
 
 uint8_t get_midi_note_number( char *note_name ) {
     uint8_t midi_note = 0;
-
-    //uint8_t *note_letter_addr = note_name;
-    //uint8_t *note_number_addr = note_letter_addr + 1;
-    //uint8_t *sharp_flag_addr  = note_letter_addr + 3;
 
     char *note_letter = note_name;
     char *note_number = note_letter + 1;
