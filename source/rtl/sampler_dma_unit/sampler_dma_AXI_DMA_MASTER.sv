@@ -232,12 +232,14 @@ wire dma_addr_wr_done;
 //////////////////////////////////////////////////////////////
 // Parameters
 
-localparam integer MAX_ARB_COUNT = clogb2( MAX_VOICES - 1 );
+localparam integer MAX_ARB_COUNT = clogb2( MAX_VOICES );  // Should be able to count to from 0 to MAX_VOICES
 
 localparam REQ_ARB_IDLE     = 4'h0;
 localparam REQ_ARB_SCAN     = 4'h1;
 localparam REQ_ARB_DMA_REQ  = 4'h2;
 localparam REQ_ARB_DMA_REQ2 = 4'h3;
+
+localparam [ MAX_VOICES - 1 : 0 ] MAX_VOICES_CONST_1 = 'h1;
 
 
 wire [ MAX_VOICES - 1 : 0 ] indv_dma_input_data_valid;
@@ -259,8 +261,14 @@ reg [ 7 : 0 ]                      indv_dma_req_len_reg[ MAX_VOICES - 1 : 0 ]; /
 (* keep = "true" *) wire [ 7 : 0 ]                      indv_dma_req_len[ MAX_VOICES - 1 : 0 ]; // Burst Size
 
 (* keep = "true" *) wire [ C_M_AXI_DATA_WIDTH - 1 : 0 ] indiv_fifo_data[MAX_VOICES - 1 : 0];
-(* keep = "true" *) wire [ MAX_VOICES - 1 : 0 ] indiv_fifo_data_available;
-(* keep = "true" *) wire [ MAX_VOICES - 1 : 0 ] indiv_fifo_data_read;
+(* keep = "true" *) wire [ MAX_VOICES - 1 : 0 ]         indiv_fifo_data_available;
+(* keep = "true" *) reg  [ MAX_VOICES - 1 : 0 ]         indiv_fifo_data_read;
+(* keep = "true" *) wire [ MAX_VOICES - 1 : 0 ]         indiv_fifo_data_read_mask;
+(* keep = "true" *) wire                                any_indiv_fifo_data_available;
+
+(* keep = "true" *) wire [ C_M_AXI_DATA_WIDTH : 0 ]     mix_fifo_data_out;
+(* keep = "true" *) wire                                mix_fifo_data_available;
+(* keep = "true" *) wire                                mix_fifo_read;
 
 // Arbiter SM
 reg   [ MAX_ARB_COUNT - 1 : 0 ] req_arbiter_count;
@@ -277,9 +285,11 @@ logic [ 3 : 0 ] req_arbiter_next_st;
 ///////////////////////////////////////////////////////////////
 // Mixer Signals
 ///////////////////////////////////////////////////////////////
-(* keep = "true" *) reg [C_M_AXI_DATA_WIDTH - 1 : 0 ] sample_mix_data;
-reg [ MAX_ARB_COUNT - 1 : 0 ]     sampler_mixer_count;
-reg mix_fifo_wr;
+(* keep = "true" *) reg [C_M_AXI_DATA_WIDTH - 1 : 0 ] mix_fifo_data_in;
+(* keep = "true" *) reg                               data_available_in_current_loop;
+(* keep = "true" *) reg [ MAX_ARB_COUNT - 1 : 0 ]     sampler_mixer_count;
+(* keep = "true" *) wire                              sampler_mixer_count_last;
+(* keep = "true" *) wire                              mix_fifo_wr;
 
 
 //////////////////////////////////////////////////////////
@@ -524,35 +534,60 @@ end
 // Sample Mixer and FIFO
 /////////////////
 
-assign fifo_data_available = ~fifo_empty;
+assign fifo_data_available           = ~fifo_empty;
+assign any_indiv_fifo_data_available = |indiv_fifo_data_available;
+
+assign mix_fifo_read = fifo_data_read & ( ~mix_fifo_empty );
+assign fifo_data_out = mix_fifo_data_out;
+assign fifo_empty    = mix_fifo_empty;
+
+assign sampler_mixer_count_last = ( sampler_mixer_count >= MAX_VOICES );
+
+assign indiv_fifo_data_read_mask = ( sampler_mixer_count_last == 1'b1 ) ? 'h0 : ( MAX_VOICES_CONST_1 << sampler_mixer_count);
+
+assign mix_fifo_wr = ( sampler_mixer_count_last & data_available_in_current_loop & ( ~mix_fifo_full ) );
 
 always @(posedge M_AXI_ACLK or negedge M_AXI_ARESETN) begin
 
 	if ( ~M_AXI_ARESETN ) begin
-		sampler_mixer_count <= 'h0;
-		sample_mix_data     <= 'h0;
-		mix_fifo_wr         <= 1'b0;
+		sampler_mixer_count            <= 'h0;
+		mix_fifo_data_in               <= 'h0;
+//		mix_fifo_wr                    <= 1'b0;
+		indiv_fifo_data_read           <= 'h0;
+		data_available_in_current_loop <= 1'b0;
 	end
 	else begin
 
-		sampler_mixer_count <= sampler_mixer_count;
-		sample_mix_data     <= sample_mix_data;
-		mix_fifo_wr         <= 1'b0;
+		sampler_mixer_count            <= sampler_mixer_count;
+		mix_fifo_data_in               <= mix_fifo_data_in;
+//		mix_fifo_wr                    <= 1'b0;
+		indiv_fifo_data_read           <= 'h0;
+		data_available_in_current_loop <= data_available_in_current_loop;
 
-		if (~mix_fifo_full) begin
-			if ( sampler_mixer_count < MAX_VOICES ) begin
-				sampler_mixer_count <= sampler_mixer_count + 1'b1;
-				if ( indiv_fifo_data[ sampler_mixer_count ] == 1'b1 ) begin
+		// While the counter is less than MAX_VOICES
+		if ( sampler_mixer_count_last == 1'b0 ) begin
+			// Increase the counter
+			sampler_mixer_count <= sampler_mixer_count + 1'b1;
+
+			if ( ( any_indiv_fifo_data_available == 1'b1 ) && ( (indiv_fifo_data_available & indiv_fifo_data_read_mask) != 'h0 ) ) begin
 					// Mix each channel separately to avoid data corruption
-					sample_mix_data[ 15 : 0 ]  <= sample_mix_data[ 15 : 0 ] + indiv_fifo_data[ sampler_mixer_count ][ 15 : 0 ];
-					sample_mix_data[ 31 : 16 ] <= sample_mix_data[ 31 : 16 ] + indiv_fifo_data[ sampler_mixer_count ][ 31 : 16 ];
-				end
+					mix_fifo_data_in[ 15 : 0 ]  <= mix_fifo_data_in[ 15 : 0 ]  + indiv_fifo_data[ sampler_mixer_count ][ 15 : 0 ];
+					mix_fifo_data_in[ 31 : 16 ] <= mix_fifo_data_in[ 31 : 16 ] + indiv_fifo_data[ sampler_mixer_count ][ 31 : 16 ];
+
+					// Assert the read signal for the FIFO
+					indiv_fifo_data_read <= indiv_fifo_data_read_mask;
+
+					// Flag that indicates that there is thata to be written to the FIFO
+					data_available_in_current_loop <= 1'b1;
 			end
-			else begin
-				sampler_mixer_count <= 'h0;
-				sample_mix_data     <= 'h0;
-				mix_fifo_wr         <= 1'b1;
-			end
+		end
+
+		// If the counter reached the limit and the mix FIFO is not full, write to the mix FIFO
+		if ( ( ~mix_fifo_full ) && ( sampler_mixer_count_last == 1'b1 ) ) begin
+			sampler_mixer_count            <= 'h0;
+			mix_fifo_data_in               <= 'h0;
+//			mix_fifo_wr                    <= data_available_in_current_loop;
+			data_available_in_current_loop <= 1'b0;
 		end
 	end
 
@@ -564,14 +599,14 @@ sampler_dma_fifo mix_fifo_inst (
     .rst ( ~M_AXI_ARESETN ), // input wire rst
 
     // Input
-    .din  ( sample_mix_data ), // input wire [31 : 0] din
-    .wr_en( mix_fifo_wr     ), // input wire wr_en
-    .full ( mix_fifo_full   ), // output wire full
+    .din  ( mix_fifo_data_in ), // input wire [31 : 0] din
+    .wr_en( mix_fifo_wr      ), // input wire wr_en
+    .full ( mix_fifo_full    ), // output wire full
 
     // Output
-    .rd_en      ( fifo_data_read ), // input wire rd_en
-    .dout       ( fifo_data_out  ), // output wire [31 : 0] dout
-    .empty      ( fifo_empty     ), // output wire empty
+    .dout       ( mix_fifo_data_out  ), // output wire [31 : 0] dout
+    .rd_en      ( mix_fifo_read      ), // input wire rd_en
+    .empty      ( mix_fifo_empty     ), // output wire empty
 
     // Misc
     .data_count (  )  // output wire [6 : 0] data_count
@@ -591,7 +626,7 @@ generate
 
 		assign indv_dma_input_data_valid[i] = ( M_AXI_RID == i ) ? M_AXI_RVALID : 1'b0;
 		assign indv_dma_input_data_last[i]  = ( M_AXI_RID == i ) ? M_AXI_RLAST  : 1'b0;
-		assign indiv_fifo_data_read[i]      = ( (sampler_mixer_count == i) && (indiv_fifo_data_available[i] == 1'b1) && (mix_fifo_full == 1'b0) ) ? 1'b1 : 1'b0;
+		//assign indiv_fifo_data_read[i]      = ( (sampler_mixer_count == i) && (indiv_fifo_data_available[i] == 1'b1) && (mix_fifo_full == 1'b0) ) ? 1'b1 : 1'b0;
 
 		dma_voice_req_fsm #(
     	.VOICE_INFO_DMA_BURST_SIZE       ( VOICE_INFO_DMA_BURST_SIZE      ),
@@ -621,8 +656,8 @@ generate
 			
 			// FIFO
 			.fifo_data_available ( indiv_fifo_data_available[i] ),
-			.fifo_data_read      ( indiv_fifo_data_read[i] ),
-			.fifo_data_out       ( indiv_fifo_data[i] )
+			.fifo_data_read      ( indiv_fifo_data_read[i]      ),
+			.fifo_data_out       ( indiv_fifo_data[i]           )
 		);
 
 		// Glue logic

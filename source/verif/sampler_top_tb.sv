@@ -28,6 +28,11 @@ initial begin
   #(50500ns) force sampler_top.sampler_dma_top.sampler_dma_v1_0_AXI_LITE_SLAVE_inst.sampler_dma_registers.dma_control[0] = 1;
 end
 
+//initial begin
+  //#(500ns) force sampler_top.sampler_dma_top.sampler_dma_v1_0_AXI_DMA_MASTER_inst.indiv_voice_fsm[0].dma_voice_fsm_inst = 32'hbcd00000;
+  //#(50500ns) force sampler_top.sampler_dma_top.sampler_dma_v1_0_AXI_LITE_SLAVE_inst.sampler_dma_registers.dma_control[0] = 1;
+//end
+
 wire i2c_sda;
 wire i2c_scl;
 

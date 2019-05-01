@@ -196,6 +196,10 @@ wire [ 31 : 0 ] dma_curr_addr[ MAX_VOICES - 1 : 0 ];
         .dma_base_addr ( dma_base_addr ),
         .dma_status    ( dma_status    ),
         .dma_curr_addr ( dma_curr_addr ),
+        // FIFO Output
+        .fifo_data_out       ( fifo_data_out       ),
+        .fifo_data_available ( fifo_data_available ),
+        .fifo_data_read      ( fifo_data_read      ),        
         // AXI Signals
         .INIT_AXI_TXN  ( axi_dma_master_init_axi_txn ),
         .TXN_DONE      ( axi_dma_master_txn_done     ),
@@ -256,7 +260,7 @@ wire [ 31 : 0 ] dma_curr_addr[ MAX_VOICES - 1 : 0 ];
         .dma_control   ( dma_control   ),
         .dma_base_addr ( dma_base_addr ),
         .dma_status    ( dma_status    ),
-        .dma_curr_addr ( dma_curr_addr ),        
+        .dma_curr_addr ( dma_curr_addr ),
         // AXI Signals
         .S_AXI_ACLK    ( axi_lite_slave_aclk    ),
         .S_AXI_ARESETN ( axi_lite_slave_aresetn ),
