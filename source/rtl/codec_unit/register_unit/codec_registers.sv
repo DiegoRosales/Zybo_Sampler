@@ -1,4 +1,8 @@
-module codec_registers (
+module codec_registers #(
+	// Number of register address bits
+	parameter integer OPT_MEM_ADDR_BITS = 5
+)
+(
 
     ////////////////////////////////
     //////// AXI CONTROLLER ////////
@@ -7,12 +11,12 @@ module codec_registers (
     input  wire        axi_reset,
 
     // Data signals
-    input  wire [31:0] data_in,
-    output wire [31:0] data_out,
-    input  wire [5:0]  reg_addr_wr,
-	input  wire [5:0]  reg_addr_rd,
-    input  wire        data_wren,
-    input  wire [3:0]  byte_enable,
+    input  wire [ 31 : 0 ]                    data_in,
+    output wire [ 31 : 0 ]                    data_out,
+    input  wire [ OPT_MEM_ADDR_BITS - 1 : 0 ] reg_addr_wr,
+	input  wire [ OPT_MEM_ADDR_BITS - 1 : 0 ] reg_addr_rd,
+    input  wire                               data_wren,
+    input  wire [ 3 : 0 ]                     byte_enable,
 
     // Signals from the design
     input  wire        clear_codec_i2c_data_wr,

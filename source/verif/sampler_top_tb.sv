@@ -17,8 +17,8 @@ initial forever #(10ns) clk_50 = ~clk_50;
 initial begin
    #(1ns) reset   = 1'b1;
    #(200ns) reset = 1'b0;
-   #(500000ns) force   sampler_top.codec_unit.register_unit.axi_slave_controller_inst.codec_registers.controller_reset = 1'b1;
-   #(500100ns) release sampler_top.codec_unit.register_unit.axi_slave_controller_inst.codec_registers.controller_reset;
+   #(500000ns) force   sampler_top.codec_unit.register_unit.codec_registers.controller_reset = 1'b1;
+   #(500100ns) release sampler_top.codec_unit.register_unit.codec_registers.controller_reset;
    //#(128200ns) force   sampler_top.codec_unit.register_unit.axi_slave_controller_inst.codec_registers.controller_reset = 1'b0;
    //#(128300ns) release sampler_top.codec_unit.register_unit.axi_slave_controller_inst.codec_registers.controller_reset;
 end

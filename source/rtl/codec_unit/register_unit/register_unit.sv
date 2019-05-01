@@ -67,6 +67,8 @@ module register_unit #(
 
 `include "register_params.svh"
 
+localparam integer OPT_MEM_ADDR_BITS = 5;
+
 wire        clear_codec_i2c_data_wr;
 wire        clear_codec_i2c_data_rd;
 wire        codec_i2c_data_wr;
@@ -97,33 +99,66 @@ wire [31:0] UPSTREAM_axis_rd_data_count_sync;
 wire [31:0] DOWNSTREAM_axis_rd_data_count_sync;
 wire [31:0] UPSTREAM_axis_wr_data_count_sync;
 
+// Output from the registers
+(* keep = "true" *) wire [ C_S_AXI_DATA_WIDTH - 1 : 0 ] reg_data_out;
+(* keep = "true" *) wire [ OPT_MEM_ADDR_BITS  - 1 : 0 ] reg_wr_addr;
+(* keep = "true" *) wire [ OPT_MEM_ADDR_BITS  - 1 : 0 ] reg_rd_addr;
+(* keep = "true" *) wire                                reg_wr_en;
+
 // Instantiation of Axi Bus Interface S00_AXI
 	axi_slave_controller # ( 
-		.C_S_AXI_DATA_WIDTH(C_S_AXI_DATA_WIDTH),
-		.C_S_AXI_ADDR_WIDTH(C_S_AXI_ADDR_WIDTH)
+		.OPT_MEM_ADDR_BITS  ( OPT_MEM_ADDR_BITS  ),
+		.C_S_AXI_DATA_WIDTH ( C_S_AXI_DATA_WIDTH ),
+		.C_S_AXI_ADDR_WIDTH ( C_S_AXI_ADDR_WIDTH )
 	) axi_slave_controller_inst (
-		.S_AXI_ACLK(s00_axi_aclk),
-		.S_AXI_ARESETN(s00_axi_aresetn),
-		.S_AXI_AWADDR(s00_axi_awaddr),
-		.S_AXI_AWPROT(s00_axi_awprot),
-		.S_AXI_AWVALID(s00_axi_awvalid),
-		.S_AXI_AWREADY(s00_axi_awready),
-		.S_AXI_WDATA(s00_axi_wdata),
-		.S_AXI_WSTRB(s00_axi_wstrb),
-		.S_AXI_WVALID(s00_axi_wvalid),
-		.S_AXI_WREADY(s00_axi_wready),
-		.S_AXI_BRESP(s00_axi_bresp),
-		.S_AXI_BVALID(s00_axi_bvalid),
-		.S_AXI_BREADY(s00_axi_bready),
-		.S_AXI_ARADDR(s00_axi_araddr),
-		.S_AXI_ARPROT(s00_axi_arprot),
-		.S_AXI_ARVALID(s00_axi_arvalid),
-		.S_AXI_ARREADY(s00_axi_arready),
-		.S_AXI_RDATA(s00_axi_rdata),
-		.S_AXI_RRESP(s00_axi_rresp),
-		.S_AXI_RVALID(s00_axi_rvalid),
-		.S_AXI_RREADY(s00_axi_rready),
+		.S_AXI_ACLK   ( s00_axi_aclk    ),
+		.S_AXI_ARESETN( s00_axi_aresetn ),
+		.S_AXI_AWADDR ( s00_axi_awaddr  ),
+		.S_AXI_AWPROT ( s00_axi_awprot  ),
+		.S_AXI_AWVALID( s00_axi_awvalid ),
+		.S_AXI_AWREADY( s00_axi_awready ),
+		.S_AXI_WDATA  ( s00_axi_wdata   ),
+		.S_AXI_WSTRB  ( s00_axi_wstrb   ),
+		.S_AXI_WVALID ( s00_axi_wvalid  ),
+		.S_AXI_WREADY ( s00_axi_wready  ),
+		.S_AXI_BRESP  ( s00_axi_bresp   ),
+		.S_AXI_BVALID ( s00_axi_bvalid  ),
+		.S_AXI_BREADY ( s00_axi_bready  ),
+		.S_AXI_ARADDR ( s00_axi_araddr  ),
+		.S_AXI_ARPROT ( s00_axi_arprot  ),
+		.S_AXI_ARVALID( s00_axi_arvalid ),
+		.S_AXI_ARREADY( s00_axi_arready ),
+		.S_AXI_RDATA  ( s00_axi_rdata   ),
+		.S_AXI_RRESP  ( s00_axi_rresp   ),
+		.S_AXI_RVALID ( s00_axi_rvalid  ),
+		.S_AXI_RREADY ( s00_axi_rready  ),
 		
+		// Interface to the register controller
+		.reg_data_out ( reg_data_out ),
+		.reg_wr_addr  ( reg_wr_addr  ),
+		.reg_rd_addr  ( reg_rd_addr  ),
+		.reg_wr_en    ( reg_wr_en    )
+
+	);
+
+
+	codec_registers #(
+		.OPT_MEM_ADDR_BITS( OPT_MEM_ADDR_BITS )
+	)
+	codec_registers (
+		// Clock and Reset
+		.axi_clk  ( s00_axi_aclk    ),
+		.axi_reset( s00_axi_aresetn ),
+
+		// Data Rd/Wr
+		.data_in     ( s00_axi_wdata ),
+		.data_out    ( reg_data_out  ),
+		.reg_addr_wr ( reg_wr_addr   ),
+		.reg_addr_rd ( reg_rd_addr   ),
+		.data_wren   ( reg_wr_en     ),
+		.byte_enable ( 4'h0          ),
+
+		// Register outputs
 		.clear_codec_i2c_data_wr  (clear_codec_i2c_data_wr_sync ),
 		.clear_codec_i2c_data_rd  (clear_codec_i2c_data_rd_sync ),
 		.codec_i2c_data_wr        (codec_i2c_data_wr_sync       ),
@@ -138,18 +173,15 @@ wire [31:0] UPSTREAM_axis_wr_data_count_sync;
 		.update_codec_i2c_rd_data (update_codec_i2c_rd_data_sync),
 		.controller_reset         (controller_reset_sync        ),
 		.audio_data_out           (audio_data_out_sync          ),
-		/////////////////////////
-  		//// Counter Signals ////
-  		/////////////////////////
-  		// AXI CLK //
-  		.DOWNSTREAM_axis_wr_data_count,
-  		.UPSTREAM_axis_rd_data_count,
+
+		// Register inputs
+		// AXI CLK //
+  		.DOWNSTREAM_axis_wr_data_count ( DOWNSTREAM_axis_wr_data_count ),
+  		.UPSTREAM_axis_rd_data_count   ( UPSTREAM_axis_rd_data_count   ),
   		// Audio CLK //
-  		.DOWNSTREAM_axis_rd_data_count(DOWNSTREAM_axis_rd_data_count_sync),
-  		.UPSTREAM_axis_wr_data_count  (UPSTREAM_axis_wr_data_count_sync  )
-
+  		.DOWNSTREAM_axis_rd_data_count ( DOWNSTREAM_axis_rd_data_count_sync ),
+  		.UPSTREAM_axis_wr_data_count   ( UPSTREAM_axis_wr_data_count_sync   )
 	);
-
 
 ///////////////////
 // Synchronizers //
