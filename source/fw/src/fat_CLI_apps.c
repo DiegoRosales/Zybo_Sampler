@@ -81,12 +81,12 @@ void file_to_buffer( FF_FILE *pxFile, uint8_t *buffer, size_t buffer_len ) {
     int    iChar;
 
 
-    xil_printf("[INFO] - Loading the file into memory\n\r");
+    //xil_printf("[INFO] - Loading the file into memory\n\r");
     memset( buffer, 0x00, buffer_len );
 
     ff_fread( buffer, buffer_len, 1, pxFile );
     Xil_DCacheFlushRange( buffer, buffer_len );
-    xil_printf("[INFO] - File succesfully loaded into memory. Loaded %d bytes. Address = 0x%x\n\r", buffer_len, buffer);
+    //xil_printf("[INFO] - File succesfully loaded into memory. Loaded %d bytes. Address = 0x%x\n\r", buffer_len, buffer);
 }
 
 // This functions loads a file into memory. You need to provide the full file path
@@ -137,7 +137,7 @@ size_t load_file_to_memory_malloc( char *file_name, uint8_t ** buffer, size_t ma
     *buffer = NULL;
 
     // Step 1 - Open the file
-    xil_printf("[INFO] - Opening the file: \"%s\"\n\r", file_name);
+    //xil_printf("[INFO] - Opening the file: \"%s\"\n\r", file_name);
     pxFile = ff_fopen( file_name, "r" );
 
     // Throw an error if the file cannot be opened
@@ -156,10 +156,10 @@ size_t load_file_to_memory_malloc( char *file_name, uint8_t ** buffer, size_t ma
         return 0;
     }
 
-    xil_printf("[INFO] - File opened succesfully. File Size = %d bytes\n\r", file_size);
+    //xil_printf("[INFO] - File opened succesfully. File Size = %d bytes\n\r", file_size);
 
     // Perform memory allocation for the buffer
-    xil_printf( "[INFO] - Performing memory allocation for the buffer. Requesting %d bytes\n\r", file_size );
+    //xil_printf( "[INFO] - Performing memory allocation for the buffer. Requesting %d bytes\n\r", file_size );
     new_buffer = pvPortMalloc( file_size + overhead ); // Added overhead
     //new_buffer = malloc( file_size );
     // Check if malloc was succesfull
@@ -167,7 +167,7 @@ size_t load_file_to_memory_malloc( char *file_name, uint8_t ** buffer, size_t ma
         xil_printf( "[ERROR] - Memory allocation failed. Requested %d bytes\n\r", file_size );
         return 0;
     } else {
-        xil_printf( "[INFO] - Memory allocation was succesfull. Buffer address =  0x%x\n\r", new_buffer );
+        //xil_printf( "[INFO] - Memory allocation was succesfull. Buffer address =  0x%x\n\r", new_buffer );
     }
 
     // Step 2 - Load the file into memory

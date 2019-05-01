@@ -39,42 +39,43 @@
 #define DATA_ASCII_TOKEN   0x61746164 // ASCII String == "data"
 
 #define GET_SAMPLER_FULL_ADDR(ADDR) ( SAMPLER_BASE_ADDR + (ADDR * 4) )
-//////////////////////////////////////////
-// Voice Information Data Structure
-//////////////////////////////////////////
-// |--------------------------|
-// |       START ADDRESS      | [0]
-// |==========================|
-// |       STREAM LENGTH      | [1]
-// |--------------------------|
-// |<-------- 32-bit -------->|
-//////////////////////////////////////////
 
-typedef struct {
-    uint32_t voice_start_addr;
-    uint32_t voice_size;
-} SAMPLER_VOICE_t;
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+// HARDWARE REGISTERS
+/////////////////////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////
 // DMA Registers
 ///////////////////////////////////////////////////////////////
 // |--------------------------|
+// |         GENERAL          |
 // | CONTROL/MISC REGISTERS   |
-// |         [10:0]           |
+// |         [9:0]            |
 // |==========================|
 // | DMA ADDRESS REG 0        |
 // |--------------------------|
 // | DMA START/STOP REG 0     |
-// |==========================|
-// | DMA ADDRESS REG 1        |
 // |--------------------------|
-// | DMA START/STOP REG 1     |
+// | DMA STATUS REG 0         |
+// |--------------------------|
+// | DMA CURRENT ADDR REG 0   |
+// |==========================|
+// |          ...             |
 // |==========================|
 // | DMA ADDRESS REG n        |
 // |--------------------------|
 // | DMA START/STOP REG n     |
 // |--------------------------|
+// | DMA STATUS REG n         |
+// |--------------------------|
+// | DMA CURRENT ADDR REG n   |
+// |--------------------------|
 ///////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////
+// General misc registers
+///////////////////////////////////////////////
 
 /////////////////////////////////
 // Sampler Version Register
@@ -120,7 +121,10 @@ typedef struct {
 } SAMPLER_REGISTERS_t;
 
 
-//////////////////////////////////////////////////
+///////////////////////////////////////////////
+// DMA registers
+///////////////////////////////////////////////
+
 ////////////////////////////////////
 // DMA Information Address
 ///////////////////////////////////
@@ -146,15 +150,64 @@ typedef union {
     uint32_t value;
 } SAMPLER_DMA_CONTROL_REG_t;
 
+////////////////////////////////////
+// DMA Status Register
+///////////////////////////////////
+typedef union {
+    // Individual Fields
+    // TODO: Put individual bits
+    struct {
+        uint32_t dma_status : 32 ; // Bit 31:0
+    } field;
+    // Complete Value
+    uint32_t value;
+} SAMPLER_DMA_STATUS_REG_t;
+
+////////////////////////////////////
+// DMA Current Address Register
+///////////////////////////////////
+typedef union {
+    // Individual Fields
+    struct {
+        uint32_t dma_current_addr : 32 ; // Bit 31:0
+    } field;
+    // Complete Value
+    uint32_t value;
+} SAMPLER_DMA_CURRENT_ADDR_REG_t;
 
 typedef struct {
-    SAMPLER_DMA_INFO_ADDR_REG_t dma_addr; // Address pointing to the voice information
-    SAMPLER_DMA_CONTROL_REG_t   dma_control;
+    SAMPLER_DMA_INFO_ADDR_REG_t    dma_addr;         // Address pointing to the voice information
+    SAMPLER_DMA_CONTROL_REG_t      dma_control;      // Start/Stop/etc.
+    SAMPLER_DMA_STATUS_REG_t       dma_status;       // Status register
+    SAMPLER_DMA_CURRENT_ADDR_REG_t dma_current_addr; // Current address being fetched
 } SAMPLER_DMA_t;
 
 typedef struct {
     SAMPLER_DMA_t sampler_dma[MAX_VOICES]; // The number of registers depends on the number of voices
 } SAMPLER_DMA_REGISTERS_t;
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+// SOFTWARE REGISTERS
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////
+// Voice Information Data Structure
+// This data structure will be accessed by
+// the DMA engine to know where to start
+//////////////////////////////////////////
+// |--------------------------|
+// |       START ADDRESS      | [0]
+// |==========================|
+// |       STREAM LENGTH      | [1]
+// |--------------------------|
+// |<-------- 32-bit -------->|
+//////////////////////////////////////////
+
+typedef struct {
+    uint32_t voice_start_addr;
+    uint32_t voice_size;
+} SAMPLER_VOICE_t;
 
 ////////////////////////////////////////////////////////////
 // Sample information (RIFF/WAV)

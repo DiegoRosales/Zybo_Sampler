@@ -57,7 +57,7 @@ uint32_t load_samples_into_memory( INSTRUMENT_INFORMATION_t *instrument_informat
                                  strlen(current_voice->sample_path) );
 
                         current_voice->sample_buffer = NULL;
-                        xil_printf("[INFO] - [%d][%d]Loading Sample \"%s\"\n\r", key, vel_range, current_voice->sample_path );
+                        xil_printf("[INFO] - [%d][%d] Loading Sample \"%s\"\n\r", key, vel_range, current_voice->sample_path );
                         file_size = load_file_to_memory_malloc( 
                                                                 full_path,
                                                                 &current_voice->sample_buffer,

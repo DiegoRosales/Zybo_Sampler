@@ -197,40 +197,63 @@ uint32_t play_instrument_key( uint8_t key, uint8_t velocity, INSTRUMENT_INFORMAT
     current_key = instrument_information->key_information[key];
 
 
-    for ( velocity_range = 0; velocity_range < MAX_NUM_OF_VELOCITY; velocity_range++ ) {
-        if( current_key->key_voice_information[velocity_range] == NULL ) {
-            continue;
-        }
 
-        current_voice = current_key->key_voice_information[velocity_range];
+    // If velocity is 0, it means to stop
+    if ( velocity == 0 ) {
+        for ( velocity_range = 0; velocity_range < MAX_NUM_OF_VELOCITY; velocity_range++ ) {
 
-        // If velocity is 0, it means to stop
-        if ( velocity == 0 ) {
+            if( current_key->key_voice_information[velocity_range] == NULL ) {
+                continue;
+            }
+
+            current_voice = current_key->key_voice_information[velocity_range];
+
             if ( current_voice->current_status != 0 ) {
                 xil_printf("[INFO] - Stopping voice playback of slot %d\n\r", current_voice->current_slot);
                 stop_voice_playback( current_voice->current_slot );
                 current_voice->current_status = 0;
                 current_voice->current_slot   = 0;
             }
-            
-            continue;
         }
-        // Check if requested velocity falls within the range
-        if( (velocity <= current_voice->velocity_max && velocity >= current_voice->velocity_min) && (current_voice->sample_present != 0) ) {
-            voice_slot = start_voice_playback( (uint32_t) current_voice->sample_format.data_start_ptr, // Audio data pointer
-                                                          current_voice->sample_format.audio_data_size // Audio data size
-                                             );
-            xil_printf("[INFO] - Started playback on slot %d\n\r", voice_slot);
 
-            current_voice->current_slot   = voice_slot;
-            current_voice->current_status = 1;
-            return 0;
-        }
+        return 0;
     }
 
-    if ( velocity != 0 ) {
-        xil_printf("[ERROR] - Couldn't find a matching sample for the requested key/velocity parameters\n\r");
-        return 2;
+    for ( velocity_range = 0; velocity_range < MAX_NUM_OF_VELOCITY; velocity_range++ ) {
+
+        // Check if the velocity information exists
+        if( current_key->key_voice_information[velocity_range] == NULL ) {
+            continue;
+        }
+
+        current_voice = current_key->key_voice_information[velocity_range];
+
+        // Check if requested velocity falls within the range
+        if ( (velocity <= current_voice->velocity_min) && (velocity >= current_voice->velocity_max) ) {
+            continue;
+        }
+
+        // Check if the sample is not already being played back
+        if ( current_voice->current_status != 0 ) {
+            xil_printf("[ERROR] - Current sample is being played on slot %d\n\r", current_voice->current_slot);
+            return 3;
+        }
+
+        // Check if sample is present
+        if ( current_voice->sample_present == 0 ) {
+            xil_printf("[ERROR] - There's no sample for the specified velocity! %d\n\r", current_voice->current_slot);
+            return 2;
+        }
+
+        // Start playback
+        voice_slot = start_voice_playback( (uint32_t) current_voice->sample_format.data_start_ptr, // Audio data pointer
+                                                      current_voice->sample_format.audio_data_size // Audio data size
+                                            );
+        xil_printf("[INFO] - Started playback on slot %d\n\r", voice_slot);
+
+        current_voice->current_slot   = voice_slot;
+        current_voice->current_status = 1;
+        break;
     }
 
     return 0;
@@ -604,6 +627,8 @@ uint32_t load_sample_information( INSTRUMENT_INFORMATION_t *instrument_informati
                                                 current_voice->sample_size,
                                                 &current_voice->sample_format
                                             );
+                current_voice->current_status = 0;
+                current_voice->current_slot   = 0;
                 if ( error != 0 ) {
                     return error;
                 }
