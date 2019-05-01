@@ -165,6 +165,10 @@ uint32_t start_voice_playback( uint32_t sample_addr, uint32_t sample_size ) {
 
 // This function will stop the playback of the voice
 uint32_t stop_voice_playback( uint32_t voice_slot ) {
+
+    // Sanity check
+    if( voice_slot >= MAX_VOICES ) return 1;
+
     // Stop the DMA
     SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_control.field.start = 0;
     SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_control.field.stop  = 1;
@@ -181,6 +185,8 @@ uint32_t play_instrument_key( uint8_t key, uint8_t velocity, INSTRUMENT_INFORMAT
     KEY_INFORMATION_t       *current_key = NULL;
     KEY_VOICE_INFORMATION_t *current_voice = NULL;
     uint32_t                 voice_slot = 0;
+
+    // Sanity check
 
     if ( instrument_information == NULL ) {
         xil_printf("[ERROR] - Instrument information = NULL\n\r");
@@ -199,6 +205,7 @@ uint32_t play_instrument_key( uint8_t key, uint8_t velocity, INSTRUMENT_INFORMAT
 
     current_key = instrument_information->key_information[key];
 
+
     for ( velocity_range = 0; velocity_range < MAX_NUM_OF_VELOCITY; velocity_range++ ) {
         if( current_key->key_voice_information[velocity_range] == NULL ) {
             continue;
@@ -206,6 +213,17 @@ uint32_t play_instrument_key( uint8_t key, uint8_t velocity, INSTRUMENT_INFORMAT
 
         current_voice = current_key->key_voice_information[velocity_range];
 
+        // If velocity is 0, it means to stop
+        if ( velocity == 0 ) {
+            if ( current_voice->current_status != 0 ) {
+                xil_printf("[INFO] - Stopping voice playback of slot %d\n\r", current_voice->current_slot);
+                stop_voice_playback( current_voice->current_slot );
+                current_voice->current_status = 0;
+                current_voice->current_slot   = 0;
+            }
+            
+            continue;
+        }
         // Check if requested velocity falls within the range
         if( (velocity <= current_voice->velocity_max && velocity >= current_voice->velocity_min) && (current_voice->sample_present != 0) ) {
             voice_slot = start_voice_playback( (uint32_t) current_voice->sample_format.data_start_ptr, // Audio data pointer
@@ -219,8 +237,12 @@ uint32_t play_instrument_key( uint8_t key, uint8_t velocity, INSTRUMENT_INFORMAT
         }
     }
 
-    xil_printf("[ERROR] - Couldn't find a matching sample for the requested key/velocity parameters\n\r");
-    return 2;
+    if ( velocity != 0 ) {
+        xil_printf("[ERROR] - Couldn't find a matching sample for the requested key/velocity parameters\n\r");
+        return 2;
+    }
+
+    return 0;
 
 }
 

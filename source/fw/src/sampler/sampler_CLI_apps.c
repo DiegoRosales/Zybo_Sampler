@@ -146,10 +146,10 @@ static BaseType_t play_key_command( char *pcWriteBuffer, size_t xWriteBufferLen,
     key_parameters.key      = get_midi_note_number( key );
     key_parameters.velocity = str2int( velocity, xParameter2StringLength );
 
-    if( key_parameters.key == 0 || key_parameters.velocity == 0 ) {
-        xil_printf("[ERROR] - Bad key or velocity.\n\r");
-        return pdFALSE;
-    }
+//    if( key_parameters.key == 0 || key_parameters.velocity == 0 ) {
+//        xil_printf("[ERROR] - Bad key or velocity.\n\r");
+//        return pdFALSE;
+//    }
 
     xil_printf("Playing back Key %d, Velocity: %d", key_parameters.key, key_parameters.velocity);
 
