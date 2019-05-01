@@ -42,9 +42,9 @@ You can find more about the board over at https://reference.digilentinc.com/refe
 
 [**DONE**] Enable FreeRTOS+FAT to access the SD card
 
-[**IN PROGRESS**] Custom DMA engine to support up to 64 different DMA regions (64 voices)
+[**DONE**] Custom DMA engine to support up to 64 different DMA regions (64 voices)
 
-[**IN PROGRESS**] Develop application to download samples to memory from an SD Card
+[**DONE**] Develop application to download samples to memory from an SD Card
 
 [**NOT STARTED**] Enable a MIDI bridge using UART
 
