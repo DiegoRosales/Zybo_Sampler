@@ -17,7 +17,6 @@ set synthesis_file_list {
     ${project_root}/source/rtl/codec_unit/controller_unit/i2c_core/verilog-i2c/rtl/axis_fifo.v
     ${project_root}/source/rtl/sampler_dma_unit/sampler_dma_top.sv
     ${project_root}/source/rtl/sampler_dma_unit/sampler_dma_S_AXI_INTR.sv
-    ${project_root}/source/rtl/sampler_dma_unit/sampler_dma_AXI_LITE_SLAVE.sv
     ${project_root}/source/rtl/sampler_dma_unit/sampler_dma_AXI_DMA_MASTER.sv
     ${project_root}/source/rtl/sampler_dma_unit/dma_voice_req_fsm.sv
     ${project_root}/source/rtl/sampler_dma_unit/sampler_dma_registers.sv
