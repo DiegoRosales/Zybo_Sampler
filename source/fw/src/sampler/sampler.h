@@ -303,6 +303,7 @@ uint32_t get_sampler_version();
 uint8_t get_json_midi_note_number( jsmntok_t *tok, uint8_t *instrument_info_buffer );
 uint8_t get_midi_note_number( char *note_name );
 
+uint32_t stop_all( INSTRUMENT_INFORMATION_t *instrument_information );
 uint32_t play_instrument_key( uint8_t key, uint8_t velocity, INSTRUMENT_INFORMATION_t *instrument_information );
 
 INSTRUMENT_INFORMATION_t* init_instrument_information( uint8_t number_of_keys, uint8_t number_of_velocity_ranges );

@@ -55,6 +55,15 @@ static const CLI_Command_Definition_t play_key_command_definition =
     2 /* One parameter is expected. */
 };
 
+// Structure defining the playback stop command
+static const CLI_Command_Definition_t stop_all_command_definition =
+{
+    "stop_all", /* The command string to type. */
+    "\r\nstop_all <key> <velocity>:\r\n Stops all playback\n\r",
+    stop_all_command, /* The function to run. */
+    0 /* One parameter is expected. */
+};
+
 // Structure defining the instrument loader command
 static const CLI_Command_Definition_t test_notification_definition =
 {
@@ -79,6 +88,7 @@ void register_sampler_cli_commands( void ) {
     my_return_queue_handler         = xQueueCreate(1, sizeof(uint32_t));
     my_key_parameters_queue_handler = xQueueCreate(1, sizeof(uint32_t));
     FreeRTOS_CLIRegisterCommand( &play_key_command_definition );
+    FreeRTOS_CLIRegisterCommand( &stop_all_command_definition );
     FreeRTOS_CLIRegisterCommand( &load_instrument_command_definition );
     FreeRTOS_CLIRegisterCommand( &test_notification_definition );
 
@@ -117,7 +127,7 @@ static BaseType_t play_key_command( char *pcWriteBuffer, size_t xWriteBufferLen,
     BaseType_t xParameter2StringLength;
 
     // Variables for the key playback task
-    TaskHandle_t     key_playback_task_hanle = xTaskGetHandle( KEY_PLAYBACK_TASK_NAME );
+    TaskHandle_t     key_playback_task_handle = xTaskGetHandle( KEY_PLAYBACK_TASK_NAME );
     key_parameters_t key_parameters;
 
     // First parameter
@@ -152,9 +162,27 @@ static BaseType_t play_key_command( char *pcWriteBuffer, size_t xWriteBufferLen,
     xQueueSend(my_key_parameters_queue_handler, &key_parameters , 1000);
 
     // Wake up the task and send the queue handler of the parameters
-    xTaskNotify( key_playback_task_hanle,
+    xTaskNotify( key_playback_task_handle,
                  my_key_parameters_queue_handler,
                  eSetValueWithOverwrite );
+
+    // Don't wait for any feedback
+    return pdFALSE;
+
+}
+
+static BaseType_t stop_all_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString ) {
+
+    // Variables for the key playback task
+    TaskHandle_t     stop_all_task_handle = xTaskGetHandle( STOP_ALL_TASK_NAME );
+
+    // Wake up the task and send the queue handler of the parameters
+    xTaskNotify( stop_all_task_handle,
+                 0,
+                 eSetValueWithOverwrite );
+
+
+    vTaskDelay( 100 );
 
     // Don't wait for any feedback
     return pdFALSE;

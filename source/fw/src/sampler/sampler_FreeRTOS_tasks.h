@@ -8,6 +8,7 @@
 
 #define LOAD_INSTRUMENT_TASK_NAME "load_instrument"
 #define KEY_PLAYBACK_TASK_NAME    "key_playback"
+#define STOP_ALL_TASK_NAME        "stop_all"
 #define MAX_PATH_LEN               100
 
 typedef struct {
@@ -25,6 +26,7 @@ uint32_t load_samples_into_memory( INSTRUMENT_INFORMATION_t *instrument_informat
 
 void notification_test_task( void *pvParameters );
 void key_playback_task( void *pvParameters );
+void stop_all_task( void *pvParameters );
 void load_instrument_task( void *pvParameters );
 
 #endif

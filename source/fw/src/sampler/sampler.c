@@ -169,6 +169,43 @@ uint32_t stop_voice_playback( uint32_t voice_slot ) {
     return 0;
 }
 
+// This function stops the playback for everything
+uint32_t stop_all( INSTRUMENT_INFORMATION_t *instrument_information ) {
+    KEY_INFORMATION_t       *current_key    = NULL;
+    KEY_VOICE_INFORMATION_t *current_voice  = NULL;
+    uint32_t                 key            = 0;
+    uint32_t                 velocity_range = 0;
+    uint32_t                 voice_slot     = 0;
+
+    // Stop the playback
+    for ( voice_slot = 0; voice_slot < MAX_VOICES; voice_slot++ ) stop_voice_playback( voice_slot );
+
+    if( instrument_information == NULL ) return 0;
+
+    // Reset the flags
+    for (key = 0; key < MAX_NUM_OF_KEYS; key++) {
+        if( instrument_information->key_information[key] == NULL ) continue;
+
+        current_key = instrument_information->key_information[key];
+
+        for ( velocity_range = 0; velocity_range < MAX_NUM_OF_VELOCITY; velocity_range++ ) {
+
+            if( current_key->key_voice_information[velocity_range] == NULL ) continue;
+
+            current_voice = current_key->key_voice_information[velocity_range];
+
+            if ( current_voice->current_status != 0 ) {
+                xil_printf("[INFO] - [%d][%d] Stopping voice playback of slot %d\n\r", key, velocity_range, current_voice->current_slot);
+                current_voice->current_status = 0;
+                current_voice->current_slot   = 0;
+            }
+        }
+    }
+
+    return 0;
+
+}
+
 // This function starts the playback of a sample given the key/velocity parameters and the instrument information
 uint32_t play_instrument_key( uint8_t key, uint8_t velocity, INSTRUMENT_INFORMATION_t *instrument_information ) {
 
@@ -315,6 +352,8 @@ INSTRUMENT_INFORMATION_t* init_instrument_information( uint8_t number_of_keys, u
                         instrument_info->key_information[key]->key_voice_information[vel_range]->sample_addr    = 0;
                         instrument_info->key_information[key]->key_voice_information[vel_range]->sample_size    = 0;
                         instrument_info->key_information[key]->key_voice_information[vel_range]->sample_buffer  = NULL;
+                        instrument_info->key_information[key]->key_voice_information[vel_range]->current_status = 0;
+                        instrument_info->key_information[key]->key_voice_information[vel_range]->current_slot   = 0;
                         memset( &instrument_info->key_information[key]->key_voice_information[vel_range]->sample_path, "\00", MAX_CHAR_IN_TOKEN_STR );
                     }
                 }

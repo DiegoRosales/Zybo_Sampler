@@ -109,6 +109,14 @@ void create_sampler_tasks ( void ) {
                     0x2000,                            /* Stack size in words, not bytes. */
                     ( void * ) instrument_information, /* Parameter passed into the task. */
                     tskIDLE_PRIORITY,                  /* Priority at which the task is created. */
+                    NULL );                            /* Used to pass out the created task's handle. */
+
+    xTaskCreate(
+                    stop_all_task,                     /* Function that implements the task. */
+                    STOP_ALL_TASK_NAME,                /* Text name for the task. */
+                    0x2000,                            /* Stack size in words, not bytes. */
+                    ( void * ) instrument_information, /* Parameter passed into the task. */
+                    tskIDLE_PRIORITY,                  /* Priority at which the task is created. */
                     NULL );                            /* Used to pass out the created task's handle. */                    
 }
 
@@ -194,6 +202,38 @@ void key_playback_task( void *pvParameters ) {
 
             if( error ) {
                 xil_printf("[ERROR] - Failed playing the key\n\r");
+            }
+
+        }
+    }
+}
+
+void stop_all_task( void *pvParameters ) {
+    BaseType_t        notification_received;
+    const TickType_t  xBlockTime = 500;
+    uint32_t          ulNotifiedValue;
+    key_parameters_t *key_parameters = malloc( sizeof( key_parameters_t ) );
+    uint32_t          error = 0;
+
+    for ( ;; ) {
+
+        get_playback_notification:
+        // We receive the Queue handler pointer in the notification value
+        notification_received = xTaskNotifyWait( 0x00,  /* Don't clear any notification bits on entry. */
+                                0xffffffff,             /* Reset the notification value to 0 on exit. */
+                                &ulNotifiedValue,       /* Notified value pass out in ulNotifiedValue. */
+                                portMAX_DELAY );        /* Block indefinitely. */
+
+        if ( notification_received == pdTRUE ) {
+            error = 0;
+
+            xil_printf("Stopping everything...\n\n\r");
+
+            // Start the playback
+            error = stop_all( instrument_information );
+
+            if( error ) {
+                xil_printf("[ERROR] - Failed stopping everything\n\r");
             }
 
         }
