@@ -169,6 +169,15 @@ module sampler_dma_top #(
 // Internal Signals
 //////////////////////////////
 
+// Number of bits needed to address all internal registers
+localparam integer OPT_MEM_ADDR_BITS = 10;
+
+// Output from the registers
+(* keep = "true" *) wire [ C_AXI_LITE_SLAVE_DATA_WIDTH - 1 : 0 ] reg_data_out;
+(* keep = "true" *) wire [ OPT_MEM_ADDR_BITS  - 1 : 0 ]          reg_wr_addr;
+(* keep = "true" *) wire [ OPT_MEM_ADDR_BITS  - 1 : 0 ]          reg_rd_addr;
+(* keep = "true" *) wire                                         reg_wr_en;
+
 // Register signals
 wire [ 31 : 0 ] dma_control[ MAX_VOICES - 1 : 0 ];
 wire [ 31 : 0 ] dma_base_addr[ MAX_VOICES - 1 : 0 ];
@@ -250,39 +259,64 @@ wire [ 31 : 0 ] dma_curr_addr[ MAX_VOICES - 1 : 0 ];
         .M_AXI_RREADY  ( axi_dma_master_rready       )
     );    
 
-// Instantiation of Axi Bus Interface AXI_LITE_SLAVE
-    sampler_dma_v1_0_AXI_LITE_SLAVE # ( 
-        .MAX_VOICES         (  MAX_VOICES                 ),
-        .C_S_AXI_DATA_WIDTH ( C_AXI_LITE_SLAVE_DATA_WIDTH ),
-        .C_S_AXI_ADDR_WIDTH ( C_AXI_LITE_SLAVE_ADDR_WIDTH )
-    ) sampler_dma_v1_0_AXI_LITE_SLAVE_inst (
-        // Register outputs
+
+	axi_slave_controller # ( 
+		.OPT_MEM_ADDR_BITS  ( OPT_MEM_ADDR_BITS  ),
+		.C_S_AXI_DATA_WIDTH ( C_AXI_LITE_SLAVE_DATA_WIDTH ),
+		.C_S_AXI_ADDR_WIDTH ( C_AXI_LITE_SLAVE_ADDR_WIDTH )
+	) axi_slave_controller_inst (
+		.S_AXI_ACLK    ( axi_lite_slave_aclk    ),
+		.S_AXI_ARESETN ( axi_lite_slave_aresetn ),
+		.S_AXI_AWADDR  ( axi_lite_slave_awaddr  ),
+		.S_AXI_AWPROT  ( axi_lite_slave_awprot  ),
+		.S_AXI_AWVALID ( axi_lite_slave_awvalid ),
+		.S_AXI_AWREADY ( axi_lite_slave_awready ),
+		.S_AXI_WDATA   ( axi_lite_slave_wdata   ),
+		.S_AXI_WSTRB   ( axi_lite_slave_wstrb   ),
+		.S_AXI_WVALID  ( axi_lite_slave_wvalid  ),
+		.S_AXI_WREADY  ( axi_lite_slave_wready  ),
+		.S_AXI_BRESP   ( axi_lite_slave_bresp   ),
+		.S_AXI_BVALID  ( axi_lite_slave_bvalid  ),
+		.S_AXI_BREADY  ( axi_lite_slave_bready  ),
+		.S_AXI_ARADDR  ( axi_lite_slave_araddr  ),
+		.S_AXI_ARPROT  ( axi_lite_slave_arprot  ),
+		.S_AXI_ARVALID ( axi_lite_slave_arvalid ),
+		.S_AXI_ARREADY ( axi_lite_slave_arready ),
+		.S_AXI_RDATA   ( axi_lite_slave_rdata   ),
+		.S_AXI_RRESP   ( axi_lite_slave_rresp   ),
+		.S_AXI_RVALID  ( axi_lite_slave_rvalid  ),
+		.S_AXI_RREADY  ( axi_lite_slave_rready  ),
+		
+		// Interface to the register controller
+		.reg_data_out ( reg_data_out ),
+		.reg_wr_addr  ( reg_wr_addr  ),
+		.reg_rd_addr  ( reg_rd_addr  ),
+		.reg_wr_en    ( reg_wr_en    )
+
+	);
+
+    sampler_dma_registers #(
+        .MAX_VOICES        ( MAX_VOICES        ),
+        .OPT_MEM_ADDR_BITS ( OPT_MEM_ADDR_BITS )
+    )
+    sampler_dma_registers (
+        // Clock and Reset
+        .axi_clk  ( axi_lite_slave_aclk    ),
+        .axi_reset( axi_lite_slave_aresetn ),
+
+        // Rd/Wr Signals
+        .data_in     ( axi_lite_slave_wdata ),
+		.data_out    ( reg_data_out         ),
+		.reg_addr_wr ( reg_wr_addr          ),
+		.reg_addr_rd ( reg_rd_addr          ),
+		.data_wren   ( reg_wr_en            ),
+		.byte_enable ( 4'h0                 ),
+
+        // User Signals
         .dma_control   ( dma_control   ),
         .dma_base_addr ( dma_base_addr ),
         .dma_status    ( dma_status    ),
-        .dma_curr_addr ( dma_curr_addr ),
-        // AXI Signals
-        .S_AXI_ACLK    ( axi_lite_slave_aclk    ),
-        .S_AXI_ARESETN ( axi_lite_slave_aresetn ),
-        .S_AXI_AWADDR  ( axi_lite_slave_awaddr  ),
-        .S_AXI_AWPROT  ( axi_lite_slave_awprot  ),
-        .S_AXI_AWVALID ( axi_lite_slave_awvalid ),
-        .S_AXI_AWREADY ( axi_lite_slave_awready ),
-        .S_AXI_WDATA   ( axi_lite_slave_wdata   ),
-        .S_AXI_WSTRB   ( axi_lite_slave_wstrb   ),
-        .S_AXI_WVALID  ( axi_lite_slave_wvalid  ),
-        .S_AXI_WREADY  ( axi_lite_slave_wready  ),
-        .S_AXI_BRESP   ( axi_lite_slave_bresp   ),
-        .S_AXI_BVALID  ( axi_lite_slave_bvalid  ),
-        .S_AXI_BREADY  ( axi_lite_slave_bready  ),
-        .S_AXI_ARADDR  ( axi_lite_slave_araddr  ),
-        .S_AXI_ARPROT  ( axi_lite_slave_arprot  ),
-        .S_AXI_ARVALID ( axi_lite_slave_arvalid ),
-        .S_AXI_ARREADY ( axi_lite_slave_arready ),
-        .S_AXI_RDATA   ( axi_lite_slave_rdata   ),
-        .S_AXI_RRESP   ( axi_lite_slave_rresp   ),
-        .S_AXI_RVALID  ( axi_lite_slave_rvalid  ),
-        .S_AXI_RREADY  ( axi_lite_slave_rready  )
+        .dma_curr_addr ( dma_curr_addr )
     );
 
 //// Instantiation of Axi Bus Interface S_AXI_INTR

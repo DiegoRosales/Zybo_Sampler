@@ -29,7 +29,8 @@
 `define SAMPLER_VERSION 32'h0000_0001
 
 module sampler_dma_registers #(
-	parameter MAX_VOICES = 4
+	parameter         MAX_VOICES = 4,
+	parameter integer OPT_MEM_ADDR_BITS = 10
 ) (
 
     ////////////////////////////////
@@ -39,12 +40,12 @@ module sampler_dma_registers #(
     input  wire        axi_reset,
 
     // Data signals
-    input  wire [31:0] data_in,
-    output wire [31:0] data_out,
-    input  wire [9:0]  reg_addr_wr,
-	input  wire [9:0]  reg_addr_rd,
-    input  wire        data_wren,
-    input  wire [3:0]  byte_enable,
+    input  wire [ 31 : 0 ]                    data_in,
+    output wire [ 31 : 0 ]                    data_out,
+    input  wire [ OPT_MEM_ADDR_BITS - 1 : 0 ] reg_addr_wr,
+	input  wire [ OPT_MEM_ADDR_BITS - 1 : 0 ] reg_addr_rd,
+    input  wire                               data_wren,
+    input  wire [ 3 : 0 ]                     byte_enable,
 
     // Signals from the design
 	output wire [ 31 : 0 ] dma_control[ MAX_VOICES - 1 : 0 ],
