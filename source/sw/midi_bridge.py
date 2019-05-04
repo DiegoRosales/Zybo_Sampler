@@ -132,30 +132,6 @@ def main():
         ser.write( values )
 
 
-
-##    for msg in inport:
-##        msg_bytes = msg.bytes()
-##
-##        serial_msg = "{}".format( "midi_ascii" + " " + " ".join( [hex(x) for x in msg_bytes] ) )
-##        print serial_msg
-##
-##        string = MIDI_CMD + ' '
-##
-##        values = MIDI_CMD
-##
-##        for value in msg_bytes:
-##            values += b' '
-##            values += bytearray([value])
-##
-##        values += b'\n'
-##
-##        print values
-##        for value in values:
-##            print hex(value)
-##        print "---"
-##        #ser.write( values )
-
-
     return 0
 
 

@@ -20,6 +20,13 @@
 #include "sampler.h"
 
 
+static BaseType_t play_key_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
+static BaseType_t stop_all_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
+static BaseType_t load_instrument_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
+static BaseType_t midi_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
+static BaseType_t midi_ascii_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
+static BaseType_t start_midi_listener_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
+
 //extern instrument_information;
 
 static xQueueHandle my_filename_queue_handler;
@@ -83,15 +90,6 @@ static const CLI_Command_Definition_t stop_all_command_definition =
 };
 
 // Structure defining the instrument loader command
-static const CLI_Command_Definition_t test_notification_definition =
-{
-    "test_notif", /* The command string to type. */
-    "\r\ntest_notification\r\n",
-    test_notification, /* The function to run. */
-    0 /* One parameter is expected. */
-};
-
-// Structure defining the instrument loader command
 static const CLI_Command_Definition_t load_instrument_command_definition =
 {
     "load_instrument", /* The command string to type. */
@@ -119,7 +117,6 @@ void register_sampler_cli_commands( void ) {
     FreeRTOS_CLIRegisterCommand( &load_instrument_command_definition );
     FreeRTOS_CLIRegisterCommand( &midi_command_definition );
     FreeRTOS_CLIRegisterCommand( &midi_ascii_command_definition );
-    FreeRTOS_CLIRegisterCommand( &test_notification_definition );
     FreeRTOS_CLIRegisterCommand( &start_midi_listener_command_definition );
 
 }
@@ -252,30 +249,6 @@ static BaseType_t midi_ascii_command( char *pcWriteBuffer, size_t xWriteBufferLe
                  eSetValueWithOverwrite );
 
     // Don't wait for any feedback
-    return pdFALSE;
-
-}
-
-
-static BaseType_t test_notification( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString ) {
-    
-    TaskHandle_t task_handle = xTaskGetHandle( "notification_test_task" );
-    uint32_t     return_value = 1;
-    file_path_t  my_file_path = {"Hello", my_return_queue_handler};
-
-    xQueueSend(my_filename_queue_handler, &my_file_path , 1000);
-
-    xTaskNotify(    task_handle,
-                    my_filename_queue_handler,
-                    eSetValueWithOverwrite );
-
-    if( ! xQueueReceive(my_return_queue_handler, &return_value, 10000) ) {
-        xil_printf("Error receiving the Queue!\n\r");
-    }
-    else {
-        xil_printf("Done! Return Value = %d\n\r", return_value);
-    }
-
     return pdFALSE;
 
 }
@@ -416,7 +389,6 @@ static BaseType_t load_instrument_command( char *pcWriteBuffer, size_t xWriteBuf
     return pdFALSE;
 
 }
-
 
 static BaseType_t start_midi_listener_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString ) {
 

@@ -23,6 +23,13 @@
 static INSTRUMENT_INFORMATION_t *instrument_information = NULL;
 static uint8_t                   instrument_info_buffer[MAX_INST_FILE_SIZE];
 
+
+static void key_playback_task( void *pvParameters );
+static void stop_all_task( void *pvParameters );
+static void load_instrument_task( void *pvParameters );
+static void run_midi_cmd_task( void *pvParameters );
+static void serial_midi_listener_task( void *pvParameters );
+
 uint32_t load_samples_into_memory( INSTRUMENT_INFORMATION_t *instrument_information, char *json_file_root_dir ) {
 
     // Initialize the variables
@@ -87,15 +94,6 @@ void create_sampler_tasks ( void ) {
 
     // Initializes the instrument information data structure
     //instrument_information = init_instrument_information(88, 1);
-    
-    /* Create the task, storing the handle. */
-    xTaskCreate(
-                    notification_test_task,              /* Function that implements the task. */
-                    "notification_test_task",            /* Text name for the task. */
-                    0x2000,                            /* Stack size in words, not bytes. */
-                    ( void * ) instrument_information, /* Parameter passed into the task. */
-                    tskIDLE_PRIORITY,                  /* Priority at which the task is created. */
-                    NULL );                            /* Used to pass out the created task's handle. */
 
     /* Create the task, storing the handle. */
     xTaskCreate(
@@ -140,7 +138,7 @@ void create_sampler_tasks ( void ) {
 }
 
 
-void run_midi_cmd_task( void *pvParameters ) {
+static void run_midi_cmd_task( void *pvParameters ) {
     BaseType_t        notification_received;
     uint32_t          ulNotifiedValue;
 
@@ -199,52 +197,12 @@ void run_midi_cmd_task( void *pvParameters ) {
 }
    
 
-void notification_test_task( void *pvParameters ) {
-    BaseType_t        notification_received;
-    uint32_t          ulNotifiedValue;
-    file_path_t       *path = malloc( sizeof( file_path_t ) );
-    uint32_t          return_value = 1;
-
-    for( ;; )
-    {
-        // Bits in this RTOS task's notification value are set by the notifying
-        // tasks and interrupts to indicate which events have occurred. */
-        notification_received = xTaskNotifyWait( 0x00,             /* Don't clear any notification bits on entry. */
-                                   0xffffffff,       /* Reset the notification value to 0 on exit. */
-                                   &ulNotifiedValue, /* Notified value pass out in ulNotifiedValue. */
-                                   portMAX_DELAY );  /* Block indefinitely. */
-
-        if ( notification_received == pdTRUE ) {
-
-            xil_printf("I have been notified!! Notification Value = %d\n\r", ulNotifiedValue);
-
-            if( ! xQueueReceive((QueueHandle_t) ulNotifiedValue, path, 1000) ) {
-                xil_printf("Error receiving the Queue!\n\r");
-            }
-            else {
-                return_value = 0;
-                xil_printf("%s\n\r", path->file_path);
-                xQueueSend(path->return_handle, &return_value, 1000);
-            }
-        }
-
-    }
-
-    /* Tasks must not attempt to return from their implementing
-    function or otherwise exit.  In newer FreeRTOS port
-    attempting to do so will result in an configASSERT() being
-    called if it is defined.  If it is necessary for a task to
-    exit then have the task call vTaskDelete( NULL ) to ensure
-    its exit is clean. */
-    vTaskDelete( NULL );
-}
-
 
 // This task receives the notification to start playing a key
 // The notification must also pass the value of a Queue Handler
 // Once the notification is recieved, the task will receive the key parameters
 // using the provided Queue handler
-void key_playback_task( void *pvParameters ) {
+static void key_playback_task( void *pvParameters ) {
     BaseType_t        notification_received;
     const TickType_t  xBlockTime = 500;
     uint32_t          ulNotifiedValue;
@@ -287,7 +245,8 @@ void key_playback_task( void *pvParameters ) {
     }
 }
 
-void stop_all_task( void *pvParameters ) {
+// This task stops all playback
+static void stop_all_task( void *pvParameters ) {
     BaseType_t        notification_received;
     uint32_t          ulNotifiedValue;
     uint32_t          error = 0;
@@ -319,7 +278,7 @@ void stop_all_task( void *pvParameters ) {
 // This task loads the instrument using a .json file
 // The .json file contains all the information regarding
 // Key, velocity ranges, and associated sample
-void load_instrument_task( void *pvParameters ) {
+static void load_instrument_task( void *pvParameters ) {
     BaseType_t        notification_received;
     const TickType_t  xBlockTime = 500;
     uint32_t          ulNotifiedValue;
@@ -430,7 +389,7 @@ void load_instrument_task( void *pvParameters ) {
 }
 
 
-void serial_midi_listener_task( void *pvParameters ) {
+static void serial_midi_listener_task( void *pvParameters ) {
     BaseType_t        notification_received;
     uint32_t          ulNotifiedValue;
     QueueHandle_t     my_return_queue_handler;

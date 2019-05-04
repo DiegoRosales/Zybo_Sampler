@@ -26,12 +26,7 @@ typedef struct {
 
 uint32_t load_samples_into_memory( INSTRUMENT_INFORMATION_t *instrument_information, char *json_file_root_dir );
 
-void notification_test_task( void *pvParameters );
-void key_playback_task( void *pvParameters );
-void stop_all_task( void *pvParameters );
-void load_instrument_task( void *pvParameters );
-void run_midi_cmd_task( void *pvParameters );
-void serial_midi_listener_task( void *pvParameters );
+
 
 
 #endif
