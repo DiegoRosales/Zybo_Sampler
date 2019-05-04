@@ -35,7 +35,6 @@ if { $argc > 0 } {
             set pack             1
             set integ            1
             set implement        1
-            set burn_bitfile     1
             set export_ws        1
         }
         all_update {
