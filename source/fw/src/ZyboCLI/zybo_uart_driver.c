@@ -144,14 +144,22 @@ static void prvUARTCommandConsoleTask( void *pvParameters )
 					/* A character was entered.  Add it to the string entered so
 					far.  When a \n is entered the complete	string will be
 					passed to the command interpreter. */
-					if( ( cRxedChar >= ' ' ) && ( cRxedChar <= '~' ) )
-					{
+					#if( INPUT_IS_ASCII_ONLY == 1 )
+						if( ( cRxedChar >= ' ' ) && ( cRxedChar <= '~' ) )
+						{
+							if( ucInputIndex < cmdMAX_INPUT_SIZE )
+							{
+								cInputString[ ucInputIndex ] = cRxedChar;
+								ucInputIndex++;
+							}
+						}
+					#else
 						if( ucInputIndex < cmdMAX_INPUT_SIZE )
 						{
 							cInputString[ ucInputIndex ] = cRxedChar;
 							ucInputIndex++;
-						}
-					}
+						}								
+					#endif
 				}
 			}
 

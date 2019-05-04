@@ -47,6 +47,24 @@ static uint32_t str2int( char *input_string, BaseType_t input_string_length ) {
 }
 
 // Structure defining the key playback command
+static const CLI_Command_Definition_t midi_command_definition =
+{
+    "midi", /* The command string to type. */
+    "\r\nmidi <COMMAND> <DATA_BYTE_1> <DATA_BYTE_2>:\r\n Executes a MIDI command. This is intended to use with a bridge since all the arguments are sent in raw binary, not ASCII\n\r",
+    midi_command, /* The function to run. */
+    -1 /* 2 - 3 parameters. */
+};
+
+// Structure defining the key playback command
+static const CLI_Command_Definition_t midi_ascii_command_definition =
+{
+    "midi_ascii", /* The command string to type. */
+    "\r\nmidi_ascii <COMMAND> <DATA_BYTE_1> <DATA_BYTE_2>:\r\n Executes a MIDI command\n\r",
+    midi_ascii_command, /* The function to run. */
+    -1 /* 2 - 3 parameters. */
+};
+
+// Structure defining the key playback command
 static const CLI_Command_Definition_t play_key_command_definition =
 {
     "play_key", /* The command string to type. */
@@ -82,6 +100,15 @@ static const CLI_Command_Definition_t load_instrument_command_definition =
     1 /* One parameter is expected. */
 };
 
+// Structure defining the instrument loader command
+static const CLI_Command_Definition_t start_midi_listener_command_definition =
+{
+    "start_serial_midi_listener", /* The command string to type. */
+    "\r\nstart_serial_midi_listener\n\r Starts the MIDI Serial listener\r\n",
+    start_midi_listener_command, /* The function to run. */
+    0 /* One parameter is expected. */
+};
+
 // This function registers all the CLI applications
 void register_sampler_cli_commands( void ) {
     my_filename_queue_handler       = xQueueCreate(1, sizeof(file_path_t));
@@ -90,7 +117,142 @@ void register_sampler_cli_commands( void ) {
     FreeRTOS_CLIRegisterCommand( &play_key_command_definition );
     FreeRTOS_CLIRegisterCommand( &stop_all_command_definition );
     FreeRTOS_CLIRegisterCommand( &load_instrument_command_definition );
+    FreeRTOS_CLIRegisterCommand( &midi_command_definition );
+    FreeRTOS_CLIRegisterCommand( &midi_ascii_command_definition );
     FreeRTOS_CLIRegisterCommand( &test_notification_definition );
+    FreeRTOS_CLIRegisterCommand( &start_midi_listener_command_definition );
+
+}
+
+static BaseType_t midi_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString ) {
+
+    const char *key;
+    const char *velocity;
+
+    uint8_t *command = NULL;
+    uint8_t *byte1   = NULL;
+    uint8_t *byte2   = NULL;
+
+    uint32_t full_cmd = 0;
+
+    BaseType_t xParameter1StringLength;
+    BaseType_t xParameter2StringLength;
+
+    // Variables for the key playback task
+    TaskHandle_t     run_midi_cmd_task_handle = xTaskGetHandle( RUN_MIDI_CMD_TASK_NAME );
+    key_parameters_t key_parameters;
+
+    // First parameter
+    command = FreeRTOS_CLIGetParameter
+                    (
+                        pcCommandString,		/* The command string itself. */
+                        1,						/* Return the first parameter. */
+                        &xParameter1StringLength	/* Store the parameter string length. */
+                    );
+
+    // Second Parameter
+    byte1 = FreeRTOS_CLIGetParameter
+                    (
+                        pcCommandString,		/* The command string itself. */
+                        2,						/* Return the first parameter. */
+                        &xParameter2StringLength	/* Store the parameter string length. */
+                    );
+
+    // Second Parameter
+    byte2 = FreeRTOS_CLIGetParameter
+                    (
+                        pcCommandString,		/* The command string itself. */
+                        3,						/* Return the first parameter. */
+                        &xParameter2StringLength	/* Store the parameter string length. */
+                    );
+
+    // We need at least 2 parameters
+    if( command == NULL || byte1 == NULL ) return pdFALSE;
+
+    full_cmd  = *command;
+    full_cmd |= *byte1 << 8;
+    if ( byte2 != NULL ) full_cmd |= *byte2 << 16;
+
+    // Wake up the task and send the full MIDI command the parameters
+    xTaskNotify( run_midi_cmd_task_handle,
+                 full_cmd,
+                 eSetValueWithOverwrite );
+
+    // Don't wait for any feedback
+    return pdFALSE;
+
+}
+
+static BaseType_t midi_ascii_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString ) {
+
+    const char *key;
+    const char *velocity;
+
+    char *command = NULL;
+    char *byte1   = NULL;
+    char *byte2   = NULL;
+
+    uint8_t command_int = 0;
+    uint8_t byte1_int   = 0;
+    uint8_t byte2_int   = 0;
+
+    uint32_t full_cmd = 0;
+
+    BaseType_t xParameter1StringLength;
+    BaseType_t xParameter2StringLength;
+    BaseType_t xParameter3StringLength;
+
+
+    // Variables for the key playback task
+    TaskHandle_t     run_midi_cmd_task_handle = xTaskGetHandle( RUN_MIDI_CMD_TASK_NAME );
+    key_parameters_t key_parameters;
+
+    // First parameter
+    command = FreeRTOS_CLIGetParameter
+                    (
+                        pcCommandString,		/* The command string itself. */
+                        1,						/* Return the first parameter. */
+                        &xParameter1StringLength	/* Store the parameter string length. */
+                    );
+
+    // Second Parameter
+    byte1 = FreeRTOS_CLIGetParameter
+                    (
+                        pcCommandString,		/* The command string itself. */
+                        2,						/* Return the first parameter. */
+                        &xParameter2StringLength	/* Store the parameter string length. */
+                    );
+
+    // Second Parameter
+    byte2 = FreeRTOS_CLIGetParameter
+                    (
+                        pcCommandString,		/* The command string itself. */
+                        3,						/* Return the first parameter. */
+                        &xParameter3StringLength	/* Store the parameter string length. */
+                    );
+
+    // We need at least 2 parameters
+    if( command == NULL || byte1 == NULL ) return pdFALSE;
+
+    /////////////////////////////////////////////
+    // String to int
+    /////////////////////////////////////////////
+
+    command_int = str2int( command, xParameter1StringLength );
+    byte1_int   = str2int( byte1,   xParameter2StringLength );
+    if ( byte2 != NULL ) byte2_int = str2int( byte2,   xParameter3StringLength );
+
+    full_cmd  = command_int;
+    full_cmd |= byte1_int << 8;
+    if ( byte2 != NULL ) full_cmd |= byte2_int << 16;
+
+    // Wake up the task and send the full MIDI command the parameters
+    xTaskNotify( run_midi_cmd_task_handle,
+                 full_cmd,
+                 eSetValueWithOverwrite );
+
+    // Don't wait for any feedback
+    return pdFALSE;
 
 }
 
@@ -251,6 +413,32 @@ static BaseType_t load_instrument_command( char *pcWriteBuffer, size_t xWriteBuf
         xil_printf("Done! Return Value = %d\n\r", return_value);
     }
 
+    return pdFALSE;
+
+}
+
+
+static BaseType_t start_midi_listener_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString ) {
+
+	uint32_t return_value = 1;
+
+    // Variables for the key playback task
+    TaskHandle_t     serial_midi_listener_task_handler = xTaskGetHandle( SERIAL_MIDI_LISTENER_TASK_NAME );
+
+    // Wake up the task and send the full MIDI command the parameters
+    xTaskNotify( serial_midi_listener_task_handler,
+                 my_return_queue_handler,
+                 eSetValueWithOverwrite );
+
+
+    if( ! xQueueReceive(my_return_queue_handler, &return_value, 10000) ) {
+        xil_printf("Timeout!\n\r");
+    }
+    else {
+        xil_printf("Done! Return Value = %d\n\r", return_value);
+    }
+
+    // Don't wait for any feedback
     return pdFALSE;
 
 }

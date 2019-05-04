@@ -46,11 +46,19 @@ You can find more about the board over at https://reference.digilentinc.com/refe
 
 [**DONE**] Develop application to download samples to memory from an SD Card
 
-[**NOT STARTED**] Enable a MIDI bridge using UART
+[**DONE**] Enable a MIDI bridge using UART
 
 ## Phase 3 [**NOT STARTED**]: Sound Playback
 
-[**NOT STARTED**] Playback samples from the FamtomX libary
+[**IN PROGRESS**] Playback samples from an open source library
+
+[**NOT STARTED**] Enable true velocity switches
+
+[**NOT STARTED**] Enable attack and release envelope settings
+
+[**NOT STARTED**] Enable layerd instruments
+
+[**NOT STARTED**] Enable multi-library simultaneous loading
 
 [**NOT STARTED**] Square Wave Synthesizer
 
@@ -58,9 +66,17 @@ You can find more about the board over at https://reference.digilentinc.com/refe
 
 [**NOT STARTED**] Sawtooth Wave Synthesizer
 
-## Phase 4 [**NOT PLANNED**]: TBD
+[**NOT STARTED**] Enable FM synthesis using preset waveforms
 
-[**NOT STARTED**] Enabled the full system in the verification environment
+[**NOT STARTED**] Enable FM synthesis using recorded waveforms
+
+## Phase 4 [**NOT PLANNED**]: Advanced features
+
+[**NOT STARTED**] Enable USB stack for Host Mode
+
+[**NOT STARTED**] Enable MIDI over USB
+
+[**NOT STARTED**] Enable the full system in the verification environment
 
 ---
 # Setup instructions

@@ -11,7 +11,9 @@ static BaseType_t play_key_command( char *pcWriteBuffer, size_t xWriteBufferLen,
 static BaseType_t stop_all_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
 static BaseType_t test_notification( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
 static BaseType_t load_instrument_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
-
+static BaseType_t midi_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
+static BaseType_t midi_ascii_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
+static BaseType_t start_midi_listener_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
 
 
 #endif

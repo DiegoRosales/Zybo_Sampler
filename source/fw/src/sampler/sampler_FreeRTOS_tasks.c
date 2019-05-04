@@ -13,6 +13,9 @@
 #include "ff_sddisk.h"
 //#include "fat_CLI_apps.h"
 
+// Serial includes
+#include "serial.h"
+
 // Sampler Includes
 #include "sampler_FreeRTOS_tasks.h"
 #include "sampler.h"
@@ -117,8 +120,84 @@ void create_sampler_tasks ( void ) {
                     0x2000,                            /* Stack size in words, not bytes. */
                     ( void * ) instrument_information, /* Parameter passed into the task. */
                     tskIDLE_PRIORITY,                  /* Priority at which the task is created. */
-                    NULL );                            /* Used to pass out the created task's handle. */                    
+                    NULL );                            /* Used to pass out the created task's handle. */
+
+    xTaskCreate(
+                    run_midi_cmd_task,                 /* Function that implements the task. */
+                    RUN_MIDI_CMD_TASK_NAME,            /* Text name for the task. */
+                    0x2000,                            /* Stack size in words, not bytes. */
+                    ( void * ) instrument_information, /* Parameter passed into the task. */
+                    configMAX_PRIORITIES,              /* Priority at which the task is created. */
+                    NULL );                            /* Used to pass out the created task's handle. */  
+
+    xTaskCreate(
+                    serial_midi_listener_task,         /* Function that implements the task. */
+                    SERIAL_MIDI_LISTENER_TASK_NAME,    /* Text name for the task. */
+                    0x2000,                            /* Stack size in words, not bytes. */
+                    ( void * ) instrument_information, /* Parameter passed into the task. */
+                    configMAX_PRIORITIES,              /* Priority at which the task is created. */
+                    NULL );                            /* Used to pass out the created task's handle. */  
 }
+
+
+void run_midi_cmd_task( void *pvParameters ) {
+    BaseType_t        notification_received;
+    uint32_t          ulNotifiedValue;
+
+    // MIDI Variables
+    uint32_t full_command = 0;
+    uint8_t  cmd          = 0;
+    uint8_t  byte1        = 0;
+    uint8_t  byte2        = 0;
+
+    for( ;; )
+    {
+        get_midi_cmd_notification:
+        // Bits in this RTOS task's notification value are set by the notifying
+        // tasks and interrupts to indicate which events have occurred. */
+        notification_received = xTaskNotifyWait( 0x00,             /* Don't clear any notification bits on entry. */
+                                   0xffffffff,       /* Reset the notification value to 0 on exit. */
+                                   &ulNotifiedValue, /* Notified value pass out in ulNotifiedValue. */
+                                   portMAX_DELAY );  /* Block indefinitely. */
+
+        if ( notification_received == pdFALSE ) goto get_midi_cmd_notification;
+
+        if ( ulNotifiedValue == 0 ) goto get_midi_cmd_notification;
+
+        full_command = ( uint32_t ) ulNotifiedValue;
+        cmd   =   full_command         & 0xff;
+        byte1 = ( full_command >> 8  ) & 0xff;
+        byte2 = ( full_command >> 16 ) & 0xff;
+
+        // Check which command is
+        switch ( cmd & 0xF0 )
+        {
+            // Note OFF
+            case 0x80:
+                play_instrument_key( byte1, 0, instrument_information );
+                break;
+
+            // Note ON
+            case 0x90:
+                play_instrument_key( byte1, byte2, instrument_information );
+                break;
+            
+            default:
+                break;
+        }
+
+    }
+
+    /* Tasks must not attempt to return from their implementing
+    function or otherwise exit.  In newer FreeRTOS port
+    attempting to do so will result in an configASSERT() being
+    called if it is defined.  If it is necessary for a task to
+    exit then have the task call vTaskDelete( NULL ) to ensure
+    its exit is clean. */
+
+    vTaskDelete( NULL );
+}
+   
 
 void notification_test_task( void *pvParameters ) {
     BaseType_t        notification_received;
@@ -210,14 +289,11 @@ void key_playback_task( void *pvParameters ) {
 
 void stop_all_task( void *pvParameters ) {
     BaseType_t        notification_received;
-    const TickType_t  xBlockTime = 500;
     uint32_t          ulNotifiedValue;
-    key_parameters_t *key_parameters = malloc( sizeof( key_parameters_t ) );
     uint32_t          error = 0;
 
     for ( ;; ) {
 
-        get_playback_notification:
         // We receive the Queue handler pointer in the notification value
         notification_received = xTaskNotifyWait( 0x00,  /* Don't clear any notification bits on entry. */
                                 0xffffffff,             /* Reset the notification value to 0 on exit. */
@@ -350,5 +426,86 @@ void load_instrument_task( void *pvParameters ) {
     called if it is defined.  If it is necessary for a task to
     exit then have the task call vTaskDelete( NULL ) to ensure
     its exit is clean. */
+    vTaskDelete( NULL );
+}
+
+
+void serial_midi_listener_task( void *pvParameters ) {
+    BaseType_t        notification_received;
+    uint32_t          ulNotifiedValue;
+    QueueHandle_t     my_return_queue_handler;
+
+    // Task Variables
+    BaseType_t        midi_listener_stop;
+    signed char       cRxedChar;
+    uint32_t          index;
+
+    // MIDI Variables
+    uint32_t full_command = 0;
+    uint8_t  bytes_rcvd[3];
+
+    for( ;; )
+    {
+        wait_for_notification:
+        // Bits in this RTOS task's notification value are set by the notifying
+        // tasks and interrupts to indicate which events have occurred. */
+        notification_received = xTaskNotifyWait( 0x00,             /* Don't clear any notification bits on entry. */
+                                   0xffffffff,       /* Reset the notification value to 0 on exit. */
+                                   &ulNotifiedValue, /* Notified value pass out in ulNotifiedValue. */
+                                   portMAX_DELAY );  /* Block indefinitely. */
+
+        if ( notification_received == pdFALSE ) goto wait_for_notification;
+
+        // Initialize everything
+        my_return_queue_handler = (QueueHandle_t) ulNotifiedValue;
+        midi_listener_stop      = pdFALSE;
+        index                   = 0;
+
+        memset( &bytes_rcvd, 0x00, 3 );
+        while( midi_listener_stop == pdFALSE ) {
+            // TODO: Find a way to get the xPort instead of hardcoding it
+            while( xSerialGetChar( ( xComPortHandle ) 0, &cRxedChar, portMAX_DELAY ) != pdPASS );
+
+            bytes_rcvd[index] = (uint8_t) cRxedChar;
+            index++;
+
+            if( index == 3 ){
+                // Check which command is
+                switch ( bytes_rcvd[0] & 0xF0 )
+                {
+                    // Note OFF
+                    case 0x80:
+                        play_instrument_key( bytes_rcvd[1], 0, instrument_information );
+                        break;
+
+                    // Note ON
+                    case 0x90:
+                        play_instrument_key( bytes_rcvd[1], bytes_rcvd[2], instrument_information );
+                        break;
+
+                    case 0xb0:
+                        midi_listener_stop = pdTRUE;
+                        break;
+                    
+                    default:
+                        break;
+                }
+
+                index = 0;
+            }
+
+        }
+
+        xQueueSend(my_return_queue_handler, 0, 1000);
+
+    }
+
+    /* Tasks must not attempt to return from their implementing
+    function or otherwise exit.  In newer FreeRTOS port
+    attempting to do so will result in an configASSERT() being
+    called if it is defined.  If it is necessary for a task to
+    exit then have the task call vTaskDelete( NULL ) to ensure
+    its exit is clean. */
+
     vTaskDelete( NULL );
 }

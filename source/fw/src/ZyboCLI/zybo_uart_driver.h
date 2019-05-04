@@ -22,6 +22,9 @@ available. */
 #define mainUART_COMMAND_CONSOLE_STACK_SIZE	( configMINIMAL_STACK_SIZE * 300UL )
 #define mainUART_COMMAND_CONSOLE_TASK_PRIORITY	( configMAX_PRIORITIES - 2 )
 
+// If this flag is set to 1, the driver will ignore all non-character inputs
+#define INPUT_IS_ASCII_ONLY 0
+
 static void prvUARTCommandConsoleTask( void *pvParameters );
 
 #endif
