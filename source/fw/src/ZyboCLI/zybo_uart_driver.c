@@ -30,9 +30,6 @@ static const char * const pcNewLine = "\r\n";
 more than one task. */
 static SemaphoreHandle_t xTxMutex = NULL;
 
-/* The handle to the UART port, which is not used by all ports. */
-static xComPortHandle xPort = 0;
-
 // This task comes from the Zynq CLI demo from the FreeRTOS source code
 // -------------
 // This is responsible for receiving all the inputs from the UART console and
@@ -48,7 +45,7 @@ static void prvUARTCommandConsoleTask( void *pvParameters )
     char           *pcOutputString;                       // Pointer to the buffer that will be used to store the CLI application output
     BaseType_t     xReturned;                             // This will hold the exit state of the CLI command (pdFALSE == Command is done generating output strings)
     xComPortHandle xPort;                                 // UART Port
-    char           *clear_screen;
+    char           *clear_screen = (char *) malloc(27);
 
 	( void ) pvParameters; // We are not using the pvParameters right now. Using this to avoid warnings.
 

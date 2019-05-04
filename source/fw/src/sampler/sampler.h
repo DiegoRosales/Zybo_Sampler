@@ -3,6 +3,19 @@
 
 #include "jsmn.h"
 
+#define ENABLE_FREERTOS_MALLOC 1
+
+#ifdef ENABLE_FREERTOS_MALLOC
+    #if( ENABLE_FREERTOS_MALLOC == 1)
+        #include "FreeRTOS.h"
+        #define sampler_malloc pvPortMalloc
+        #define sampler_free   vPortFree
+    #else
+        #define sampler_malloc malloc
+        #define sampler_free   free
+    #endif
+#endif
+
 #define SAMPLER_BASE_ADDR     XPAR_AUDIO_SAMPLER_INST_AXI_LITE_SLAVE_BASEADDR
 #define SAMPLER_DMA_BASE_ADDR SAMPLER_BASE_ADDR + (0x40)
 #define MAX_VOICES 4
@@ -306,7 +319,10 @@ uint8_t get_midi_note_number( char *note_name );
 uint32_t stop_all( INSTRUMENT_INFORMATION_t *instrument_information );
 uint32_t play_instrument_key( uint8_t key, uint8_t velocity, INSTRUMENT_INFORMATION_t *instrument_information );
 
-INSTRUMENT_INFORMATION_t* init_instrument_information( uint8_t number_of_keys, uint8_t number_of_velocity_ranges );
+KEY_VOICE_INFORMATION_t *init_voice_information();
+KEY_INFORMATION_t * init_key_information();
+INSTRUMENT_INFORMATION_t* init_instrument_information();
+
 uint32_t decode_instrument_information( uint8_t *instrument_info_buffer, INSTRUMENT_INFORMATION_t *instrument_info );
 uint32_t load_sample_information( INSTRUMENT_INFORMATION_t *instrument_information );
 uint32_t get_riff_information( uint8_t *sample_buffer, size_t sample_size, SAMPLE_FORMAT_t *riff_information );

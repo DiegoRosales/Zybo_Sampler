@@ -67,7 +67,8 @@ uint32_t load_samples_into_memory( INSTRUMENT_INFORMATION_t *instrument_informat
                                  strlen(current_voice->sample_path) );
 
                         current_voice->sample_buffer = NULL;
-                        xil_printf("[INFO] - [%d][%d] Loading Sample \"%s\"\n\r", key, vel_range, current_voice->sample_path );
+                        //xil_printf("[INFO] - [%d][%d] Loading Sample \"%s\"\n\r", key, vel_range, current_voice->sample_path );
+                        xil_printf(".");
                         file_size = load_file_to_memory_malloc( 
                                                                 full_path,
                                                                 &current_voice->sample_buffer,
@@ -79,6 +80,7 @@ uint32_t load_samples_into_memory( INSTRUMENT_INFORMATION_t *instrument_informat
                         instrument_information->total_size += file_size;
                         instrument_information->total_keys++;
                         if ( current_voice->sample_buffer == NULL || file_size == 0 ) {
+                            xil_printf("\n\r");
                             return 1;                          
                         }
                     }
@@ -86,6 +88,8 @@ uint32_t load_samples_into_memory( INSTRUMENT_INFORMATION_t *instrument_informat
             }
         }
     }
+
+    xil_printf("\n\r");
 
     return 0;
 }
@@ -322,7 +326,7 @@ static void load_instrument_task( void *pvParameters ) {
                 // Step 2 - Initialize the instrument information
                 xil_printf("Step 2 - Initializing the instrument information\n\r");
                 if ( instrument_information == NULL ){
-                    instrument_information = init_instrument_information(MAX_NUM_OF_KEYS, 1);
+                    instrument_information = init_instrument_information();
 
                     // Check if the initialization succeeded
                     if ( instrument_information == NULL ){

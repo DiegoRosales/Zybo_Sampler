@@ -297,13 +297,44 @@ uint32_t play_instrument_key( uint8_t key, uint8_t velocity, INSTRUMENT_INFORMAT
 
 }
 
-// This function will initialize the data structure of an instrument
-INSTRUMENT_INFORMATION_t* init_instrument_information( uint8_t number_of_keys, uint8_t number_of_velocity_ranges ) {
-    uint32_t total_information_size        = sizeof(INSTRUMENT_INFORMATION_t); //(total_size_of_keys * total_size_of_velocity_ranges) + sizeof(INSTRUMENT_INFORMATION_t);
+// Initialize key voice information
+KEY_VOICE_INFORMATION_t *init_voice_information() {
 
-    INSTRUMENT_INFORMATION_t* instrument_info = malloc( total_information_size );
+    KEY_VOICE_INFORMATION_t *voice_information = sampler_malloc( sizeof( KEY_VOICE_INFORMATION_t ) );
+
+    // Sanity check
+    if( voice_information == NULL ){
+        xil_printf( "[ERROR] - Memory allocation for the Voice Information failed!" );
+        return NULL;
+    }
+
+    memset( voice_information, 0x00, sizeof( KEY_VOICE_INFORMATION_t ) );
+
+    return voice_information;
+}
+
+// Initialize key information
+KEY_INFORMATION_t * init_key_information( ) {
+
+    KEY_INFORMATION_t *key_information = sampler_malloc( sizeof( KEY_INFORMATION_t ) );
+
+    // Sanity check
+    if( key_information == NULL ){
+        xil_printf( "[ERROR] - Memory allocation for the Key Information failed!" );
+        return NULL;
+    }
+
+    memset( key_information, 0x00, sizeof( KEY_INFORMATION_t ) );
+
+    return key_information;
+}
+
+// This function will initialize the data structure of an instrument
+INSTRUMENT_INFORMATION_t* init_instrument_information() {
+
+    INSTRUMENT_INFORMATION_t* instrument_info = sampler_malloc( sizeof(INSTRUMENT_INFORMATION_t) );
     if ( instrument_info == NULL ) {
-        xil_printf("[ERROR] - Memory allocation for the instrument info failed. Requested size = %d bytes\n\r", total_information_size);
+        xil_printf("[ERROR] - Memory allocation for the instrument info failed. Requested size = %d bytes\n\r", sizeof(INSTRUMENT_INFORMATION_t));
         return NULL;
     } else {
         xil_printf("[INFO] - Memory allocation for the instrument info succeeded. Memory location: 0x%x\n\r", instrument_info );
@@ -311,58 +342,8 @@ INSTRUMENT_INFORMATION_t* init_instrument_information( uint8_t number_of_keys, u
         int vel_range = 0;
 
         // Initialize the structure
-        memset( &instrument_info->instrument_name, "\00" , MAX_CHAR_IN_TOKEN_STR );
-
-        // TODO: Don't malloc for a preset number of keys. Dynamically malloc based on the samples available in the json file
-        for (key = 0; key < MAX_NUM_OF_KEYS; key++) {
-
-            // If the key number exceeds the maximum requested, assign the address to 0
-            if ( key >= number_of_keys ) {
-                instrument_info->key_information[key] = NULL;
-            } else {
-                // Allocate a memory section for the key information
-                instrument_info->key_information[key] = malloc( sizeof( KEY_INFORMATION_t ) );
-
-                // If the memory allocation failed, throw an error
-                if ( instrument_info->key_information[key] == NULL ) {
-                    xil_printf("[ERROR] - Memory allocation for the instrument info KEY[%d] failed. Requested size = %d bytes\n\r", key, sizeof( KEY_INFORMATION_t ));
-                    return NULL;	
-                }
-
-                // Allocate memory for each one of the velocity ranges
-                for (vel_range = 0; vel_range < MAX_NUM_OF_VELOCITY; vel_range++) {
-
-                    // If the velocity range exceeds the one requested, assign the address to 0
-                    if ( vel_range >= number_of_velocity_ranges ) {
-                        instrument_info->key_information[key]->key_voice_information[vel_range] = NULL;
-                    } else {
-                        // Allocate a memory section for the sample information related to the velocity range
-                        instrument_info->key_information[key]->key_voice_information[vel_range] = malloc( sizeof( KEY_VOICE_INFORMATION_t ) );
-
-                        // If the memory allocation failed, throw an error
-                        if ( instrument_info->key_information[key]->key_voice_information[vel_range] == NULL ) {
-                            xil_printf("[ERROR] - Memory allocation for the instrument info KEY[%d][%d] failed. Requested size = %d bytes\n\r", key, vel_range, sizeof( KEY_VOICE_INFORMATION_t ));
-                            return NULL;	
-                        }
-
-                        // Initialize the data structure
-                        instrument_info->key_information[key]->key_voice_information[vel_range]->sample_present = 0;
-                        instrument_info->key_information[key]->key_voice_information[vel_range]->velocity_min   = 0;
-                        instrument_info->key_information[key]->key_voice_information[vel_range]->velocity_max   = 0;
-                        instrument_info->key_information[key]->key_voice_information[vel_range]->sample_addr    = 0;
-                        instrument_info->key_information[key]->key_voice_information[vel_range]->sample_size    = 0;
-                        instrument_info->key_information[key]->key_voice_information[vel_range]->sample_buffer  = NULL;
-                        instrument_info->key_information[key]->key_voice_information[vel_range]->current_status = 0;
-                        instrument_info->key_information[key]->key_voice_information[vel_range]->current_slot   = 0;
-                        memset( &instrument_info->key_information[key]->key_voice_information[vel_range]->sample_path, "\00", MAX_CHAR_IN_TOKEN_STR );
-                    }
-                }
-            }
-        }
-
-        xil_printf("[INFO] - Data Structure Initialized. Maximum number of keys = %d | Maximum number of velocity ranges = %d\n\r", number_of_keys, number_of_velocity_ranges );
+        memset( instrument_info, 0x00 , sizeof(INSTRUMENT_INFORMATION_t) );
     }
-    //memset( instrument_info, '\0', total_information_size );
 
     return instrument_info;
 }
@@ -417,11 +398,14 @@ uint8_t get_midi_note_number( char *note_name ) {
 }
 
 // This function will extract the sample paths from the information file
+// This will also allocate and initialize the information when it hasn't been allocated yet
 uint32_t extract_sample_paths( uint32_t sample_start_token_index, uint32_t number_of_samples, jsmntok_t *tokens, uint8_t *instrument_info_buffer, INSTRUMENT_INFORMATION_t *instrument_info ) {
     uint8_t midi_note;
-    uint8_t *sample_path_addr;
     uint32_t note_name_index;
     uint32_t key_info_index;
+
+    KEY_INFORMATION_t       *current_key   = NULL;
+    KEY_VOICE_INFORMATION_t *current_voice = NULL;
 
     //for( int i = sample_start_token_index; i < (number_of_samples * NUM_OF_SAMPLE_JSON_MEMBERS * 2); i = i + (NUM_OF_SAMPLE_JSON_MEMBERS * 2) + 1 ) {
     for( int i = 0; i < number_of_samples ; i++) {
@@ -430,20 +414,36 @@ uint32_t extract_sample_paths( uint32_t sample_start_token_index, uint32_t numbe
         // Get the MIDI note
         midi_note = get_json_midi_note_number(&tokens[note_name_index], instrument_info_buffer);
 
-        if ( midi_note < 88 ) {
-            sample_path_addr = &instrument_info->key_information[midi_note]->key_voice_information[0]->sample_path;
+        if ( midi_note < MAX_NUM_OF_KEYS ) {
+
+            // Allocate the memory if the key information doesn't exist
+            if( instrument_info->key_information[midi_note] == NULL ) {
+                instrument_info->key_information[midi_note] = init_key_information();
+                if( instrument_info->key_information[midi_note] == NULL ) return 0;
+            }
+
+            current_key = instrument_info->key_information[midi_note];
+
+            // TODO: Add multiple velocity switches
+            if( current_key->key_voice_information[0] == NULL ) {
+                current_key->key_voice_information[0] = init_voice_information();
+                if( current_key->key_voice_information[0] == NULL ) return 0;
+            }
+
+            current_voice = current_key->key_voice_information[0];
+
             // Get the rest of the information
             for( int j = key_info_index; j < ( key_info_index + (NUM_OF_SAMPLE_JSON_MEMBERS * 2) ); j += 2 ) {
                 if( jsoneq( (const char *)instrument_info_buffer, &tokens[j], SAMPLE_VEL_MIN_TOKEN_STR ) ) {
-                    instrument_info->key_information[midi_note]->key_voice_information[0]->velocity_min = str2int( (char *)(instrument_info_buffer + tokens[j + 1].start), ( tokens[j + 1].end - tokens[j + 1].start ) );
+                    current_voice->velocity_min = str2int( (char *)(instrument_info_buffer + tokens[j + 1].start), ( tokens[j + 1].end - tokens[j + 1].start ) );
                     //xil_printf("KEY[%d]: velocity_min = %d\n\r", midi_note, instrument_info->key_information[midi_note].key_voice_information[0].velocity_min);
                 } else if( jsoneq( (const char *)instrument_info_buffer, &tokens[j], SAMPLE_VEL_MAX_TOKEN_STR ) ) {
-                    instrument_info->key_information[midi_note]->key_voice_information[0]->velocity_max = str2int( (char *)(instrument_info_buffer + tokens[j + 1].start), ( tokens[j + 1].end - tokens[j + 1].start ) );
+                    current_voice->velocity_max = str2int( (char *)(instrument_info_buffer + tokens[j + 1].start), ( tokens[j + 1].end - tokens[j + 1].start ) );
                     //xil_printf("KEY[%d]: velocity_max = %d\n\r", midi_note, instrument_info->key_information[midi_note].key_voice_information[0].velocity_max);
                 } else if( jsoneq( (const char *)instrument_info_buffer, &tokens[j], SAMPLE_PATH_TOKEN_STR ) ) {
-                    instrument_info->key_information[midi_note]->key_voice_information[0]->sample_present = 1;
-                    json_snprintf( (const char *)instrument_info_buffer, &tokens[j + 1], (char *)sample_path_addr );
-                    xil_printf("KEY[%d]: sample_path = %s\n\r", midi_note, instrument_info->key_information[midi_note]->key_voice_information[0]->sample_path);
+                    current_voice->sample_present = 1;
+                    json_snprintf( (const char *)instrument_info_buffer, &tokens[j + 1], current_voice->sample_path );
+                    xil_printf("KEY[%d]: sample_path = %s\n\r", midi_note, current_voice->sample_path);
                 }
             }
         }
@@ -615,7 +615,7 @@ uint32_t realign_audio_data( KEY_VOICE_INFORMATION_t *voice_information ) {
 
     aligned_buffer_ptr = voice_information->sample_format.data_start_ptr + ( (int) 4 - ( (int) voice_information->sample_format.data_start_ptr % (int) 4 ) );
 
-    temp_data_buffer = malloc( (size_t) voice_information->sample_format.audio_data_size );
+    temp_data_buffer = sampler_malloc( (size_t) voice_information->sample_format.audio_data_size );
     // Fail if there's not enugh space for malloc
     if ( temp_data_buffer == NULL ) {
         xil_printf( "[ERROR] - Malloc for the temporary realignment buffer failed! Requested size = %d bytes", voice_information->sample_format.audio_data_size );
@@ -630,7 +630,7 @@ uint32_t realign_audio_data( KEY_VOICE_INFORMATION_t *voice_information ) {
 
     // Step 4 - Free the temporary memory
 
-    free( temp_data_buffer );
+    sampler_free( temp_data_buffer );
 
     // Step 5 - Assign the new pointer
     voice_information->sample_format.data_start_ptr = aligned_buffer_ptr;
