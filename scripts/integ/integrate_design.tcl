@@ -90,6 +90,7 @@ set_property -dict ${concatenator_block_properties} [get_bd_cells xlconcat_0]
 #### Add the custom IP and make the connections ####
 set packaged_ip_inst_name ${packaged_ip_name}_inst
 create_bd_cell -type ip -vlnv xilinx.com:user:${packaged_ip_name}:${packaged_ip_ver} ${packaged_ip_inst_name}
+set_property -dict [list CONFIG.MAX_VOICES ${MAX_VOICES}] [get_bd_cells ${packaged_ip_inst_name}]
 
 ##############################################
 ####### Step 2 - Create the IO ports #########

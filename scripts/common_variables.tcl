@@ -30,6 +30,7 @@ set packaged_ip_root_dir  ${results_dir}/${packaged_ip_dirname}
 ## Block Design Variables
 set block_design_name "audio_sampler_block_design"
 set block_design_hdf  ${block_design_name}_wrapper.hdf
+set MAX_VOICES        8
 
 ## SDK Design Variables
 set processor        "ps7_cortexa9_0"

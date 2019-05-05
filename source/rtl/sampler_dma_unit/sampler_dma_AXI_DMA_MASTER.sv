@@ -256,19 +256,19 @@ reg [ MAX_VOICES - 1 : 0 ]         indv_dma_req_reg; // Request
 reg [ C_M_AXI_ADDR_WIDTH - 1 : 0 ] indv_dma_addr_reg[ MAX_VOICES - 1 : 0 ]; // Address
 reg [ 7 : 0 ]                      indv_dma_req_len_reg[ MAX_VOICES - 1 : 0 ]; // Burst Size
 
-(* keep = "true" *) wire [ MAX_VOICES - 1 : 0 ]         indv_dma_req; // Request
-(* keep = "true" *) wire [ C_M_AXI_ADDR_WIDTH - 1 : 0 ] indv_dma_addr[ MAX_VOICES - 1 : 0 ]; // Address
-(* keep = "true" *) wire [ 7 : 0 ]                      indv_dma_req_len[ MAX_VOICES - 1 : 0 ]; // Burst Size
+wire [ MAX_VOICES - 1 : 0 ]         indv_dma_req; // Request
+wire [ C_M_AXI_ADDR_WIDTH - 1 : 0 ] indv_dma_addr[ MAX_VOICES - 1 : 0 ]; // Address
+wire [ 7 : 0 ]                      indv_dma_req_len[ MAX_VOICES - 1 : 0 ]; // Burst Size
 
-(* keep = "true" *) wire [ C_M_AXI_DATA_WIDTH - 1 : 0 ] indiv_fifo_data[MAX_VOICES - 1 : 0];
-(* keep = "true" *) wire [ MAX_VOICES - 1 : 0 ]         indiv_fifo_data_available;
-(* keep = "true" *) reg  [ MAX_VOICES - 1 : 0 ]         indiv_fifo_data_read;
-(* keep = "true" *) wire [ MAX_VOICES - 1 : 0 ]         indiv_fifo_data_read_mask;
-(* keep = "true" *) wire                                any_indiv_fifo_data_available;
+wire [ C_M_AXI_DATA_WIDTH - 1 : 0 ] indiv_fifo_data[MAX_VOICES - 1 : 0];
+wire [ MAX_VOICES - 1 : 0 ]         indiv_fifo_data_available;
+reg  [ MAX_VOICES - 1 : 0 ]         indiv_fifo_data_read;
+wire [ MAX_VOICES - 1 : 0 ]         indiv_fifo_data_read_mask;
+wire                                any_indiv_fifo_data_available;
 
-(* keep = "true" *) wire [ C_M_AXI_DATA_WIDTH : 0 ]     mix_fifo_data_out;
-(* keep = "true" *) wire                                mix_fifo_data_available;
-(* keep = "true" *) wire                                mix_fifo_read;
+wire [ C_M_AXI_DATA_WIDTH : 0 ]     mix_fifo_data_out;
+wire                                mix_fifo_data_available;
+wire                                mix_fifo_read;
 
 // Arbiter SM
 reg   [ MAX_ARB_COUNT - 1 : 0 ] req_arbiter_count;
@@ -276,10 +276,10 @@ reg   [ 3 : 0 ] req_arbiter_curr_st;
 logic [ 3 : 0 ] req_arbiter_next_st;
 
 // State Control
-(* keep = "true" *) wire all_dma_req;
-(* keep = "true" *) wire found_req;
-(* keep = "true" *) reg req_done;
-(* keep = "true" *) wire end_of_scan;
+wire all_dma_req;
+wire found_req;
+reg req_done;
+wire end_of_scan;
 
 
 ///////////////////////////////////////////////////////////////
@@ -638,11 +638,12 @@ generate
 			.clk     ( M_AXI_ACLK    ),
 			.reset_n ( M_AXI_ARESETN ),
 
-			.start_dma     ( dma_control[i][0] ),
-			.stop_dma      ( dma_control[i][1] ),
-			.dma_base_addr ( dma_base_addr[i]  ),
-			.dma_status    ( dma_status[i]     ),
-			.dma_curr_addr ( dma_curr_addr[i]  ),
+			.start_dma     ( dma_control[i][30]   ),
+			.stop_dma      ( dma_control[i][31]   ),
+			.dma_base_addr ( dma_base_addr[i]     ),
+			.dma_length    ( dma_control[i][29:0] ),
+			.dma_status    ( dma_status[i]        ),
+			.dma_curr_addr ( dma_curr_addr[i]     ),
 
 			// DMA request signals
 			.dma_address ( indv_dma_addr[i]    ),

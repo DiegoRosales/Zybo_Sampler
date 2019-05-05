@@ -144,12 +144,14 @@ uint32_t start_voice_playback( uint32_t sample_addr, uint32_t sample_size ) {
     Xil_DCacheFlush();
 
     // Step 3 - Write the voice information address to the register with the slot number
-    SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_addr.value = &sampler_voices_information[voice_slot];
+    SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_addr.value = sample_addr;// &sampler_voices_information[voice_slot];
     
     // Step 4 - Start the DMA
     SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_control.value = 0;
-    SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_control.value = 1;
-    SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_control.value = 0;
+
+    SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_control.value = sample_size & 0x3FFFFFFF;
+    SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_control.value = (sample_size & 0x3FFFFFFF) | ( 1 << 30 );
+    SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_control.value = sample_size & 0x3FFFFFFF;
 
     return voice_slot;
 }
@@ -161,8 +163,9 @@ uint32_t stop_voice_playback( uint32_t voice_slot ) {
     if( voice_slot >= MAX_VOICES ) return 1;
 
     // Stop the DMA
-    SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_control.field.start = 0;
-    SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_control.field.stop  = 1;
+    SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_addr.value = 0;
+    SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_control.field.start   = 0;
+    SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_control.field.stop    = 1;
 
     // Release the voice slot
     sampler_voices [ voice_slot ] = 0;

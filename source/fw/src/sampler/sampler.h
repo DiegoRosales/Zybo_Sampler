@@ -156,8 +156,9 @@ typedef union {
 typedef union {
     // Individual Fields
     struct {
-        uint32_t start : 1 ; // Bit 0
-        uint32_t stop  : 1 ; // Bit 1
+        uint32_t dma_len : 30 ; // Bit [29:0]
+        uint32_t start   : 1  ; // Bit 30
+        uint32_t stop    : 1  ; // Bit 31
     } field;
     // Complete Value
     uint32_t value;
@@ -191,8 +192,8 @@ typedef union {
 typedef struct {
     SAMPLER_DMA_INFO_ADDR_REG_t    dma_addr;         // Address pointing to the voice information
     SAMPLER_DMA_CONTROL_REG_t      dma_control;      // Start/Stop/etc.
-    SAMPLER_DMA_STATUS_REG_t       dma_status;       // Status register
-    SAMPLER_DMA_CURRENT_ADDR_REG_t dma_current_addr; // Current address being fetched
+//    SAMPLER_DMA_STATUS_REG_t       dma_status;       // Status register
+//    SAMPLER_DMA_CURRENT_ADDR_REG_t dma_current_addr; // Current address being fetched
 } SAMPLER_DMA_t;
 
 typedef struct {

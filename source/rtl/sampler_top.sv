@@ -1,7 +1,7 @@
 //// Sampler Top
 module sampler_top #(
   // Max Voices
-  parameter MAX_VOICES = 4,
+  parameter MAX_VOICES = 64,
   ///////////////////////
   parameter C_S00_AXI_DATA_WIDTH = 32,
   parameter C_S00_AXI_ADDR_WIDTH = 8,
