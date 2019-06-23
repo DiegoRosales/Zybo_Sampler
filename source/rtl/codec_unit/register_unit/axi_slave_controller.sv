@@ -116,12 +116,11 @@
 	//-- Signals for user logic register space example
 	//------------------------------------------------
 
-
-
-
 	wire	 slv_reg_rden;
 	wire	 slv_reg_wren;
 	reg	   aw_en;
+
+	reg [ 1 : 0 ] rd_dly_cnt;
 
 	// I/O Connections assignments
 
@@ -267,25 +266,31 @@
 
 	always @( posedge S_AXI_ACLK )
 	begin
-	  if ( S_AXI_ARESETN == 1'b0 )
-	    begin
-	      axi_arready <= 1'b0;
-	      axi_araddr  <= 32'b0;
-	    end 
-	  else
-	    begin    
-	      if (~axi_arready && S_AXI_ARVALID)
-	        begin
-	          // indicates that the slave has acceped the valid read address
-	          axi_arready <= 1'b1;
-	          // Read address latching
-	          axi_araddr  <= S_AXI_ARADDR;
-	        end
-	      else
-	        begin
-	          axi_arready <= 1'b0;
-	        end
-	    end 
+	  if ( S_AXI_ARESETN == 1'b0 ) begin
+			axi_arready <= 1'b0;
+			axi_araddr  <= 32'b0;
+			rd_dly_cnt <= 'h0;
+	  end 
+	  else begin    
+			axi_arready <= axi_arready;
+			axi_araddr  <= axi_araddr;
+			rd_dly_cnt  <= rd_dly_cnt;
+			if (~axi_arready && S_AXI_ARVALID) begin
+				// Read address latching
+				axi_araddr  <= S_AXI_ARADDR;
+				if ( rd_dly_cnt[1] == 1 )  begin // Delay count for the Xilinx BRAM output delay
+						// indicates that the slave has acceped the valid read address
+						axi_arready <= 1'b1;
+				end
+				else  begin
+						rd_dly_cnt <= rd_dly_cnt + 1;
+				end
+			end
+			else begin
+					axi_arready <= 1'b0;
+					rd_dly_cnt <= 'h0;
+			end
+	  end 
 	end       
 
 	// Implement axi_arvalid generation
@@ -296,27 +301,24 @@
 	// bus and axi_rresp indicates the status of read transaction.axi_rvalid 
 	// is deasserted on reset (active low). axi_rresp and axi_rdata are 
 	// cleared to zero on reset (active low).  
-	always @( posedge S_AXI_ACLK )
-	begin
-	  if ( S_AXI_ARESETN == 1'b0 )
-	    begin
-	      axi_rvalid <= 0;
-	      axi_rresp  <= 0;
-	    end 
-	  else
-	    begin    
-	      if (axi_arready && S_AXI_ARVALID && ~axi_rvalid)
-	        begin
-	          // Valid read data is available at the read data bus
-	          axi_rvalid <= 1'b1;
-	          axi_rresp  <= 2'b0; // 'OKAY' response
-	        end   
-	      else if (axi_rvalid && S_AXI_RREADY)
-	        begin
-	          // Read data is accepted by the master
-	          axi_rvalid <= 1'b0;
-	        end                
-	    end
+	always @( posedge S_AXI_ACLK ) begin
+	  if ( S_AXI_ARESETN == 1'b0 )begin
+	    axi_rvalid <= 0;
+	    axi_rresp  <= 0;
+	  end
+	  else begin    
+			axi_rvalid <= axi_rvalid;
+			axi_rresp  <= axi_rresp;
+			if (axi_arready && S_AXI_ARVALID && ~axi_rvalid) begin
+					// Valid read data is available at the read data bus
+					axi_rvalid <= 1'b1;
+					axi_rresp  <= 2'b0; // 'OKAY' response
+			end
+			else if (axi_rvalid && S_AXI_RREADY) begin
+				// Read data is accepted by the master
+				axi_rvalid <= 1'b0;
+			end                
+		end
 	end    
 
 	// Implement memory mapped register select and read logic generation

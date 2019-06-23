@@ -36,7 +36,7 @@ module sampler_dma_top #(
 
     // Parameters of Axi Slave Bus Interface AXI_LITE_SLAVE
     parameter integer C_AXI_LITE_SLAVE_DATA_WIDTH = 32,
-    parameter integer C_AXI_LITE_SLAVE_ADDR_WIDTH = 4,
+    parameter integer C_AXI_LITE_SLAVE_ADDR_WIDTH = 32,
 
     // Parameters of Axi Slave Bus Interface S_AXI_INTR
     parameter integer C_S_AXI_INTR_DATA_WIDTH = 32,
@@ -45,7 +45,12 @@ module sampler_dma_top #(
     parameter         C_INTR_SENSITIVITY      = 32'hFFFFFFFF,
     parameter         C_INTR_ACTIVE_STATE     = 32'hFFFFFFFF,
     parameter integer C_IRQ_SENSITIVITY       = 1,
-    parameter integer C_IRQ_ACTIVE_STATE      = 1    
+    parameter integer C_IRQ_ACTIVE_STATE      = 1,
+
+    // Debug
+    parameter FETCHER_ENABLE_DEBUG       = 1,
+    parameter DMA_REQUESTER_ENABLE_DEBUG = 1,
+    parameter DMA_RECEIVER_ENABLE_DEBUG  = 1
 ) (
 
     // Output FIFO Read
@@ -170,24 +175,54 @@ module sampler_dma_top #(
 //////////////////////////////
 
 // Number of bits needed to address all internal registers
-localparam integer OPT_MEM_ADDR_BITS = 10;
+localparam integer OPT_MEM_ADDR_BITS = C_AXI_LITE_SLAVE_ADDR_WIDTH - 3;
 
 // Output from the registers
-(* keep = "true" *) wire [ C_AXI_LITE_SLAVE_DATA_WIDTH - 1 : 0 ] reg_data_out;
-(* keep = "true" *) wire [ OPT_MEM_ADDR_BITS  - 1 : 0 ]          reg_wr_addr;
-(* keep = "true" *) wire [ OPT_MEM_ADDR_BITS  - 1 : 0 ]          reg_rd_addr;
-(* keep = "true" *) wire                                         reg_wr_en;
+wire [ C_AXI_LITE_SLAVE_DATA_WIDTH - 1 : 0 ] reg_data_out;
+wire [ OPT_MEM_ADDR_BITS  - 1 : 0 ]          reg_wr_addr;
+wire [ OPT_MEM_ADDR_BITS  - 1 : 0 ]          reg_rd_addr;
+wire                                         reg_wr_en;
 
-// Register signals
-wire [ 31 : 0 ] dma_control[ MAX_VOICES - 1 : 0 ];
-wire [ 31 : 0 ] dma_base_addr[ MAX_VOICES - 1 : 0 ];
-wire [ 31 : 0 ] dma_status[ MAX_VOICES - 1 : 0 ];
-wire [ 31 : 0 ] dma_curr_addr[ MAX_VOICES - 1 : 0 ];
 
-// Instantiation of Axi Bus Interface AXI_DMA_MASTER
-    sampler_dma_v1_0_AXI_DMA_MASTER # (
-        // Max voices
-        .MAX_VOICES                ( MAX_VOICES                              ),
+// Control Registers
+(* keep = "true" *) wire start;
+(* keep = "true" *) wire stop;
+
+// Interface between the fetcher and the BRAM registers
+(* keep = "true" *) wire             bram_B_we;
+(* keep = "true" *) wire [ 5 : 0 ]   bram_B_addr;
+(* keep = "true" *) wire [ 127 : 0 ] bram_B_din;
+(* keep = "true" *) wire [ 127 : 0 ] bram_B_dout;
+
+// Interface between the fetcher and the DMA requester
+(* keep = "true" *) wire [ 31 : 0 ] sample_addr;
+(* keep = "true" *) wire [ 5 : 0 ]  sample_id;
+(* keep = "true" *) wire            sample_valid;
+(* keep = "true" *) wire            sample_overflow;
+(* keep = "true" *) wire            sample_last;
+(* keep = "true" *) wire            load_next_sample;
+
+// Interface between the DMA requester and the receiver
+(* keep = "true" *) wire           all_samples_received;
+(* keep = "true" *) wire           last_request_sent;
+(* keep = "true" *) wire [ 5 : 0 ] last_request_id;
+(* keep = "true" *) wire           all_samples_invalid;
+
+// Interface between the AXI bridge and the receiver //
+(* keep = "true" *) wire [ 31 : 0 ] axi_sample_data;
+(* keep = "true" *) wire [ 5 : 0 ]  axi_sample_id;
+(* keep = "true" *) wire            axi_sample_valid;
+(* keep = "true" *) wire            axi_sample_data_last;
+(* keep = "true" *) wire            axi_sample_receiver_ready;
+
+// Interface between the AXI bridge and the requester //
+(* keep = "true" *) wire [ 31 : 0 ] dma_sample_req_addr;
+(* keep = "true" *) wire [ 5 : 0 ]  dma_sample_req_id;
+(* keep = "true" *) wire [ 7 : 0 ]  dma_sample_req_len;
+(* keep = "true" *) wire            dma_sample_req_valid;
+(* keep = "true" *) wire            dma_sample_req_done;
+
+    axi_dma_bridge # (
         // AXI Parameters
         .C_M_TARGET_SLAVE_BASE_ADDR( C_AXI_DMA_MASTER_TARGET_SLAVE_BASE_ADDR ),
         .C_M_AXI_BURST_LEN         ( C_AXI_DMA_MASTER_BURST_LEN              ),
@@ -199,16 +234,28 @@ wire [ 31 : 0 ] dma_curr_addr[ MAX_VOICES - 1 : 0 ];
         .C_M_AXI_WUSER_WIDTH       ( C_AXI_DMA_MASTER_WUSER_WIDTH            ),
         .C_M_AXI_RUSER_WIDTH       ( C_AXI_DMA_MASTER_RUSER_WIDTH            ),
         .C_M_AXI_BUSER_WIDTH       ( C_AXI_DMA_MASTER_BUSER_WIDTH            )
-    ) sampler_dma_v1_0_AXI_DMA_MASTER_inst (
-        // Register inputs
-        .dma_control   ( dma_control   ),
-        .dma_base_addr ( dma_base_addr ),
-        .dma_status    ( dma_status    ),
-        .dma_curr_addr ( dma_curr_addr ),
-        // FIFO Output
-        .fifo_data_out       ( fifo_data_out       ),
-        .fifo_data_available ( fifo_data_available ),
-        .fifo_data_read      ( fifo_data_read      ),        
+    ) axi_dma_bridge (
+		////////////////////////////////////////////////////
+		// Interface to the user logic
+		////////////////////////////////////////////////////
+
+		// Interface between the AXI bridge and the receiver //
+	    .axi_sample_data           ( axi_sample_data           ),
+	    .axi_sample_id             ( axi_sample_id             ),
+	    .axi_sample_valid          ( axi_sample_valid          ),
+	    .axi_sample_data_last      ( axi_sample_data_last      ),
+	    .axi_sample_receiver_ready ( axi_sample_receiver_ready ),
+
+		// Interface between the AXI bridge and the requester //
+		.dma_sample_req_addr  ( dma_sample_req_addr  ),
+		.dma_sample_req_id    ( dma_sample_req_id    ),
+		.dma_sample_req_len   ( dma_sample_req_len   ),
+		.dma_sample_req_valid ( dma_sample_req_valid ),
+		.dma_sample_req_done  ( dma_sample_req_done  ),
+
+		////////////////////////////////////////////////////
+		// Interface to the AXI fabric
+		////////////////////////////////////////////////////
         // AXI Signals
         .INIT_AXI_TXN  ( axi_dma_master_init_axi_txn ),
         .TXN_DONE      ( axi_dma_master_txn_done     ),
@@ -260,6 +307,7 @@ wire [ 31 : 0 ] dma_curr_addr[ MAX_VOICES - 1 : 0 ];
     );    
 
 
+
 	axi_slave_controller # ( 
 		.OPT_MEM_ADDR_BITS  ( OPT_MEM_ADDR_BITS  ),
 		.C_S_AXI_DATA_WIDTH ( C_AXI_LITE_SLAVE_DATA_WIDTH ),
@@ -301,8 +349,8 @@ wire [ 31 : 0 ] dma_curr_addr[ MAX_VOICES - 1 : 0 ];
     )
     sampler_dma_registers (
         // Clock and Reset
-        .axi_clk  ( axi_lite_slave_aclk    ),
-        .axi_reset( axi_lite_slave_aresetn ),
+        .clk     ( axi_lite_slave_aclk    ),
+        .reset_n ( axi_lite_slave_aresetn ),
 
         // Rd/Wr Signals
         .data_in     ( axi_lite_slave_wdata ),
@@ -310,47 +358,107 @@ wire [ 31 : 0 ] dma_curr_addr[ MAX_VOICES - 1 : 0 ];
 		.reg_addr_wr ( reg_wr_addr          ),
 		.reg_addr_rd ( reg_rd_addr          ),
 		.data_wren   ( reg_wr_en            ),
-		.byte_enable ( 4'h0                 ),
+
+        .bram_B_we   ( bram_B_we   ),
+        .bram_B_addr ( bram_B_addr ),
+        .bram_B_din  ( bram_B_din  ),
+        .bram_B_dout ( bram_B_dout ),
 
         // User Signals
-        .dma_control   ( dma_control   ),
-        .dma_base_addr ( dma_base_addr ),
-        .dma_status    ( dma_status    ),
-        .dma_curr_addr ( dma_curr_addr )
+        .start ( start ),  // Start the fetch mechanism
+        .stop  ( stop  )   // Stop the fetch mechanism
     );
 
-//// Instantiation of Axi Bus Interface S_AXI_INTR
-//    sampler_dma_v1_0_S_AXI_INTR # ( 
-//        .C_S_AXI_DATA_WIDTH(C_S_AXI_INTR_DATA_WIDTH),
-//        .C_S_AXI_ADDR_WIDTH(C_S_AXI_INTR_ADDR_WIDTH),
-//        .C_NUM_OF_INTR(C_NUM_OF_INTR),
-//        .C_INTR_SENSITIVITY(C_INTR_SENSITIVITY),
-//        .C_INTR_ACTIVE_STATE(C_INTR_ACTIVE_STATE),
-//        .C_IRQ_SENSITIVITY(C_IRQ_SENSITIVITY),
-//        .C_IRQ_ACTIVE_STATE(C_IRQ_ACTIVE_STATE)
-//    ) sampler_dma_v1_0_S_AXI_INTR_inst (
-//        .S_AXI_ACLK(s_axi_intr_aclk),
-//        .S_AXI_ARESETN(s_axi_intr_aresetn),
-//        .S_AXI_AWADDR(s_axi_intr_awaddr),
-//        .S_AXI_AWPROT(s_axi_intr_awprot),
-//        .S_AXI_AWVALID(s_axi_intr_awvalid),
-//        .S_AXI_AWREADY(s_axi_intr_awready),
-//        .S_AXI_WDATA(s_axi_intr_wdata),
-//        .S_AXI_WSTRB(s_axi_intr_wstrb),
-//        .S_AXI_WVALID(s_axi_intr_wvalid),
-//        .S_AXI_WREADY(s_axi_intr_wready),
-//        .S_AXI_BRESP(s_axi_intr_bresp),
-//        .S_AXI_BVALID(s_axi_intr_bvalid),
-//        .S_AXI_BREADY(s_axi_intr_bready),
-//        .S_AXI_ARADDR(s_axi_intr_araddr),
-//        .S_AXI_ARPROT(s_axi_intr_arprot),
-//        .S_AXI_ARVALID(s_axi_intr_arvalid),
-//        .S_AXI_ARREADY(s_axi_intr_arready),
-//        .S_AXI_RDATA(s_axi_intr_rdata),
-//        .S_AXI_RRESP(s_axi_intr_rresp),
-//        .S_AXI_RVALID(s_axi_intr_rvalid),
-//        .S_AXI_RREADY(s_axi_intr_rready),
-//        .irq(irq)
-//    );
+    sample_info_fetcher #(
+        .NUMBER_OF_SAMPLE_REG_PER_READ ( 4   ),   // This controls the number of registers to be fetched on a single read
+        .BRAM_DATA_WIDTH               ( 128 ), // This controls the data width of the BRAM data
+        .BRAM_ADDR_WIDTH               ( 6   ),
+        // Debug
+        .ENABLE_DEBUG ( FETCHER_ENABLE_DEBUG )
 
+    ) sample_info_fetcher (
+        .clk     ( axi_lite_slave_aclk    ),
+        .reset_n ( axi_lite_slave_aresetn ),
+
+        // Control interface //
+        .start ( start ), // Start the fetch mechanism
+        .stop  ( stop  ),  // Stop the fetch mechanism
+
+        // BRAM Interface //
+       .bram_data_wr   ( bram_B_we   ),
+       .bram_addr      ( bram_B_addr ),
+       .bram_data_in   ( bram_B_dout ),
+       .bram_data_out  ( bram_B_din  ),
+
+        // Voice FSM Interface //
+        .sample_addr         ( sample_addr         ),
+        .sample_id           ( sample_id           ),
+        .sample_valid        ( sample_valid        ),
+        .sample_overflow     ( sample_overflow     ),
+        .sample_last         ( sample_last         ),
+        .load_next_sample    ( load_next_sample    ),
+        .all_samples_invalid ( all_samples_invalid )
+    );
+
+    sample_dma_requester #(
+        .ENABLE_DEBUG ( DMA_REQUESTER_ENABLE_DEBUG )
+    )
+    sample_dma_requester (
+        .clk     ( axi_lite_slave_aclk    ),
+        .reset_n ( axi_lite_slave_aresetn ),
+
+        // Control interface //
+        .start ( start ),  // Start the fetch mechanism
+        .stop  ( stop  ),  // Stop the fetch mechanism
+
+        // AXI Bridge interface //
+		.dma_sample_req_addr  ( dma_sample_req_addr  ),
+		.dma_sample_req_id    ( dma_sample_req_id    ),
+		.dma_sample_req_len   ( dma_sample_req_len   ),
+		.dma_sample_req_valid ( dma_sample_req_valid ),
+		.dma_sample_req_done  ( dma_sample_req_done  ),
+
+        // Data receiver interface //
+        .all_samples_received ( all_samples_received ),
+        .last_request_sent    ( last_request_sent    ),
+        .last_request_id      ( last_request_id      ),
+
+        // Information fethcer interface //
+        .sample_addr         ( sample_addr         ),
+        .sample_id           ( sample_id           ),
+        .sample_valid        ( sample_valid        ),
+        .sample_overflow     ( sample_overflow     ),
+        .sample_last         ( sample_last         ),
+        .load_next_sample    ( load_next_sample    ),
+        .all_samples_invalid ( all_samples_invalid )
+    );
+
+    sample_dma_receiver # (
+        .ENABLE_DEBUG ( DMA_RECEIVER_ENABLE_DEBUG )
+    )
+    sample_dma_receiver (
+        .clk     ( axi_lite_slave_aclk    ),
+        .reset_n ( axi_lite_slave_aresetn ),
+
+        .stop ( stop ),
+
+        // DMA Requester interface //
+        .all_samples_received ( all_samples_received ),
+        .last_request_sent    ( last_request_sent    ),
+        .last_request_id      ( last_request_id      ),
+        .all_samples_invalid  ( all_samples_invalid  ),
+
+        // AXI Bridge Interface //
+	    .axi_sample_data           ( axi_sample_data           ),
+	    .axi_sample_id             ( axi_sample_id             ),
+	    .axi_sample_valid          ( axi_sample_valid          ),
+	    .axi_sample_data_last      ( axi_sample_data_last      ),
+	    .axi_sample_receiver_ready ( axi_sample_receiver_ready ),
+
+        // Output FIFO interface //
+        .sample_data           ( fifo_data_out       ),
+        .sample_data_available ( fifo_data_available ),
+        .sample_data_read      ( fifo_data_read      )
+
+    );
 endmodule

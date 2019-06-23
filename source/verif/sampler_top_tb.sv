@@ -23,10 +23,10 @@ initial begin
    //#(128300ns) release sampler_top.codec_unit.register_unit.axi_slave_controller_inst.codec_registers.controller_reset;
 end
 
-initial begin
-  #(500ns) force sampler_top.sampler_dma_top.sampler_dma_registers.dma_base_addr[0] = 32'hbcd00000;
-  #(50500ns) force sampler_top.sampler_dma_top.sampler_dma_registers.dma_control[0] = 1;
-end
+//initial begin
+//  #(500ns) force sampler_top.sampler_dma_top.sampler_dma_registers.dma_base_addr[0] = 32'hbcd00000;
+//  #(50500ns) force sampler_top.sampler_dma_top.sampler_dma_registers.dma_control[0] = 1;
+//end
 
 //initial begin
   //#(500ns) force sampler_top.sampler_dma_top.sampler_dma_v1_0_AXI_DMA_MASTER_inst.indiv_voice_fsm[0].dma_voice_fsm_inst = 32'hbcd00000;

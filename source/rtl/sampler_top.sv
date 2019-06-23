@@ -24,7 +24,7 @@ module sampler_top #(
 
   // Parameters of Axi Slave Bus Interface AXI_LITE_SLAVE
   parameter integer C_AXI_LITE_SLAVE_DATA_WIDTH = 32,
-  parameter integer C_AXI_LITE_SLAVE_ADDR_WIDTH = 13,
+  parameter integer C_AXI_LITE_SLAVE_ADDR_WIDTH = 16,
 
   // Parameters of Axi Slave Bus Interface S_AXI_INTR
   parameter integer C_S_AXI_INTR_DATA_WIDTH = 32,
@@ -33,7 +33,12 @@ module sampler_top #(
   parameter         C_INTR_SENSITIVITY      = 32'hFFFFFFFF,
   parameter         C_INTR_ACTIVE_STATE     = 32'hFFFFFFFF,
   parameter integer C_IRQ_SENSITIVITY       = 1,
-  parameter integer C_IRQ_ACTIVE_STATE      = 1      
+  parameter integer C_IRQ_ACTIVE_STATE      = 1,
+
+  // Debug
+  parameter FETCHER_ENABLE_DEBUG       = 1,
+  parameter DMA_REQUESTER_ENABLE_DEBUG = 1,
+  parameter DMA_RECEIVER_ENABLE_DEBUG  = 1
 
 ) (
   //********************************************//
@@ -430,7 +435,12 @@ codec_unit_top #(
     .C_INTR_SENSITIVITY      (C_INTR_SENSITIVITY     ),
     .C_INTR_ACTIVE_STATE     (C_INTR_ACTIVE_STATE    ),
     .C_IRQ_SENSITIVITY       (C_IRQ_SENSITIVITY      ),
-    .C_IRQ_ACTIVE_STATE      (C_IRQ_ACTIVE_STATE     )
+    .C_IRQ_ACTIVE_STATE      (C_IRQ_ACTIVE_STATE     ),
+
+    // Debug
+    .FETCHER_ENABLE_DEBUG       ( FETCHER_ENABLE_DEBUG       ),
+    .DMA_REQUESTER_ENABLE_DEBUG ( DMA_REQUESTER_ENABLE_DEBUG ),
+    .DMA_RECEIVER_ENABLE_DEBUG  ( DMA_RECEIVER_ENABLE_DEBUG  )
 
   ) sampler_dma_top (
     // Output FIFO Read signals

@@ -116,34 +116,22 @@ always_comb begin
   end
 end
 
-//assign audio_data_out_pre = (word_length == 2'b00) ? {audio_data_in[15:0], audio_data_in[47:32], {32{1'b0}}} : // 16-bit
-//                            (word_length == 2'b01) ? {audio_data_in[19:0], audio_data_in[51:32], {24{1'b0}}} : // 20-bit
-//                            (word_length == 2'b10) ? {audio_data_in[23:0], audio_data_in[55:32], {16{1'b0}}} : // 24-bit
-//                            (word_length == 2'b11) ? {audio_data_in[31:0], audio_data_in[63:32]}             : // 32-bit
-//                            'h0;
-
-//assign audio_data_out_pre = (word_length == 2'b00) ? {{32{1'b0}}, audio_data_in[47:32], audio_data_in[15:0]} : // 16-bit
-//                            (word_length == 2'b01) ? {{24{1'b0}}, audio_data_in[51:32], audio_data_in[19:0]} : // 20-bit
-//                            (word_length == 2'b10) ? {{16{1'b0}}, audio_data_in[55:32], audio_data_in[23:0]} : // 24-bit
-//                            (word_length == 2'b11) ? {audio_data_in[63:32], audio_data_in[31:0]}             : // 32-bit
-//                            'h0;
-
 
 // Shift Register for the output data
 always_ff @(posedge ac_bclk) begin
   data_rd_reg       <= 1'b0;
   // Get the new data
-  if ( ac_pblrc && m_axis_tvalid ) begin
-    audio_data_out_shift_reg <= audio_data_out_pre;
-    data_rd_reg              <= 1'b1; // Assert the Data RD to get the data for the next cycle
+  if ( ac_pblrc ) begin
+    data_rd_reg <= 1'b1; // Assert the Data RD to get the data for the next cycle
+    // To avoid weird noises, when there's no data, send 0
+    if ( m_axis_tvalid ) audio_data_out_shift_reg <= audio_data_out_pre;
+    else audio_data_out_shift_reg <= 'h0;
   end
   // Shift the data
   else begin
     // Output Data
     if(justification == 1'b0) audio_data_out_shift_reg <= { audio_data_out_shift_reg[62:0], audio_data_out_shift_reg[63]   };
     else                      audio_data_out_shift_reg <= { audio_data_out_shift_reg[0]   , audio_data_out_shift_reg[63:1] };
-    //audio_data_out_shift_reg <= { audio_data_out_shift_reg[0], audio_data_out_shift_reg[63:1] };
-    //audio_data_out_shift_reg <= { audio_data_out_shift_reg[62:0], audio_data_out_shift_reg[63] };
   end
 end
 
