@@ -48,6 +48,8 @@ You can find more about the board over at https://reference.digilentinc.com/refe
 
 [**DONE**] Enable a MIDI bridge using UART
 
+[**IN PROGRESS**] Increase the scalability of the DMA engine
+
 ## Phase 3 [**NOT STARTED**]: Sound Playback
 
 [**IN PROGRESS**] Playback samples from an open source library
