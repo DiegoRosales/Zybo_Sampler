@@ -18,7 +18,7 @@ set worskpace_project_path     "${results_dir}/${workspace_project_name}"
 ## File list variables
 set rtl_file_list         ${project_root}/scripts/rtl_filelist.f
 set constraints_file_list ${project_root}/scripts/constraints_filelist.f
-set fw_source_path        ${project_root}/source/fw/
+set collateral_ip_list    ${project_root}/scripts/collateral_ip_filelist.f
 
 ## Packaged Project Variables
 set packaged_ip_dirname   "packaged_ip"
@@ -30,9 +30,10 @@ set packaged_ip_root_dir  ${results_dir}/${packaged_ip_dirname}
 ## Block Design Variables
 set block_design_name "audio_sampler_block_design"
 set block_design_hdf  ${block_design_name}_wrapper.hdf
-set MAX_VOICES        8
+set MAX_VOICES        10
 
 ## SDK Design Variables
 set processor        "ps7_cortexa9_0"
 set hw_project_name  "codec_${processor}"
 set sdk_project_name "codec_fw"
+set fw_source_path   ${project_root}/source/fw/

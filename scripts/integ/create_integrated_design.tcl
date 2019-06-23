@@ -74,7 +74,7 @@ if { $skip_project_gen == 0 } {
         if { ${enable_debug} == 1 } {
             implement_debug_core
         }
-
+        implement_debug_core
         if { ${enable_debug} == 0 } {
             if { [file exists ${integrated_ip_project_path}/post_route.dcp] != 0} { 
                 puts "Found checkpoint. Running incrementally"
@@ -98,6 +98,7 @@ if { $skip_project_gen == 0 } {
         if { ${enable_debug} == 1 } {
             write_debug_probes -force ${integrated_ip_project_path}/${integrated_ip_project_name}.ltx
         }
+        write_debug_probes -force ${integrated_ip_project_path}/${integrated_ip_project_name}.ltx
     }
     ###############################################
 }

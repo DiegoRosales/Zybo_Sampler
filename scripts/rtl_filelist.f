@@ -16,11 +16,13 @@ set synthesis_file_list {
     ${project_root}/source/rtl/codec_unit/controller_unit/i2c_core/verilog-i2c/rtl/i2c_master_wbs_8.v
     ${project_root}/source/rtl/codec_unit/controller_unit/i2c_core/verilog-i2c/rtl/axis_fifo.v
     ${project_root}/source/rtl/sampler_dma_unit/sampler_dma_top.sv
-    ${project_root}/source/rtl/sampler_dma_unit/sampler_dma_S_AXI_INTR.sv
-    ${project_root}/source/rtl/sampler_dma_unit/sampler_dma_AXI_DMA_MASTER.sv
-    ${project_root}/source/rtl/sampler_dma_unit/dma_voice_req_fsm.sv
     ${project_root}/source/rtl/sampler_dma_unit/sampler_dma_registers.sv
+    ${project_root}/source/rtl/sampler_dma_unit/sample_info_fetcher.sv
+    ${project_root}/source/rtl/sampler_dma_unit/sample_dma_requester.sv
+    ${project_root}/source/rtl/sampler_dma_unit/sample_dma_receiver.sv
+    ${project_root}/source/rtl/sampler_dma_unit/axi_dma_bridge.sv
 }
+
 ## This should be populated when the collateral IPs are generated
 set generated_ip_file_list {
 }
