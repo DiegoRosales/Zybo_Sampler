@@ -18,6 +18,7 @@
 #include "nco.h"
 #include "sampler.h"
 
+
 ////////////////////////////////////////////////////
 // External variables
 ////////////////////////////////////////////////////
@@ -81,14 +82,7 @@ static const CLI_Command_Definition_t get_sampler_version_command_definition =
     0 /* The user can enter any number of commands. */
 };
 
-// Command to load a sine wave into memory
-static const CLI_Command_Definition_t playback_sine_command_definition =
-{
-    "playback_sine",
-    "\r\nplayback_sine <FREQUENCY>\r\n Starts the playback of a sine wave of a given frequency\r\n",
-    playback_sine_command, /* The function to run. */
-    1 /* The user can enter any number of commands. */
-};
+
 ////////////////////////////////////////////////////////
 // Functions
 ////////////////////////////////////////////////////////
@@ -102,7 +96,6 @@ void register_codec_cli_commands( void ) {
     FreeRTOS_CLIRegisterCommand( &codec_reg_command_definition ); // Sampler Read Command
 	FreeRTOS_CLIRegisterCommand( &load_sine_command_definition ); // Load sine command
 	FreeRTOS_CLIRegisterCommand( &get_sampler_version_command_definition ); // Load sine command
-	FreeRTOS_CLIRegisterCommand( &playback_sine_command_definition ); // Load sine command
 
 }
 
@@ -646,89 +639,4 @@ static BaseType_t get_sampler_version_command( char *pcWriteBuffer, size_t xWrit
     return xReturn;
 }
 
-// This starts the playback of a sine wave
-static BaseType_t playback_sine_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString ) {
-    const char         *pcParameter;
-    BaseType_t         xParameterStringLength;
-    BaseType_t         xReturn;
-    static UBaseType_t uxParameterNumber = 0;
 
-	// Custom variables
-    uint32_t frequency;
-	uint32_t voice_slot;
-	static BaseType_t command_done;
-
-	/* Remove compile time warnings about unused parameters, and check the
-	write buffer is not NULL.  NOTE - for simplicity, this example assumes the
-	write buffer length is adequate, so does not check for buffer overflows. */
-	( void ) pcCommandString;
-	( void ) xWriteBufferLen;
-	configASSERT( pcWriteBuffer );
-
-    if( uxParameterNumber == 0 ) // Parameter 0 (aka no parameter yet)
-	{
-		/* The first time the function is called after the command has been
-		entered just a header string is returned. */
-		sprintf( pcWriteBuffer, "The parameters were:\r\n" );
-
-		/* Next time the function is called the first parameter will be echoed
-		back. */
-		uxParameterNumber = 1U;
-
-		/* There is more data to be returned as no parameters have been echoed
-		back yet. */
-		xReturn = pdPASS;
-
-		// Initialize command_done
-		command_done = pdFALSE;		
-	} else {
-        /* Obtain the parameter string. */
-		pcParameter = FreeRTOS_CLIGetParameter
-						(
-							pcCommandString,		/* The command string itself. */
-							uxParameterNumber,		/* Return the next parameter. */
-							&xParameterStringLength	/* Store the parameter string length. */
-						);
-
-		if ( ( pcParameter != NULL ) && ( command_done != pdTRUE ) ) {
-            // Step 1 - Convert the string into an integer to get the frequency
-            frequency = str2int(pcParameter, xParameterStringLength);
-
-            // Step 2 - Initialize NCO variables
-            nco_init(&sine_nco, frequency, 48000);
-
-			// Step 3 - Load the values into memory
-			nco_load_sine_to_mem(&sine_nco);
-
-			// Step 4 - Flush the data to the DDR
-			Xil_DCacheFlushRange(sine_nco.audio_data, (0x100000 * 2));
-
-			// Step 5 - Start the playback
-			voice_slot = start_voice_playback( sine_nco.audio_data, sine_nco.target_memory_size );
-			uint32_t addr = SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_addr.value;
-
-			/* Return the parameter string. */
-			memset( pcWriteBuffer, 0x00, xWriteBufferLen ); // Initialize the buffer
-			sprintf( pcWriteBuffer, "Sine wave of frequency %dHz loaded\n\rNumber of samples = %d\n\rStart address = 0x%x\n\rVoice Slot ID = %d\n\rWritten Address = 0x%x", frequency, sine_nco.target_memory_size, sine_nco.audio_data, voice_slot, addr );
-			APPEND_NEWLINE(pcWriteBuffer);
-
-			/* There might be more parameters to return after this one. */
-			xReturn      = pdPASS;
-			command_done = pdTRUE; // Command is done
-
-		}
-		else if (command_done == pdTRUE) {
-			/* No more parameters were found.  Make sure the write buffer does
-			not contain a valid string. */
-			pcWriteBuffer[ 0 ] = 0x00;
-
-			/* No more data to return. */
-			xReturn = pdFALSE;
-
-			/* Start over the next time this command is executed. */
-			uxParameterNumber = 0;
-		}
-    }
-
-    return xReturn;
-}
