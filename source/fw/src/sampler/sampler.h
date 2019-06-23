@@ -17,12 +17,19 @@
 #endif
 
 #define SAMPLER_BASE_ADDR     XPAR_AUDIO_SAMPLER_INST_AXI_LITE_SLAVE_BASEADDR
-#define SAMPLER_DMA_BASE_ADDR SAMPLER_BASE_ADDR + (0x40)
+#define SAMPLER_DMA_BASE_ADDR SAMPLER_BASE_ADDR + (0x1000)
 #define MAX_VOICES 4
 
 // Direct access to the Sampler control register
 #define SAMPLER_CONTROL_REGISTER_ACCESS ((volatile SAMPLER_REGISTERS_t *)(SAMPLER_BASE_ADDR))
 #define SAMPLER_DMA_REGISTER_ACCESS     ((volatile SAMPLER_DMA_REGISTERS_t *)(SAMPLER_DMA_BASE_ADDR))
+
+// Shortcuts for the Sampler Control Access
+#define SAMPLER_CONTROL_START_BIT 0
+#define SAMPLER_CONTROL_STOP_BIT  1
+#define SAMPLER_CONTROL_START     ( 1 << SAMPLER_CONTROL_START_BIT )
+#define SAMPLER_CONTROL_STOP      ( 1 << SAMPLER_CONTROL_STOP_BIT  )
+
 
 // Endinaness conversion
 
@@ -55,7 +62,12 @@
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////
-// HARDWARE REGISTERS
+//  _   _               _                          ____            _     _                
+// | | | | __ _ _ __ __| |_      ____ _ _ __ ___  |  _ \ ___  __ _(_)___| |_ ___ _ __ ___ 
+// | |_| |/ _` | '__/ _` \ \ /\ / / _` | '__/ _ \ | |_) / _ \/ _` | / __| __/ _ \ '__/ __|
+// |  _  | (_| | | | (_| |\ V  V / (_| | | |  __/ |  _ <  __/ (_| | \__ \ ||  __/ |  \__ \
+// |_| |_|\__,_|_|  \__,_| \_/\_/ \__,_|_|  \___| |_| \_\___|\__, |_|___/\__\___|_|  |___/
+//
 /////////////////////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////
@@ -66,29 +78,52 @@
 // | CONTROL/MISC REGISTERS   |
 // |         [9:0]            |
 // |==========================|
-// | DMA ADDRESS REG 0        |
-// |--------------------------|
-// | DMA START/STOP REG 0     |
-// |--------------------------|
-// | DMA STATUS REG 0         |
-// |--------------------------|
-// | DMA CURRENT ADDR REG 0   |
-// |==========================|
+// |          RSVD            |
 // |          ...             |
 // |==========================|
-// | DMA ADDRESS REG n        |
+// | Sample DMA Reg 0         |
 // |--------------------------|
-// | DMA START/STOP REG n     |
+// | Sample DMA Reg 1         |
 // |--------------------------|
-// | DMA STATUS REG n         |
-// |--------------------------|
-// | DMA CURRENT ADDR REG n   |
+// | Sample DMA Reg n         |
 // |--------------------------|
 ///////////////////////////////////////////////////////////////
 
-///////////////////////////////////////////////
+// Misc Control and Status Register (BAR = SAMPLER_BASE_ADDR)
+// .----------.-------------.----------------------------.
+// | Address  |  Operation  |        Register Name       |
+// :----------+-------------+----------------------------:
+// |  0x0     |  RO         |  SAMPLER HW VERSION        |
+// :----------+-------------+----------------------------:
+// |  0x1     |  RO         |  MAX VOICES                |
+// :----------+-------------+----------------------------:
+// |  0x2     |  RO         |  BRAM START ADDRESS        |
+// :----------+-------------+----------------------------:
+// |  0x3     |  RO         |  BRAM END ADDRESS          |
+// :----------+-------------+----------------------------:
+// |  0x4     |  RD/WR      |  RSVD[31:2] | STOP | START |
+// '----------'-------------'----------------------------'
+
+// Sample DMA Register (BAR = SAMPLER_BASE_ADDR + BRAM START ADDRESS)
+// .-------------.-------------.-----------------------------------------------------------.
+// |   Address   |  Operation  |        0      |      1      |      2      |      3        |
+// :-------------+-------------+-----------------------------------------------------------:
+// |     0x0     |    RD/WR    |                 Sample Current Address [31:0]             |
+// :-------------+-------------+-----------------------------------------------------------:
+// |     0x1     |    RD/WR    |                   Sample End Address [31:0]               |
+// :-------------+-------------+-----------------------------------------------------------:
+// |     0x2     |    RD/WR    |  Control[7:0] |   Sample Length [23:0]                    |
+// :-------------+-------------+-----------------------------------------------------------:
+// |     0x3     |    RD/WR    |          RSVD[15:0]         |     Next Sample[15:0]       |
+// '-------------'-------------'-----------------------------------------------------------'
+
+
+
+//***********************************************
+//***********************************************
 // General misc registers
-///////////////////////////////////////////////
+//***********************************************
+//***********************************************
 
 /////////////////////////////////
 // Sampler Version Register
@@ -116,8 +151,62 @@ typedef union {
 
 /////////////////////////////////
 // Sampler Voice Information Start Address
-// (sampler address where the FW can write the voice address)
+// (address where the FW can write the voice address)
 /////////////////////////////////
+typedef union {
+    // Individual Fields
+    struct {
+        uint32_t dma_start_addr : 32 ; // Bit 31:0
+    } field;
+    // Complete Value
+    uint32_t value;
+} SAMPLER_DMA_CTRL_START_ADDR_REG_t;
+
+/////////////////////////////////
+// Sampler Voice Information End Address
+/////////////////////////////////
+typedef union {
+    // Individual Fields
+    struct {
+        uint32_t dma_end_addr : 32 ; // Bit 31:0
+    } field;
+    // Complete Value
+    uint32_t value;
+} SAMPLER_DMA_CTRL_END_ADDR_REG_t;
+
+/////////////////////////////////
+// Sampler Control Register
+/////////////////////////////////
+typedef union {
+    // Individual Fields
+    struct {
+        uint32_t start : 1 ; // Bit 0
+        uint32_t stop  : 1 ; // Bit 1
+        uint32_t rsvd  : 30; // Bits [31:2]
+    } field;
+    // Complete Value
+    uint32_t value;
+} SAMPLER_CONTROL_REG_t;
+
+typedef struct {
+    SAMPLER_VER_REG_t                 SAMPLER_VER_REG;                 // Address 0
+    SAMPLER_MAX_VOICES_REG_t          SAMPLER_MAX_VOICES_REG;          // Address 1
+    SAMPLER_DMA_CTRL_START_ADDR_REG_t SAMPLER_DMA_CTRL_START_ADDR_REG; // Address 2
+    SAMPLER_DMA_CTRL_END_ADDR_REG_t   SAMPLER_DMA_CTRL_END_ADDR_REG;   // Address 3
+    SAMPLER_CONTROL_REG_t             SAMPLER_CONTROL_REG;             // Address 4
+} SAMPLER_REGISTERS_t;
+
+////////////////////////////////////////////////////////////////////
+
+//***********************************************
+//***********************************************
+// DMA registers
+//***********************************************
+//***********************************************
+
+////////////////////////////////////
+// DMA Start Address
+///////////////////////////////////
 typedef union {
     // Individual Fields
     struct {
@@ -127,28 +216,17 @@ typedef union {
     uint32_t value;
 } SAMPLER_DMA_START_ADDR_REG_t;
 
-typedef struct {
-    SAMPLER_VER_REG_t            SAMPLER_VER_REG;            // Address 0
-    SAMPLER_MAX_VOICES_REG_t     SAMPLER_MAX_VOICES_REG;     // Address 1
-    SAMPLER_DMA_START_ADDR_REG_t SAMPLER_DMA_START_ADDR_REG; // Address 2
-} SAMPLER_REGISTERS_t;
-
-
-///////////////////////////////////////////////
-// DMA registers
-///////////////////////////////////////////////
-
 ////////////////////////////////////
-// DMA Information Address
+// DMA End Address
 ///////////////////////////////////
 typedef union {
     // Individual Fields
     struct {
-        uint32_t dma_info_addr : 32 ; // Bit 31:0
+        uint32_t dma_end_addr : 32 ; // Bit 31:0
     } field;
     // Complete Value
     uint32_t value;
-} SAMPLER_DMA_INFO_ADDR_REG_t;
+} SAMPLER_DMA_END_ADDR_REG_t;
 
 ////////////////////////////////////
 // DMA Control Bits
@@ -156,26 +234,29 @@ typedef union {
 typedef union {
     // Individual Fields
     struct {
-        uint32_t dma_len : 30 ; // Bit [29:0]
-        uint32_t start   : 1  ; // Bit 30
-        uint32_t stop    : 1  ; // Bit 31
+        uint32_t dma_len  : 24 ; // Bit [23:0]   // Length in number of samples
+        uint32_t valid    : 1  ; // Bit 24       // Sample is valid
+        uint32_t last     : 1  ; // Bit 25       // Sample is the last of the loop
+        uint32_t rsvd     : 5  ; // Bits [30:26] // Reserved
+        uint32_t overflow : 1  ; // Bit 31       // Sampler read all the samples
     } field;
     // Complete Value
     uint32_t value;
 } SAMPLER_DMA_CONTROL_REG_t;
 
 ////////////////////////////////////
-// DMA Status Register
+// Next Sample Register
 ///////////////////////////////////
 typedef union {
     // Individual Fields
     // TODO: Put individual bits
     struct {
-        uint32_t dma_status : 32 ; // Bit 31:0
+        uint32_t dma_next_sample : 16 ; // Bit [15:0]
+        uint32_t rsvd            : 16 ; // Bit [31:16]
     } field;
     // Complete Value
     uint32_t value;
-} SAMPLER_DMA_STATUS_REG_t;
+} SAMPLER_DMA_NEXT_SAMPLE_REG_t;
 
 ////////////////////////////////////
 // DMA Current Address Register
@@ -190,10 +271,10 @@ typedef union {
 } SAMPLER_DMA_CURRENT_ADDR_REG_t;
 
 typedef struct {
-    SAMPLER_DMA_INFO_ADDR_REG_t    dma_addr;         // Address pointing to the voice information
-    SAMPLER_DMA_CONTROL_REG_t      dma_control;      // Start/Stop/etc.
-//    SAMPLER_DMA_STATUS_REG_t       dma_status;       // Status register
-//    SAMPLER_DMA_CURRENT_ADDR_REG_t dma_current_addr; // Current address being fetched
+    SAMPLER_DMA_START_ADDR_REG_t  dma_start_addr;  // Address pointing to the sample data
+    SAMPLER_DMA_START_ADDR_REG_t  dma_end_addr;    // Address pointing to the end of the sample data
+    SAMPLER_DMA_CONTROL_REG_t     dma_control;     // Start/Stop/etc.
+    SAMPLER_DMA_NEXT_SAMPLE_REG_t dma_next_sample; // Status register
 } SAMPLER_DMA_t;
 
 typedef struct {
@@ -201,9 +282,21 @@ typedef struct {
 } SAMPLER_DMA_REGISTERS_t;
 
 
-/////////////////////////////////////////////////////////////////////////////////////////////
-// SOFTWARE REGISTERS
-/////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////
+//  ____         __ _                            ____            _     _                
+// / ___|  ___  / _| |___      ____ _ _ __ ___  |  _ \ ___  __ _(_)___| |_ ___ _ __ ___ 
+// \___ \ / _ \| |_| __\ \ /\ / / _` | '__/ _ \ | |_) / _ \/ _` | / __| __/ _ \ '__/ __|
+//  ___) | (_) |  _| |_ \ V  V / (_| | | |  __/ |  _ <  __/ (_| | \__ \ ||  __/ |  \__ \
+// |____/ \___/|_|  \__| \_/\_/ \__,_|_|  \___| |_| \_\___|\__, |_|___/\__\___|_|  |___/
+//                                                         |___/                        
+///////////////////////////////////////////////////////////////////////////////////////////////
+
+typedef struct {
+    uint16_t voice_is_active;
+    uint16_t previous_voice_slot;
+    uint16_t next_voice_slot;
+    uint16_t slot_is_last;
+} VOICE_TRK_t;
 
 //////////////////////////////////////////
 // Voice Information Data Structure
@@ -239,13 +332,13 @@ typedef struct {
 } RIFF_DESCRIPTOR_CHUNK_t;
 
 typedef struct {
-    WAVE_BASE_CHUNK_t BaseChunk; // ID ("fmt ") and Size
-    uint16_t AudioFormat;        // (little endian) | PCM = 1 (i.e. Linear quantization). Values other than 1 indicate some form of compression
-    uint16_t NumChannels;        // (little endian) | Mono = 1, Stereo = 2, etc.
-    uint32_t SampleRate;         // (little endian) | 8000, 44100, etc.
-    uint32_t ByteRate;           // (little endian) | == SampleRate * NumChannels * BitsPerSample/8
-    uint16_t BlockAlign;         // (little endian) | == NumChannels * BitsPerSample/8. The number of bytes for one sample including all channels. I wonder what happens when this number isn't an integer?
-    uint16_t BitsPerSample;      // (little endian) | 8 bits = 8, 16 bits = 16, etc.
+    WAVE_BASE_CHUNK_t BaseChunk;     // ID ("fmt ") and Size
+    uint16_t          AudioFormat;   // (little endian) | PCM = 1 (i.e. Linear quantization). Values other than 1 indicate some form of compression
+    uint16_t          NumChannels;   // (little endian) | Mono = 1, Stereo = 2, etc.
+    uint32_t          SampleRate;    // (little endian) | 8000, 44100, etc.
+    uint32_t          ByteRate;      // (little endian) | == SampleRate * NumChannels * BitsPerSample/8
+    uint16_t          BlockAlign;    // (little endian) | == NumChannels * BitsPerSample/8. The number of bytes for one sample including all channels. I wonder what happens when this number isn't an integer?
+    uint16_t          BitsPerSample; // (little endian) | 8 bits = 8, 16 bits = 16, etc.
 } FORMAT_DESCRIPTOR_CHUNK_t;
 
 // Canonical RIFF data structure
@@ -308,11 +401,14 @@ uint32_t SamplerRegWr(uint32_t addr, uint32_t value, uint32_t check);
 uint32_t SamplerRegRd(uint32_t addr);
 
 
-uint32_t get_available_voice_slot( void );
+uint16_t get_available_voice_slot( void );
+void     release_slot( uint16_t slot );
 uint32_t stop_voice_playback( uint32_t voice_slot_number );
 uint32_t start_voice_playback( uint32_t sample_addr, uint32_t sample_size );
 
 uint32_t get_sampler_version();
+
+void sampler_init ( void );
 
 uint8_t get_json_midi_note_number( jsmntok_t *tok, uint8_t *instrument_info_buffer );
 uint8_t get_midi_note_number( char *note_name );

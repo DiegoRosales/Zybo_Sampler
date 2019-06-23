@@ -8,7 +8,7 @@
 // Main function
 void main_rtos_program();
 // Init function
-void sampler_init( void );
+void system_init( void );
 
 
 #endif

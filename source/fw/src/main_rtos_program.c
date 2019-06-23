@@ -42,7 +42,7 @@ FF_Disk_t *pxSDDisk;
 
 void main_rtos_program() {
 
-    sampler_init();
+    system_init();
 
     create_sampler_tasks();
     
@@ -64,7 +64,7 @@ void main_rtos_program() {
 /////////////////////////////////
 // System Initialization Task  //
 /////////////////////////////////
-void sampler_init( void ) {
+void system_init( void ) {
     xil_printf("==========================\n\r");
     xil_printf("Initializing the system...\n\r");
     ////////
@@ -80,29 +80,11 @@ void sampler_init( void ) {
     xil_printf("Audio Data Address Start = 0x%x\n\r", sine_nco.audio_data);
     xil_printf("Done!\n\r");    
 
-    //instrument_information = init_instrument_information(88, 1);
-    /* Create the SD card disk. */
-	
-//    ////////
-//    // GPIO Configuration
-//    ////////
-//    xil_printf("Initializing the GPIO...\n\r");
-//    // Initialize the GPIO IP
-//    XGpio_Initialize(&gpio, 0);
-//    // Enable the GPIO Interrupts
-//    enable_gpio_interrupts();
-//    XGpio_InterruptClear(&gpio, 0xffffffff);
-//    XGpio_InterruptEnable(&gpio, 0xffffffff);
-//    XGpio_InterruptGlobalEnable(&gpio);
-//
-//    ////////
-//    // DMA Configuration
-//    ////////
-//    xil_printf("Initializing the DMA Engine...\n\r");
+    sampler_init();
+
     xil_printf("Done!\n\r");
     xil_printf("==========================\n\r");
-    //for(int i=0; i<100000; i++); // Small delay
-    //while(1);
+
 }
 
 

@@ -29,7 +29,9 @@ static const NOTE_LUT_STRUCT_t MIDI_NOTES_LUT[12] = {
     {"Gx_S", 20}	
 };
 
-static uint32_t        sampler_voices[MAX_VOICES];
+static VOICE_TRK_t     sampler_voices[MAX_VOICES];
+static uint8_t         last_voice_slot;
+static uint8_t         number_of_active_slots;
 static SAMPLER_VOICE_t sampler_voices_information[MAX_VOICES];
 
 
@@ -114,17 +116,110 @@ uint32_t SamplerRegRd(uint32_t addr) {
     return readback;
 }
 
-// This function will return the number
-// of the voice slot available to start the playback
-uint32_t get_available_voice_slot( void ) {
-    for ( int i = 0 ; i < MAX_VOICES ; i++ ) {
-        if ( sampler_voices[ i ] == 0 ) {
-            sampler_voices[ i ] = 1;
-            return i; // Return the slot number
+// Initialize the sampler registers
+void sampler_init ( void ) {
+
+    // Initialize the slots
+    last_voice_slot        = 0;
+    number_of_active_slots = 0;
+    for( int i = 0; i < MAX_VOICES; i++ ){
+        sampler_voices[ i ].voice_is_active     = 0;
+        sampler_voices[ i ].previous_voice_slot = 0;
+        sampler_voices[ i ].next_voice_slot     = 0;
+        sampler_voices[ i ].slot_is_last        = 0;
+    }
+
+}
+
+// This function will return the number of the voice slot available to start the playback
+uint16_t get_available_voice_slot( void ) {
+    uint16_t current_slot     = 0xffff;
+    uint16_t previous_slot    = 0;
+
+    // If there are no voices playing
+    // Step 1 - Check if there are voices playing. If not, take slot 0
+    if( number_of_active_slots == 0 ){
+        current_slot = 0;
+        sampler_voices[ current_slot ].voice_is_active     = 1;
+        sampler_voices[ current_slot ].previous_voice_slot = 0;
+        sampler_voices[ current_slot ].next_voice_slot     = 0;
+        sampler_voices[ current_slot ].slot_is_last        = 1;
+        last_voice_slot                                    = 0;
+        number_of_active_slots                             = number_of_active_slots + 1;
+        return current_slot;
+    }
+
+    // If there are voices playing
+    // Step 1 - Get a free slot
+    for( current_slot = 0; current_slot < MAX_VOICES; current_slot ++ ){
+        if( sampler_voices[ current_slot ].voice_is_active == 0 ){
+            break;
         }
     }
-    return 0xffffffff; // Return bad data
+
+    if( current_slot == 0xffff ) return current_slot;
+
+    // Step 2 - Get the last link of the chain
+    previous_slot = last_voice_slot;
+
+    // Step 3 - Insert the voice slot into the link
+    sampler_voices[ current_slot ].previous_voice_slot = previous_slot;
+    sampler_voices[ current_slot ].next_voice_slot     = sampler_voices[ previous_slot ].next_voice_slot;
+    sampler_voices[ previous_slot ].next_voice_slot    = current_slot;
+    sampler_voices[ previous_slot ].slot_is_last       = 0;
+
+    // Step 4 - Enable the slot
+    sampler_voices[ current_slot ].slot_is_last    = 1;
+    sampler_voices[ current_slot ].voice_is_active = 1;
+    last_voice_slot                                = current_slot;
+    number_of_active_slots                         = number_of_active_slots + 1;
+
+
+    return current_slot;
 }
+
+void release_slot( uint16_t slot ) {
+    uint16_t previous_slot;
+
+    // Sanity check. Check if there are any voices playing
+    if( number_of_active_slots == 0 || number_of_active_slots > MAX_VOICES ) return;
+    // Sanity check. Check if slot is valid
+    if( slot > MAX_VOICES ) return;
+
+    // If this is the last voice remaining
+    if( number_of_active_slots == 1 ){
+        sampler_voices[ slot ].previous_voice_slot = 0;
+        sampler_voices[ slot ].next_voice_slot     = 0;
+        sampler_voices[ slot ].slot_is_last        = 0;
+        sampler_voices[ slot ].voice_is_active     = 0;
+        last_voice_slot                            = 0;
+        number_of_active_slots                     = 0;
+        return;
+    }
+
+    // If there are more voices playing
+
+    // Get the previous slot
+    previous_slot = sampler_voices[ slot ].previous_voice_slot;
+
+    // The nxst slot of the previous slot is now the next slot of the current slot
+    sampler_voices[ previous_slot ].next_voice_slot = sampler_voices[ slot ].next_voice_slot;
+    // If the current slot was the last of the chain, now the previous one is the last of the chain
+    if( sampler_voices[ slot ].slot_is_last ) {
+        sampler_voices[ previous_slot ].slot_is_last = 1;
+        last_voice_slot                              = previous_slot;
+    }
+
+    // Clear the slot
+    sampler_voices[ slot ].previous_voice_slot = 0;
+    sampler_voices[ slot ].next_voice_slot     = 0;
+    sampler_voices[ slot ].slot_is_last        = 0;
+    sampler_voices[ slot ].voice_is_active     = 0;
+    number_of_active_slots                     = number_of_active_slots - 1;
+
+    return;
+
+} 
 
 uint32_t get_sampler_version( void ) {
     return SAMPLER_CONTROL_REGISTER_ACCESS->SAMPLER_VER_REG.value;
@@ -132,43 +227,89 @@ uint32_t get_sampler_version( void ) {
 
 // This function will trigger the playback of a voice based on the voice information
 uint32_t start_voice_playback( uint32_t sample_addr, uint32_t sample_size ) {
-    uint32_t voice_slot = 0;
+    uint32_t voice_slot          = 0;
+    uint32_t previous_voice_slot = 0;
+    uint32_t number_of_samples   = 0;
+    SAMPLER_DMA_CONTROL_REG_t temp_ctrl_reg;
+    SAMPLER_DMA_CONTROL_REG_t temp_ctrl_reg2;
+
 
     // Step 1 - Get a voice slot
     voice_slot = get_available_voice_slot();
+    if( voice_slot == 0xffff ) return voice_slot;
 
-    // Step 2 - Load the voice information data structure
+    // Step 2 - Calculate Number of sampler
+    number_of_samples = sample_size / 4; // 2x16-bit samples
+
+    // Step 3 - Load the voice information data structure
     sampler_voices_information[voice_slot].voice_start_addr = sample_addr;
     sampler_voices_information[voice_slot].voice_size       = sample_size;
-    //Xil_DCacheFlushRange(&sampler_voices_information[voice_slot].voice_start_addr, 64);
+
+    // Step 4 - Write the voice information address to the register with the slot number
+    SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_start_addr.value = sample_addr;
+    SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_end_addr.value   = sample_addr + sample_size;
+
+    // Set the control register
+    temp_ctrl_reg.field.dma_len = number_of_samples;
+    temp_ctrl_reg.field.valid   = 1;
+    temp_ctrl_reg.field.last    = (uint32_t) sampler_voices[voice_slot].slot_is_last;
+
+    SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_control.value    = 0;
+    SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_control.value    = temp_ctrl_reg.value;
+
+    // Step 6 - Add the voice to the chain
+    if ( number_of_active_slots > 1 ) {
+        previous_voice_slot       = sampler_voices[voice_slot].previous_voice_slot;
+        temp_ctrl_reg2.value      = SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[previous_voice_slot].dma_control.value;
+        temp_ctrl_reg2.field.last = sampler_voices[previous_voice_slot].slot_is_last & 0x1;
+        SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_next_sample.value          = ( sampler_voices[voice_slot].next_voice_slot & 0xffff );
+        SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[previous_voice_slot].dma_control.value     = temp_ctrl_reg2.value;
+        SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[previous_voice_slot].dma_next_sample.value = ( voice_slot & 0xffff );
+    } else {
+        SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_next_sample.value = voice_slot;
+    }
+
+    // Step 6 - Start the DMA
+    SAMPLER_CONTROL_REGISTER_ACCESS->SAMPLER_CONTROL_REG.value = SAMPLER_CONTROL_START;
+
     Xil_DCacheFlush();
-
-    // Step 3 - Write the voice information address to the register with the slot number
-    SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_addr.value = sample_addr;// &sampler_voices_information[voice_slot];
-    
-    // Step 4 - Start the DMA
-    SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_control.value = 0;
-
-    SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_control.value = sample_size & 0x3FFFFFFF;
-    SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_control.value = (sample_size & 0x3FFFFFFF) | ( 1 << 30 );
-    SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_control.value = sample_size & 0x3FFFFFFF;
 
     return voice_slot;
 }
 
 // This function will stop the playback of the voice
 uint32_t stop_voice_playback( uint32_t voice_slot ) {
+    uint32_t                  previous_voice_slot = 0;
+    SAMPLER_DMA_CONTROL_REG_t temp_ctrl_reg;
 
     // Sanity check
     if( voice_slot >= MAX_VOICES ) return 1;
+    
+    SAMPLER_DMA_REGISTERS_t temp_reg;
 
-    // Stop the DMA
-    SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_addr.value = 0;
-    SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_control.field.start   = 0;
-    SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_control.field.stop    = 1;
+    // Step 1 - Remove the sample from the chain
+    if ( number_of_active_slots > 1 ) {
+        previous_voice_slot = sampler_voices[voice_slot].previous_voice_slot;
+        temp_ctrl_reg.value = SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[previous_voice_slot].dma_control.value;
+
+        if ( sampler_voices[voice_slot].slot_is_last ) temp_ctrl_reg.field.last = 1;
+
+        SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[previous_voice_slot].dma_control.value     = temp_ctrl_reg.value;
+        SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[previous_voice_slot].dma_next_sample.value = sampler_voices[voice_slot].next_voice_slot;
+    } else {
+        // Fully stop the DMA
+        SAMPLER_CONTROL_REGISTER_ACCESS->SAMPLER_CONTROL_REG.value = SAMPLER_CONTROL_STOP;
+    }
+
+    // Step 2 - Clear the DMA
+    SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_start_addr.value  = 0;
+    SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_end_addr.value    = 0;
+    SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_control.value     = 0;
+    SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_next_sample.value = 0;
 
     // Release the voice slot
-    sampler_voices [ voice_slot ] = 0;
+    release_slot( voice_slot );
+
     return 0;
 }
 
@@ -179,6 +320,9 @@ uint32_t stop_all( INSTRUMENT_INFORMATION_t *instrument_information ) {
     uint32_t                 key            = 0;
     uint32_t                 velocity_range = 0;
     uint32_t                 voice_slot     = 0;
+
+    // Stop the engine
+    SAMPLER_CONTROL_REGISTER_ACCESS->SAMPLER_CONTROL_REG.value = SAMPLER_CONTROL_STOP;
 
     // Stop the playback
     for ( voice_slot = 0; voice_slot < MAX_VOICES; voice_slot++ ) stop_voice_playback( voice_slot );
@@ -289,6 +433,13 @@ uint32_t play_instrument_key( uint8_t key, uint8_t velocity, INSTRUMENT_INFORMAT
         voice_slot = start_voice_playback( (uint32_t) current_voice->sample_format.data_start_ptr, // Audio data pointer
                                                       current_voice->sample_format.audio_data_size // Audio data size
                                             );
+        
+        // If there are no available slots, don't update the status
+        if ( voice_slot == 0xffff ) {
+            xil_printf("[ERROR] - No available slots found! %d\n\r", voice_slot);
+            break;
+        }
+
         xil_printf("[INFO] - Started playback on slot %d\n\r", voice_slot);
 
         current_voice->current_slot   = voice_slot;
