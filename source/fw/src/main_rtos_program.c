@@ -24,8 +24,9 @@
 #include "ff_stdio.h"
 #include "ff_ramdisk.h"
 #include "ff_sddisk.h"
+#include "fat_CLI_apps.h"
 
-// FreeRTOS Taksk
+// FreeRTOS Tasks
 #include "sampler_FreeRTOS_tasks.h"
 
 // Other
@@ -51,6 +52,8 @@ void main_rtos_program() {
     register_codec_cli_commands();
     register_fat_cli_commands();
     register_sampler_cli_commands();
+
+    pxSDDisk = FF_SDDiskInit( mainSD_CARD_DISK_NAME );
 
     vTaskStartScheduler();
 
