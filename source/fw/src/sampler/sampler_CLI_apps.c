@@ -60,6 +60,19 @@ static uint32_t str2int( char *input_string, BaseType_t input_string_length ) {
 
 }
 
+static void ff_get_file_dir ( char *file_path, char* dest ) {
+    size_t path_len = strlen( file_path );
+    char     current_char = '\00';
+    uint32_t last_slash = 0;
+
+    for ( int i = 0; i < path_len ; i++ ) {
+    	current_char = file_path[i];
+        if ( current_char == '/' ) last_slash = i;
+    }
+
+    strncat( dest, file_path, last_slash );
+}
+
 // Structure defining the key playback command
 static const CLI_Command_Definition_t midi_command_definition =
 {
@@ -374,20 +387,37 @@ static BaseType_t load_instrument_command( char *pcWriteBuffer, size_t xWriteBuf
     memset( my_file_path.file_path, 0x00, MAX_PATH_LEN );
     memset( my_file_path.file_dir, 0x00, MAX_PATH_LEN );
     // Copy the Path
-    if ( pcParameter[0] != '/' ) {
-        // 1 - Get the current directory
-        ff_getcwd( my_file_path.file_dir, MAX_PATH_LEN );
-        xil_printf( "CWD: %s\n\r", my_file_path.file_dir);
+    // 1 - Get the current directory
+    ff_getcwd( my_file_path.file_dir, MAX_PATH_LEN );
+    xil_printf( "CWD: %s\n\r", my_file_path.file_dir);
+    // Sanity check - Check if the path is less than the maximum allowable
+    cwd_path_len = strlen( my_file_path.file_dir );
+    configASSERT( ! ( (cwd_path_len + xParameterStringLength + 1) > MAX_PATH_LEN) );
 
-        // 2 - Assemble the full path
-        cwd_path_len = strlen( my_file_path.file_dir );
-        configASSERT( ! ( (cwd_path_len + xParameterStringLength + 1) > MAX_PATH_LEN) );
-        strncat( my_file_path.file_path, my_file_path.file_dir, cwd_path_len);
-        strncat( my_file_path.file_path, "/", 1);
-        strncat( my_file_path.file_path, pcParameter, xParameterStringLength );
+    // 2 - Assemble the full path
+    // If you're in the root, append the path as is
+    if ( strcmp( my_file_path.file_dir, (const char *)"/" ) == 0 ) {
+       // If the path is a full path (i.e. referenced from the root), copy as is
+        if ( pcParameter[0] == '/' ) {
+            sprintf(my_file_path.file_path, "%s", pcParameter);
+        } else { // If it's a relative directory, prepend the root slash
+            strncat( my_file_path.file_path, "/", 1);
+        }
+        ff_get_file_dir( pcParameter, my_file_path.file_dir );
+        //strncat( my_file_path.file_path, my_file_path.file_dir, STRLEN( my_file_path.file_dir ) );
+        strncat( my_file_path.file_path, pcParameter, xParameterStringLength ); 
     } else {
-        sprintf(my_file_path.file_path, "%s", pcParameter);
+        // If the path is a full path (i.e. referenced from the root), copy as is
+        if ( pcParameter[0] == '/' ) {
+            sprintf(my_file_path.file_path, "%s", pcParameter);
+        } else { // If it's a relative path, prepend the current directory
+            strncat( my_file_path.file_path, my_file_path.file_dir, cwd_path_len);
+            strncat( my_file_path.file_path, "/", 1);
+            strncat( my_file_path.file_path, pcParameter, xParameterStringLength );
+        }
     }
+
+    xil_printf( "File Path: %s\n\r", my_file_path.file_path);
 
     my_file_path.return_handle = my_return_queue_handler;
 
