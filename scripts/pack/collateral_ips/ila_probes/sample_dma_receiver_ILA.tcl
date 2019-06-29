@@ -11,7 +11,7 @@ set ip_version     6.2
 set ip_vendor      "xilinx.com"
 set ip_library     "ip"
 
-set number_of_probes            24
+set number_of_probes            25
 set number_of_comparators       2
 set number_of_input_pipe_stages 2
 
@@ -42,6 +42,7 @@ set configuration_parameters [list  \
                                     CONFIG.C_PROBE21_WIDTH  {16} \
                                     CONFIG.C_PROBE22_WIDTH  {1} \
                                     CONFIG.C_PROBE23_WIDTH  {1} \
+                                    CONFIG.C_PROBE24_WIDTH  {1} \
                                     CONFIG.C_INPUT_PIPE_STAGES ${number_of_input_pipe_stages} \
                                     CONFIG.C_PROBE0_MU_CNT  ${number_of_comparators} \
                                     CONFIG.C_PROBE1_MU_CNT  ${number_of_comparators} \
@@ -66,6 +67,7 @@ set configuration_parameters [list  \
                                     CONFIG.C_PROBE21_MU_CNT ${number_of_comparators} \
                                     CONFIG.C_PROBE22_MU_CNT ${number_of_comparators} \
                                     CONFIG.C_PROBE23_MU_CNT ${number_of_comparators} \
+                                    CONFIG.C_PROBE24_MU_CNT ${number_of_comparators} \
                                     CONFIG.ALL_PROBE_SAME_MU_CNT ${number_of_comparators} \
                                     CONFIG.C_ADV_TRIGGER {false} \
                                     ]
