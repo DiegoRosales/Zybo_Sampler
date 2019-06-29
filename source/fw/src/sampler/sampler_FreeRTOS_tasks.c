@@ -396,7 +396,8 @@ static void load_instrument_task( void *pvParameters ) {
 static void serial_midi_listener_task( void *pvParameters ) {
     BaseType_t        notification_received;
     uint32_t          ulNotifiedValue;
-    QueueHandle_t     my_return_queue_handler;
+    uint32_t          return_value;
+    QueueHandle_t     return_queue_handler;
 
     // Task Variables
     BaseType_t        midi_listener_stop;
@@ -420,9 +421,10 @@ static void serial_midi_listener_task( void *pvParameters ) {
         if ( notification_received == pdFALSE ) goto wait_for_notification;
 
         // Initialize everything
-        my_return_queue_handler = (QueueHandle_t) ulNotifiedValue;
-        midi_listener_stop      = pdFALSE;
-        index                   = 0;
+        return_queue_handler = (QueueHandle_t) ulNotifiedValue;
+        midi_listener_stop   = pdFALSE;
+        index                = 0;
+        return_value         = 1;
 
         memset( &bytes_rcvd, 0x00, 3 );
         while( midi_listener_stop == pdFALSE ) {
@@ -459,7 +461,7 @@ static void serial_midi_listener_task( void *pvParameters ) {
 
         }
 
-        xQueueSend(my_return_queue_handler, 0, 1000);
+        xQueueSend(return_queue_handler, &return_value, 1000);
 
     }
 
