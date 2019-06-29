@@ -72,6 +72,7 @@ localparam FSM_ST_SAMPLE_WB_DATA = 6;
 
 // This holds the fetched information
 reg  [ NUMBER_OF_SAMPLE_REG_PER_READ - 1 : 0 ] [ 31 : 0 ] sample_registers;
+wire [ NUMBER_OF_SAMPLE_REG_PER_READ - 1 : 0 ] [ 31 : 0 ] sample_registers_pre;
 wire [ NUMBER_OF_SAMPLE_REG_PER_READ - 1 : 0 ] [ 31 : 0 ] sample_registers_wb;
 reg  [ NUMBER_OF_SAMPLE_REG_PER_READ - 1 : 0 ] [ 31 : 0 ] sample_registers_wb_reg;
 
@@ -172,11 +173,11 @@ always_comb begin
 
         // Wait for the request to get the next sample information
         FSM_ST_WAIT: begin
-            if ( stop | ~curr_sample_valid | all_samples_invalid ) begin
+            if ( stop | all_samples_invalid ) begin
                 fsm_next_st = FSM_ST_IDLE;
             end
             else begin
-                if ( load_next_sample ) begin
+                if ( load_next_sample | ~curr_sample_valid) begin
                     fsm_next_st = FSM_ST_READ;
                 end
                 else begin
@@ -245,8 +246,8 @@ assign sample_addr        = sample_registers[0];
 assign sample_end_addr    = sample_registers[1];
 assign sample_len         = sample_registers[2][23:0];
 assign control_and_status = sample_registers[2][31:24];
-assign next_bram_addr     = sample_registers[3][BRAM_ADDR_WIDTH - 1 : 0];
 assign sample_id          = current_bram_addr;
+assign next_bram_addr     = sample_registers_pre[3][BRAM_ADDR_WIDTH - 1 : 0]; // Take the next BRAM address directly in case the FW changed it while waiting
 
 // Get the current control and status bits
 assign curr_sample_valid       = control_and_status[0];
@@ -272,6 +273,9 @@ assign next_control_and_status[7]   = sample_addr_overflow;
 ///////////////////////////////////////
 // Sample Data FF
 ///////////////////////////////////////
+
+assign sample_registers_pre = bram_data_in;
+
 always_ff @(posedge clk, negedge reset_n) begin
     if (~reset_n) begin
         sample_registers <= 'h0;
@@ -282,7 +286,7 @@ always_ff @(posedge clk, negedge reset_n) begin
 
         // Sample the data whenever there's new data ready
         if ( fsm_curr_st_FSM_ST_SAMPLE_DATA ) begin
-            sample_registers <= bram_data_in;
+            sample_registers <= sample_registers_pre;
         end
     end
 end

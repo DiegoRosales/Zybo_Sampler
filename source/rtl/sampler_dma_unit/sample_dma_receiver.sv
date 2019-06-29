@@ -63,17 +63,16 @@ wire           fifo_reset;
 wire [ 6 : 0 ] fifo_data_count;
 
 // Mix registers
-reg  [ 15 : 0 ] mix_data_left;
-reg  [ 15 : 0 ] mix_data_right;
+wire [ 15 : 0 ] mix_data_left;
+wire [ 15 : 0 ] mix_data_right;
 wire [ 31 : 0 ] mix_fifo_data_in;
 wire [ 31 : 0 ] mix_fifo_data_out;
-reg             mix_fifo_data_rd_reg;
-reg             mix_fifo_data_wr_reg;
+wire            mix_data_wr;
+wire            mix_data_rd;
 wire            mix_fifo_data_rd;
 wire            mix_fifo_data_wr;
 wire            mix_fifo_full;
 wire            mix_fifo_empty;
-reg             mix_fifo_empty_reg;
 
 // Last sample ID
 reg [ 5 : 0 ] last_request_id_reg;
@@ -144,7 +143,7 @@ always_comb begin
             if ( stop | all_samples_invalid ) begin
                 fsm_next_st = FSM_ST_IDLE;
             end
-            else if ( axi_sample_data_last_reg && last_request_sent_reg && sample_id_is_last ) begin
+            else if ( axi_sample_data_last_reg  && last_request_sent_reg && sample_id_is_last ) begin
                 fsm_next_st = FSM_ST_WAIT_FOR_FIFO_EMPTY;
             end
             else begin
@@ -223,46 +222,22 @@ end
 /////////////////
 assign mix_fifo_data_in = { mix_data_right, mix_data_left };
 
-always_ff @(posedge clk, negedge reset_n) begin
-    if ( ~reset_n ) begin
-        mix_data_left        <= 'h0;
-        mix_data_right       <= 'h0;
-        mix_fifo_data_rd_reg <= 1'b0;
-        mix_fifo_data_wr_reg <= 1'b0;
-    end
-    else begin
-        mix_data_left  <= mix_data_left;
-        mix_data_right <= mix_data_right;
-        mix_fifo_data_rd_reg <= 1'b0;
-        mix_fifo_data_wr_reg <= 1'b0;
+// Mix the new data with the previous data
+assign mix_data_left  = ( fsm_curr_st_FSM_ST_WAIT_FOR_SAMPLE_DATA_1 == 1'b1 ) ? ( axi_sample_data[ 15 : 0 ]  + mix_fifo_data_out[ 15 : 0 ]  ) : axi_sample_data[ 15 : 0 ];
+assign mix_data_right = ( fsm_curr_st_FSM_ST_WAIT_FOR_SAMPLE_DATA_1 == 1'b1 ) ? ( axi_sample_data[ 31 : 16 ] + mix_fifo_data_out[ 31 : 16 ] ) : axi_sample_data[ 31 : 16 ];
+assign mix_data_wr    = ( fsm_curr_st_FSM_ST_WAIT_FOR_SAMPLE_DATA_0 | fsm_curr_st_FSM_ST_WAIT_FOR_SAMPLE_DATA_1 ) && axi_sample_valid;
+assign mix_data_rd    = ( fsm_curr_st_FSM_ST_WAIT_FOR_SAMPLE_DATA_1 ) && axi_sample_valid;
 
-        if ( axi_sample_valid ) begin
-            // If the FIFO was empty (i.e. the first samples of the batch), there's nothing else to mix for the next transfer
-            if ( fsm_curr_st_FSM_ST_WAIT_FOR_SAMPLE_DATA_0 ) begin
-                mix_data_left  <= axi_sample_data[ 15 : 0 ];
-                mix_data_right <= axi_sample_data[ 31 : 16 ];
-                mix_fifo_data_wr_reg <= 1'b1;
-            end
-            else if ( fsm_curr_st_FSM_ST_WAIT_FOR_SAMPLE_DATA_1 ) begin
-                mix_data_left  <= axi_sample_data[ 15 : 0 ]  + mix_fifo_data_out[ 15 : 0 ];
-                mix_data_right <= axi_sample_data[ 31 : 16 ] + mix_fifo_data_out[ 31 : 16 ];
-                mix_fifo_data_rd_reg <= 1'b1;
-                mix_fifo_data_wr_reg <= 1'b1;
-            end
-        end
-    end
-end
-
-assign mix_fifo_data_rd = mix_fifo_data_rd_reg | ( sample_data_read & sample_data_available );
-assign mix_fifo_data_wr = mix_fifo_data_wr_reg;
+assign mix_fifo_data_rd = mix_data_rd | ( sample_data_read & sample_data_available );
+assign mix_fifo_data_wr = mix_data_wr;
 assign fifo_reset       = ~reset_n | stop;
 
 
 //////////////////
 // Outputs
 //////////////////
-assign sample_data           = ( fifo_reset | mix_fifo_empty ) ? 32'h00000000 : mix_fifo_data_out;
-assign sample_data_available = ( fsm_curr_st_FSM_ST_WAIT_FOR_FIFO_EMPTY | fsm_curr_st_FSM_ST_IDLE | fifo_reset | mix_fifo_empty ) && ~fsm_curr_st_FSM_ST_WAIT_FOR_SAMPLE_DATA_0 && ~fsm_curr_st_FSM_ST_WAIT_FOR_SAMPLE_DATA_1 && ~fsm_curr_st_FSM_ST_START;
+assign sample_data           = mix_fifo_data_out;
+assign sample_data_available = fsm_curr_st_FSM_ST_WAIT_FOR_FIFO_EMPTY && ~mix_fifo_empty;
 sampler_dma_fifo mix_fifo (
     // Clock and Reset
     .clk ( clk        ), // input wire clk
@@ -318,7 +293,8 @@ generate;
             .probe20 ( fifo_out_data_left        ),
             .probe21 ( fifo_out_data_right       ),
             .probe22 ( mix_fifo_empty            ),
-            .probe23 ( all_samples_invalid       ) 
+            .probe23 ( all_samples_invalid       ),
+            .probe24 ( mix_fifo_data_wr          )
 
         );
     end
