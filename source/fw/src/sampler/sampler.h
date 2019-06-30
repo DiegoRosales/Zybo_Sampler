@@ -18,7 +18,7 @@
 
 #define SAMPLER_BASE_ADDR     XPAR_AUDIO_SAMPLER_INST_AXI_LITE_SLAVE_BASEADDR
 #define SAMPLER_DMA_BASE_ADDR SAMPLER_BASE_ADDR + (0x1000)
-#define MAX_VOICES 4
+#define MAX_VOICES            64
 
 // Direct access to the Sampler control register
 #define SAMPLER_CONTROL_REGISTER_ACCESS ((volatile SAMPLER_REGISTERS_t *)(SAMPLER_BASE_ADDR))
