@@ -90,7 +90,18 @@ set_property -dict ${concatenator_block_properties} [get_bd_cells xlconcat_0]
 #### Add the custom IP and make the connections ####
 set packaged_ip_inst_name ${packaged_ip_name}_inst
 create_bd_cell -type ip -vlnv xilinx.com:user:${packaged_ip_name}:${packaged_ip_ver} ${packaged_ip_inst_name}
+## Set the maximum number of voices
 set_property -dict [list CONFIG.MAX_VOICES ${MAX_VOICES}] [get_bd_cells ${packaged_ip_inst_name}]
+## If DMA debug, enable it
+if { ${enable_dma_debug} } {
+    set_property -dict [list CONFIG.FETCHER_ENABLE_DEBUG       1] [get_bd_cells ${packaged_ip_inst_name}]
+    set_property -dict [list CONFIG.DMA_REQUESTER_ENABLE_DEBUG 1] [get_bd_cells ${packaged_ip_inst_name}]
+    set_property -dict [list CONFIG.DMA_RECEIVER_ENABLE_DEBUG  1] [get_bd_cells ${packaged_ip_inst_name}]
+} else {
+    set_property -dict [list CONFIG.FETCHER_ENABLE_DEBUG       0] [get_bd_cells ${packaged_ip_inst_name}]
+    set_property -dict [list CONFIG.DMA_REQUESTER_ENABLE_DEBUG 0] [get_bd_cells ${packaged_ip_inst_name}]
+    set_property -dict [list CONFIG.DMA_RECEIVER_ENABLE_DEBUG  0] [get_bd_cells ${packaged_ip_inst_name}]
+}
 
 ##############################################
 ####### Step 2 - Create the IO ports #########
@@ -212,7 +223,7 @@ connect_bd_net [get_bd_pins xlconcat_0/dout] [get_bd_pins processing_system7_0/I
 #######################################################
 ####### Step 4 (optional) - Insert Debug Core #########
 #######################################################
-if { ${enable_debug} == 1 } {
+if { ${enable_axi_debug} == 1 } {
     set_property HDL_ATTRIBUTE.DEBUG true [get_bd_intf_nets {ps7_0_axi_periph_M01_AXI }]
     set_property HDL_ATTRIBUTE.DEBUG true [get_bd_intf_nets {audio_sampler_inst_axi_dma_master }]
     apply_bd_automation -rule xilinx.com:bd_rule:debug -dict [list \

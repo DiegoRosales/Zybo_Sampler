@@ -71,10 +71,12 @@ if { $skip_project_gen == 0 } {
     ### Launch P&R
     if { $implement == 1 } {
 
+        ## If there's an ILA, implement it
         if { ${enable_debug} == 1 } {
             implement_debug_core
         }
-        implement_debug_core
+
+        ## If there's not any ILA, a checkpoint can be used for incremental PAR
         if { ${enable_debug} == 0 } {
             if { [file exists ${integrated_ip_project_path}/post_route.dcp] != 0} { 
                 puts "Found checkpoint. Running incrementally"
@@ -94,7 +96,8 @@ if { $skip_project_gen == 0 } {
         
         ### Write the bitstream
         write_bitstream -force ${integrated_ip_project_path}/${integrated_ip_project_name}.bit
-        ### Write the debug probes
+
+        ### If there's an ILA rite the debug probes
         if { ${enable_debug} == 1 } {
             write_debug_probes -force ${integrated_ip_project_path}/${integrated_ip_project_name}.ltx
         }
