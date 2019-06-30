@@ -38,19 +38,19 @@ You can find more about the board over at https://reference.digilentinc.com/refe
 
 [**DONE**] FreeRTOS CLI Interface over UART to the PS
 
-## Phase 2 [**IN PROGRESS**]: Enable and test advanced IO
+## Phase 2 [**DONE**]: Enable and test advanced IO
 
 [**DONE**] Enable FreeRTOS+FAT to access the SD card
 
-[**DONE***] Custom DMA engine to support up to 64 different DMA regions (64 voices) <sup><sup><sup>***DMA is functional, but currently tested at 4 voices to facilitate debug**</sup></sup></sup>
+[**DONE***] Custom DMA engine to support up to 64 different DMA regions (64 voices)
 
 [**DONE**] Develop application to download samples to memory from an SD Card
 
 [**DONE**] Enable a MIDI bridge using UART
 
-[**IN PROGRESS**] Increase the scalability of the DMA engine
+[**DONE**] Increase the scalability of the DMA engine
 
-## Phase 3 [**NOT STARTED**]: Sound Playback
+## Phase 3 [**IN PROGRESS**]: Sound Playback
 
 [**IN PROGRESS**] Playback samples from an open source library
 
