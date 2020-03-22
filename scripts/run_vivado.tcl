@@ -13,7 +13,16 @@ set enable_debug     0
 set enable_axi_debug 0
 set enable_dma_debug 0
 
+## Source common variables
 source scripts/common_variables.tcl
+source scripts/utils.tcl
+
+## Step 0 - Create output directory
+## Step 1 - Pack IPs with the IP packager
+## Step 2 - Perform design integration
+## Step 3 - Run Synthesis & Place and Route
+## Step 4 - Export SDK files
+## Step 5 - Build the FW
 
 foreach myarg $argv {
     switch $myarg {
@@ -87,74 +96,6 @@ foreach myarg $argv {
         }
     }
 }
-# if { $argc > 0 } {
-#     switch [lindex $argv 0] {
-#         pack {
-#             set pack 1
-#         }
-#         integ {
-#             set integ 1
-#         } 
-#         integ_impl {
-#             set integ     1
-#             set implement 1
-#         }         
-#         integ_all {
-#             set integ            1
-#             set implement        1
-#             set burn_bitfile     1
-#             set export_ws        1
-#         }         
-#         all {
-#             set pack             1
-#             set integ            1
-#             set implement        1
-#             set export_ws        1
-#         }
-#         all_update {
-#             set pack             1
-#             set integ            1
-#             set implement        1
-#             set burn_bitfile     0
-#         }        
-#         all_update_debug {
-#             set pack             1
-#             set integ            1
-#             set implement        1
-#             set enable_debug     1
-#         }          
-#         burn_only {
-#             set integ            1
-#             set skip_project_gen 1
-#             set burn_bitfile     1
-#         } 
-#         export_ws {
-#             set integ            1
-#             set skip_project_gen 1
-#             set export_ws        1
-#         }
-#         launch_sdk {
-#             set integ            1
-#             set skip_project_gen 1
-#             set launch_sdk       1
-#         }
-#         default {
-#             puts "You didn't select any options"
-#         }
-#     }
-#     if { $argc > 1 } { 
-#         switch [lindex $argv 1] { 
-#             debug {
-#                 set enable_debug 1
-#             }
-#             prep_debug {
-#                 set pack             1
-#                 set integ            1
-#                 set synthesize       1
-#             }            
-#         }
-#     }
-# }
 
 if { [file exists ${results_dir}] == 0} {
     puts "Creating Results Directory: ${results_dir}"
