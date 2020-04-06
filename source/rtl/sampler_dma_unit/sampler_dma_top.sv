@@ -31,8 +31,8 @@ module sampler_dma_top #(
     parameter integer C_AXI_DMA_MASTER_BUSER_WIDTH     = 0,
 
     // Parameters of Axi Master Bus Interface AXI_STREAM_MASTER
-    parameter integer C_AXI_STREAM_MASTER_TDATA_WIDTH = 32,
-    parameter integer C_AXI_STREAM_MASTER_START_COUNT = 32,
+    parameter integer C_AXI_STREAM_MASTER_TDATA_WIDTH = 64,
+    parameter integer C_AXI_STREAM_MASTER_START_COUNT = 64,
 
     // Parameters of Axi Slave Bus Interface AXI_LITE_SLAVE
     parameter integer C_AXI_LITE_SLAVE_DATA_WIDTH = 32,
@@ -53,122 +53,91 @@ module sampler_dma_top #(
     parameter DMA_RECEIVER_ENABLE_DEBUG  = 1
 ) (
 
-    // Output FIFO Read
-	output wire [ C_AXI_DMA_MASTER_ADDR_WIDTH : 0 ]     fifo_data_out,
-	output wire                                         fifo_data_available,
-	input  wire                                         fifo_data_read,
+    // AXI Clock
+    input wire axi_clk,
+
     ///////////////////////////////////////////////////////////
     // Ports of Axi Master Bus Interface AXI_DMA_MASTER
     ///////////////////////////////////////////////////////////
-    input  wire                                       axi_dma_master_init_axi_txn ,
-    output wire                                       axi_dma_master_txn_done     ,
-    output wire                                       axi_dma_master_error        ,
-    input  wire                                       axi_dma_master_aclk         ,
-    input  wire                                       axi_dma_master_aresetn      ,
-    output wire [C_AXI_DMA_MASTER_ID_WIDTH-1 : 0]     axi_dma_master_awid         ,
-    output wire [C_AXI_DMA_MASTER_ADDR_WIDTH-1 : 0]   axi_dma_master_awaddr       ,
-    output wire [7 : 0]                               axi_dma_master_awlen        ,
-    output wire [2 : 0]                               axi_dma_master_awsize       ,
-    output wire [1 : 0]                               axi_dma_master_awburst      ,
-    output wire                                       axi_dma_master_awlock       ,
-    output wire [3 : 0]                               axi_dma_master_awcache      ,
-    output wire [2 : 0]                               axi_dma_master_awprot       ,
-    output wire [3 : 0]                               axi_dma_master_awqos        ,
-    output wire [C_AXI_DMA_MASTER_AWUSER_WIDTH-1 : 0] axi_dma_master_awuser       ,
-    output wire                                       axi_dma_master_awvalid      ,
-    input  wire                                       axi_dma_master_awready      ,
-    output wire [C_AXI_DMA_MASTER_DATA_WIDTH-1 : 0]   axi_dma_master_wdata        ,
-    output wire [C_AXI_DMA_MASTER_DATA_WIDTH/8-1 : 0] axi_dma_master_wstrb        ,
-    output wire                                       axi_dma_master_wlast        ,
-    output wire [C_AXI_DMA_MASTER_WUSER_WIDTH-1 : 0]  axi_dma_master_wuser        ,
-    output wire                                       axi_dma_master_wvalid       ,
-    input  wire                                       axi_dma_master_wready       ,
-    input  wire [C_AXI_DMA_MASTER_ID_WIDTH-1 : 0]     axi_dma_master_bid          ,
-    input  wire [1 : 0]                               axi_dma_master_bresp        ,
-    input  wire [C_AXI_DMA_MASTER_BUSER_WIDTH-1 : 0]  axi_dma_master_buser        ,
-    input  wire                                       axi_dma_master_bvalid       ,
-    output wire                                       axi_dma_master_bready       ,
-    output wire [C_AXI_DMA_MASTER_ID_WIDTH-1 : 0]     axi_dma_master_arid         ,
-    output wire [C_AXI_DMA_MASTER_ADDR_WIDTH-1 : 0]   axi_dma_master_araddr       ,
-    output wire [7 : 0]                               axi_dma_master_arlen        ,
-    output wire [2 : 0]                               axi_dma_master_arsize       ,
-    output wire [1 : 0]                               axi_dma_master_arburst      ,
-    output wire                                       axi_dma_master_arlock       ,
-    output wire [3 : 0]                               axi_dma_master_arcache      ,
-    output wire [2 : 0]                               axi_dma_master_arprot       ,
-    output wire [3 : 0]                               axi_dma_master_arqos        ,
-    output wire [C_AXI_DMA_MASTER_ARUSER_WIDTH-1 : 0] axi_dma_master_aruser       ,
-    output wire                                       axi_dma_master_arvalid      ,
-    input  wire                                       axi_dma_master_arready      ,
-    input  wire [C_AXI_DMA_MASTER_ID_WIDTH-1 : 0]     axi_dma_master_rid          ,
-    input  wire [C_AXI_DMA_MASTER_DATA_WIDTH-1 : 0]   axi_dma_master_rdata        ,
-    input  wire [1 : 0]                               axi_dma_master_rresp        ,
-    input  wire                                       axi_dma_master_rlast        ,
-    input  wire [C_AXI_DMA_MASTER_RUSER_WIDTH-1 : 0]  axi_dma_master_ruser        ,
-    input  wire                                       axi_dma_master_rvalid       ,
-    output wire                                       axi_dma_master_rready       ,
+    input  wire                                       axi_dma_master_aresetn,
+    input  wire                                       axi_dma_master_init_axi_txn,
+    output wire                                       axi_dma_master_txn_done,
+    output wire                                       axi_dma_master_error,
+    output wire [C_AXI_DMA_MASTER_ID_WIDTH-1 : 0]     axi_dma_master_awid,
+    output wire [C_AXI_DMA_MASTER_ADDR_WIDTH-1 : 0]   axi_dma_master_awaddr,
+    output wire [7 : 0]                               axi_dma_master_awlen,
+    output wire [2 : 0]                               axi_dma_master_awsize,
+    output wire [1 : 0]                               axi_dma_master_awburst,
+    output wire                                       axi_dma_master_awlock,
+    output wire [3 : 0]                               axi_dma_master_awcache,
+    output wire [2 : 0]                               axi_dma_master_awprot,
+    output wire [3 : 0]                               axi_dma_master_awqos,
+    output wire [C_AXI_DMA_MASTER_AWUSER_WIDTH-1 : 0] axi_dma_master_awuser,
+    output wire                                       axi_dma_master_awvalid,
+    input  wire                                       axi_dma_master_awready,
+    output wire [C_AXI_DMA_MASTER_DATA_WIDTH-1 : 0]   axi_dma_master_wdata,
+    output wire [C_AXI_DMA_MASTER_DATA_WIDTH/8-1 : 0] axi_dma_master_wstrb,
+    output wire                                       axi_dma_master_wlast,
+    output wire [C_AXI_DMA_MASTER_WUSER_WIDTH-1 : 0]  axi_dma_master_wuser,
+    output wire                                       axi_dma_master_wvalid,
+    input  wire                                       axi_dma_master_wready,
+    input  wire [C_AXI_DMA_MASTER_ID_WIDTH-1 : 0]     axi_dma_master_bid,
+    input  wire [1 : 0]                               axi_dma_master_bresp,
+    input  wire [C_AXI_DMA_MASTER_BUSER_WIDTH-1 : 0]  axi_dma_master_buser,
+    input  wire                                       axi_dma_master_bvalid,
+    output wire                                       axi_dma_master_bready,
+    output wire [C_AXI_DMA_MASTER_ID_WIDTH-1 : 0]     axi_dma_master_arid,
+    output wire [C_AXI_DMA_MASTER_ADDR_WIDTH-1 : 0]   axi_dma_master_araddr,
+    output wire [7 : 0]                               axi_dma_master_arlen,
+    output wire [2 : 0]                               axi_dma_master_arsize,
+    output wire [1 : 0]                               axi_dma_master_arburst,
+    output wire                                       axi_dma_master_arlock,
+    output wire [3 : 0]                               axi_dma_master_arcache,
+    output wire [2 : 0]                               axi_dma_master_arprot,
+    output wire [3 : 0]                               axi_dma_master_arqos,
+    output wire [C_AXI_DMA_MASTER_ARUSER_WIDTH-1 : 0] axi_dma_master_aruser,
+    output wire                                       axi_dma_master_arvalid,
+    input  wire                                       axi_dma_master_arready,
+    input  wire [C_AXI_DMA_MASTER_ID_WIDTH-1 : 0]     axi_dma_master_rid,
+    input  wire [C_AXI_DMA_MASTER_DATA_WIDTH-1 : 0]   axi_dma_master_rdata,
+    input  wire [1 : 0]                               axi_dma_master_rresp,
+    input  wire                                       axi_dma_master_rlast,
+    input  wire [C_AXI_DMA_MASTER_RUSER_WIDTH-1 : 0]  axi_dma_master_ruser,
+    input  wire                                       axi_dma_master_rvalid,
+    output wire                                       axi_dma_master_rready,
     ///////////////////////////////////////////////////////////
     // Ports of Axi Master Bus Interface AXI_STREAM_MASTER
     ///////////////////////////////////////////////////////////
-    input  wire                                             axi_stream_master_aclk    ,
-    input  wire                                             axi_stream_master_aresetn ,
-    output wire                                             axi_stream_master_tvalid  ,
-    output wire [C_AXI_STREAM_MASTER_TDATA_WIDTH-1 : 0]     axi_stream_master_tdata   ,
-    output wire [(C_AXI_STREAM_MASTER_TDATA_WIDTH/8)-1 : 0] axi_stream_master_tstrb   ,
-    output wire                                             axi_stream_master_tlast   ,
-    input  wire                                             axi_stream_master_tready  ,
+    input  wire                                             axi_stream_master_aresetn,
+    output wire [C_AXI_STREAM_MASTER_TDATA_WIDTH-1 : 0]     axi_stream_master_tdata,
+    input  wire                                             axi_stream_master_tready,
+    output wire                                             axi_stream_master_tvalid,
+    output wire                                             axi_stream_master_tlast,
+    output wire [(C_AXI_STREAM_MASTER_TDATA_WIDTH/8)-1 : 0] axi_stream_master_tstrb,
 
     ///////////////////////////////////////////////////////////
     // Ports of Axi Slave Bus Interface AXI_LITE_SLAVE
     ///////////////////////////////////////////////////////////
-    input  wire                                         axi_lite_slave_aclk    ,
-    input  wire                                         axi_lite_slave_aresetn ,
-    input  wire [C_AXI_LITE_SLAVE_ADDR_WIDTH-1 : 0]     axi_lite_slave_awaddr  ,
-    input  wire [2 : 0]                                 axi_lite_slave_awprot  ,
-    input  wire                                         axi_lite_slave_awvalid ,
-    output wire                                         axi_lite_slave_awready ,
-    input  wire [C_AXI_LITE_SLAVE_DATA_WIDTH-1 : 0]     axi_lite_slave_wdata   ,
-    input  wire [(C_AXI_LITE_SLAVE_DATA_WIDTH/8)-1 : 0] axi_lite_slave_wstrb   ,
-    input  wire                                         axi_lite_slave_wvalid  ,
-    output wire                                         axi_lite_slave_wready  ,
-    output wire [1 : 0]                                 axi_lite_slave_bresp   ,
-    output wire                                         axi_lite_slave_bvalid  ,
-    input  wire                                         axi_lite_slave_bready  ,
-    input  wire [C_AXI_LITE_SLAVE_ADDR_WIDTH-1 : 0]     axi_lite_slave_araddr  ,
-    input  wire [2 : 0]                                 axi_lite_slave_arprot  ,
-    input  wire                                         axi_lite_slave_arvalid ,
-    output wire                                         axi_lite_slave_arready ,
-    output wire [C_AXI_LITE_SLAVE_DATA_WIDTH-1 : 0]     axi_lite_slave_rdata   ,
-    output wire [1 : 0]                                 axi_lite_slave_rresp   ,
-    output wire                                         axi_lite_slave_rvalid  ,
+    input  wire                                         axi_lite_slave_aresetn,
+    input  wire [C_AXI_LITE_SLAVE_ADDR_WIDTH-1 : 0]     axi_lite_slave_awaddr,
+    input  wire [2 : 0]                                 axi_lite_slave_awprot,
+    input  wire                                         axi_lite_slave_awvalid,
+    output wire                                         axi_lite_slave_awready,
+    input  wire [C_AXI_LITE_SLAVE_DATA_WIDTH-1 : 0]     axi_lite_slave_wdata,
+    input  wire [(C_AXI_LITE_SLAVE_DATA_WIDTH/8)-1 : 0] axi_lite_slave_wstrb,
+    input  wire                                         axi_lite_slave_wvalid,
+    output wire                                         axi_lite_slave_wready,
+    output wire [1 : 0]                                 axi_lite_slave_bresp,
+    output wire                                         axi_lite_slave_bvalid,
+    input  wire                                         axi_lite_slave_bready,
+    input  wire [C_AXI_LITE_SLAVE_ADDR_WIDTH-1 : 0]     axi_lite_slave_araddr,
+    input  wire [2 : 0]                                 axi_lite_slave_arprot,
+    input  wire                                         axi_lite_slave_arvalid,
+    output wire                                         axi_lite_slave_arready,
+    output wire [C_AXI_LITE_SLAVE_DATA_WIDTH-1 : 0]     axi_lite_slave_rdata,
+    output wire [1 : 0]                                 axi_lite_slave_rresp,
+    output wire                                         axi_lite_slave_rvalid,
     input  wire                                         axi_lite_slave_rready  
-
-//    ///////////////////////////////////////////////////////////
-//    // Ports of Axi Slave Bus Interface S_AXI_INTR
-//    ///////////////////////////////////////////////////////////
-//    input  wire                                     s_axi_intr_aclk    ,
-//    input  wire                                     s_axi_intr_aresetn ,
-//    input  wire [C_S_AXI_INTR_ADDR_WIDTH-1 : 0]     s_axi_intr_awaddr  ,
-//    input  wire [2 : 0]                             s_axi_intr_awprot  ,
-//    input  wire                                     s_axi_intr_awvalid ,
-//    output wire                                     s_axi_intr_awready ,
-//    input  wire [C_S_AXI_INTR_DATA_WIDTH-1 : 0]     s_axi_intr_wdata   ,
-//    input  wire [(C_S_AXI_INTR_DATA_WIDTH/8)-1 : 0] s_axi_intr_wstrb   ,
-//    input  wire                                     s_axi_intr_wvalid  ,
-//    output wire                                     s_axi_intr_wready  ,
-//    output wire [1 : 0]                             s_axi_intr_bresp   ,
-//    output wire                                     s_axi_intr_bvalid  ,
-//    input  wire                                     s_axi_intr_bready  ,
-//    input  wire [C_S_AXI_INTR_ADDR_WIDTH-1 : 0]     s_axi_intr_araddr  ,
-//    input  wire [2 : 0]                             s_axi_intr_arprot  ,
-//    input  wire                                     s_axi_intr_arvalid ,
-//    output wire                                     s_axi_intr_arready ,
-//    output wire [C_S_AXI_INTR_DATA_WIDTH-1 : 0]     s_axi_intr_rdata   ,
-//    output wire [1 : 0]                             s_axi_intr_rresp   ,
-//    output wire                                     s_axi_intr_rvalid  ,
-//    input  wire                                     s_axi_intr_rready  ,
-//    output wire                                     irq
-
 );
 //////////////////////////////
 // Internal Signals
@@ -222,6 +191,18 @@ wire                                         reg_wr_en;
 (* keep = "true" *) wire            dma_sample_req_valid;
 (* keep = "true" *) wire            dma_sample_req_done;
 
+// FIFO
+wire [ C_AXI_DMA_MASTER_ADDR_WIDTH : 0 ] fifo_data_out;
+wire                                     fifo_data_available;
+wire                                     fifo_data_read;
+
+// Assignments
+assign fifo_data_read           = axi_stream_master_tready;
+assign axi_stream_master_tvalid = fifo_data_available;
+assign axi_stream_master_tdata  = {16'h0, fifo_data_out[31:16], 16'h0, fifo_data_out[15:0]}; // 16 bit audio support at the moment
+assign axi_stream_master_tlast  = 1'b0;
+assign axi_stream_master_tstrb  = 1'b0;
+
     axi_dma_bridge # (
         // AXI Parameters
         .C_M_TARGET_SLAVE_BASE_ADDR( C_AXI_DMA_MASTER_TARGET_SLAVE_BASE_ADDR ),
@@ -260,7 +241,7 @@ wire                                         reg_wr_en;
         .INIT_AXI_TXN  ( axi_dma_master_init_axi_txn ),
         .TXN_DONE      ( axi_dma_master_txn_done     ),
         .ERROR         ( axi_dma_master_error        ),
-        .M_AXI_ACLK    ( axi_dma_master_aclk         ),
+        .M_AXI_ACLK    ( axi_clk                     ),
         .M_AXI_ARESETN ( axi_dma_master_aresetn      ),
         .M_AXI_AWID    ( axi_dma_master_awid         ),
         .M_AXI_AWADDR  ( axi_dma_master_awaddr       ),
@@ -313,7 +294,7 @@ wire                                         reg_wr_en;
 		.C_S_AXI_DATA_WIDTH ( C_AXI_LITE_SLAVE_DATA_WIDTH ),
 		.C_S_AXI_ADDR_WIDTH ( C_AXI_LITE_SLAVE_ADDR_WIDTH )
 	) axi_slave_controller_inst (
-		.S_AXI_ACLK    ( axi_lite_slave_aclk    ),
+		.S_AXI_ACLK    ( axi_clk                ),
 		.S_AXI_ARESETN ( axi_lite_slave_aresetn ),
 		.S_AXI_AWADDR  ( axi_lite_slave_awaddr  ),
 		.S_AXI_AWPROT  ( axi_lite_slave_awprot  ),
@@ -349,7 +330,7 @@ wire                                         reg_wr_en;
     )
     sampler_dma_registers (
         // Clock and Reset
-        .clk     ( axi_lite_slave_aclk    ),
+        .clk     ( axi_clk                ),
         .reset_n ( axi_lite_slave_aresetn ),
 
         // Rd/Wr Signals
@@ -377,7 +358,7 @@ wire                                         reg_wr_en;
         .ENABLE_DEBUG ( FETCHER_ENABLE_DEBUG )
 
     ) sample_info_fetcher (
-        .clk     ( axi_lite_slave_aclk    ),
+        .clk     ( axi_clk                ),
         .reset_n ( axi_lite_slave_aresetn ),
 
         // Control interface //
@@ -404,7 +385,7 @@ wire                                         reg_wr_en;
         .ENABLE_DEBUG ( DMA_REQUESTER_ENABLE_DEBUG )
     )
     sample_dma_requester (
-        .clk     ( axi_lite_slave_aclk    ),
+        .clk     ( axi_clk                ),
         .reset_n ( axi_lite_slave_aresetn ),
 
         // Control interface //
@@ -437,7 +418,7 @@ wire                                         reg_wr_en;
         .ENABLE_DEBUG ( DMA_RECEIVER_ENABLE_DEBUG )
     )
     sample_dma_receiver (
-        .clk     ( axi_lite_slave_aclk    ),
+        .clk     ( axi_clk                ),
         .reset_n ( axi_lite_slave_aresetn ),
 
         .stop ( stop ),

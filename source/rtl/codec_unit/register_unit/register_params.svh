@@ -10,8 +10,6 @@
         if (~RST) REGISTER <= DEF_VAL; \
         else REGISTER      <= (WR) ? WR_DATA : REGISTER; \
 
-
-
 // Generate an AXI register that the sofware sets to 1 and gets cleared by the HW
 // CLK     = AXI Clock
 // RST     = AXI Reset

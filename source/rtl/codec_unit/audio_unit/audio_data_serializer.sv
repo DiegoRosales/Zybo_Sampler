@@ -68,7 +68,7 @@ reg DOWNSTREAM_missed_reg;
 reg justification_sampled;
 
 // Data to be serialized
-wire [63:0] audio_data_in;
+wire  [63:0] audio_data_in;
 logic [63:0] audio_data_out_pre;
 
 // Input data for the FIFO
@@ -97,20 +97,20 @@ always_comb begin
   if(justification_sampled == 1'b0) begin
     // Left Justified
     case(word_length)
-      2'b00:   audio_data_out_pre = {audio_data_in[15:0], audio_data_in[47:32], {32{1'b0}}} ; // 16-bit
-      2'b01:   audio_data_out_pre = {audio_data_in[19:0], audio_data_in[51:32], {24{1'b0}}} ; // 20-bit
-      2'b10:   audio_data_out_pre = {audio_data_in[23:0], audio_data_in[55:32], {16{1'b0}}} ; // 24-bit
-      2'b11:   audio_data_out_pre = {audio_data_in[31:0], audio_data_in[63:32]}             ; // 32-bit
+      2'b00:   audio_data_out_pre = {audio_data_in[15:0], audio_data_in[47:32], {32{1'b0}}}; // 16-bit
+      2'b01:   audio_data_out_pre = {audio_data_in[19:0], audio_data_in[51:32], {24{1'b0}}}; // 20-bit
+      2'b10:   audio_data_out_pre = {audio_data_in[23:0], audio_data_in[55:32], {16{1'b0}}}; // 24-bit
+      2'b11:   audio_data_out_pre = {audio_data_in[31:0], audio_data_in[63:32]};             // 32-bit
       default: audio_data_out_pre = 'h0;
     endcase
   end 
   else begin
     // Right Justified
     case(word_length)
-      2'b00:   audio_data_out_pre = {{32{1'b0}}, audio_data_in[47:32], audio_data_in[15:0]} ; // 16-bit
-      2'b01:   audio_data_out_pre = {{24{1'b0}}, audio_data_in[51:32], audio_data_in[19:0]} ; // 20-bit
-      2'b10:   audio_data_out_pre = {{16{1'b0}}, audio_data_in[55:32], audio_data_in[23:0]} ; // 24-bit
-      2'b11:   audio_data_out_pre = {audio_data_in[63:32], audio_data_in[31:0]}             ; // 32-bit
+      2'b00:   audio_data_out_pre = {{32{1'b0}}, audio_data_in[47:32], audio_data_in[15:0]}; // 16-bit
+      2'b01:   audio_data_out_pre = {{24{1'b0}}, audio_data_in[51:32], audio_data_in[19:0]}; // 20-bit
+      2'b10:   audio_data_out_pre = {{16{1'b0}}, audio_data_in[55:32], audio_data_in[23:0]}; // 24-bit
+      2'b11:   audio_data_out_pre = {            audio_data_in[63:32], audio_data_in[31:0]}; // 32-bit
       default: audio_data_out_pre = 'h0;
     endcase
   end
@@ -151,7 +151,7 @@ end
 assign audio_data_in_pre = (word_length == 2'b00) ? { {16{1'b0}}, audio_data_in_shift_reg[63:48], {16{1'b0}}, audio_data_in_shift_reg[47:32]} : // 16-bit
                            (word_length == 2'b01) ? { {12{1'b0}}, audio_data_in_shift_reg[63:44], {12{1'b0}}, audio_data_in_shift_reg[43:24]} : // 20-bit
                            (word_length == 2'b10) ? { {8{1'b0}} , audio_data_in_shift_reg[63:40], {8{1'b0}} , audio_data_in_shift_reg[39:16]} : // 24-bit
-                           (word_length == 2'b11) ? {audio_data_in_shift_reg[63:32], audio_data_in_shift_reg[31:0]} :                           // 32-bit
+                           (word_length == 2'b11) ? {             audio_data_in_shift_reg[63:32],             audio_data_in_shift_reg[31:0]}  : // 32-bit
                            'h0;
 
 // Shift Register for the input data

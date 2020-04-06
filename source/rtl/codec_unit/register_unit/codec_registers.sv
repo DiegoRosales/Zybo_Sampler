@@ -4,44 +4,44 @@ module codec_registers #(
 )
 (
 
-    ////////////////////////////////
-    //////// AXI CONTROLLER ////////
-    // Clock and Reset
-    input  wire        axi_clk,
-    input  wire        axi_reset,
+  ////////////////////////////////
+  //////// AXI CONTROLLER ////////
+  // Clock and Reset
+  input  wire        axi_clk,
+  input  wire        axi_reset,
 
-    // Data signals
-    input  wire [ 31 : 0 ]                    data_in,
-    output wire [ 31 : 0 ]                    data_out,
-    input  wire [ OPT_MEM_ADDR_BITS - 1 : 0 ] reg_addr_wr,
-	input  wire [ OPT_MEM_ADDR_BITS - 1 : 0 ] reg_addr_rd,
-    input  wire                               data_wren,
-    input  wire [ 3 : 0 ]                     byte_enable,
+  // Data signals
+  input  wire [ 31 : 0 ]                    data_in,
+  output wire [ 31 : 0 ]                    data_out,
+  input  wire [ OPT_MEM_ADDR_BITS - 1 : 0 ] reg_addr_wr,
+  input  wire [ OPT_MEM_ADDR_BITS - 1 : 0 ] reg_addr_rd,
+  input  wire                               data_wren,
+  input  wire [ 3 : 0 ]                     byte_enable,
 
-    // Signals from the design
-    input  wire        clear_codec_i2c_data_wr,
-    input  wire        clear_codec_i2c_data_rd,
-	output wire        codec_i2c_data_wr,
-    output wire        codec_i2c_data_rd,
-	input  wire        controller_busy,
-	input  wire        codec_init_done,
-	input  wire        data_in_valid,
-	input  wire        missed_ack,
-	output wire [31:0] codec_i2c_addr,
-	output wire [31:0] codec_i2c_wr_data,
-    input  wire [31:0] codec_i2c_rd_data,
-    input  wire        update_codec_i2c_rd_data,
-	output wire        controller_reset,
-	input  wire [63:0] audio_data_out,
-	/////////////////////////
-  	//// Counter Signals ////
-  	/////////////////////////
-  	// AXI CLK //
-  	input wire [31:0] DOWNSTREAM_axis_wr_data_count,
-  	input wire [31:0] UPSTREAM_axis_rd_data_count,
-  	// Audio CLK //
-  	input wire [31:0] DOWNSTREAM_axis_rd_data_count,
-  	input wire [31:0] UPSTREAM_axis_wr_data_count
+  // Signals from the design
+  input  wire        clear_codec_i2c_data_wr,
+  input  wire        clear_codec_i2c_data_rd,
+  output wire        codec_i2c_data_wr,
+  output wire        codec_i2c_data_rd,
+  input  wire        controller_busy,
+  input  wire        codec_init_done,
+  input  wire        data_in_valid,
+  input  wire        missed_ack,
+  output wire [31:0] codec_i2c_addr,
+  output wire [31:0] codec_i2c_wr_data,
+  input  wire [31:0] codec_i2c_rd_data,
+  input  wire        update_codec_i2c_rd_data,
+  output wire        controller_reset,
+  input  wire [63:0] audio_data_out,
+  /////////////////////////
+  //// Counter Signals ////
+  /////////////////////////
+  // AXI CLK //
+  input wire [31:0] DOWNSTREAM_axis_wr_data_count,
+  input wire [31:0] UPSTREAM_axis_rd_data_count,
+  // Audio CLK //
+  input wire [31:0] DOWNSTREAM_axis_rd_data_count,
+  input wire [31:0] UPSTREAM_axis_wr_data_count
 
 );
 
