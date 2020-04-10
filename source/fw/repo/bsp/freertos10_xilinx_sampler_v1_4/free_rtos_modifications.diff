@@ -1,0 +1,40 @@
+diff -r /mnt/d/Xilinx/Vitis/2019.2/data/embeddedsw/ThirdParty/bsp/freertos10_xilinx_v1_4/src/Source/include/FreeRTOS.h ./src/Source/include/FreeRTOS.h
+830c830
+<       #define configSTACK_DEPTH_TYPE uint16_t
+---
+>       #define configSTACK_DEPTH_TYPE uint32_t
+diff -r /mnt/d/Xilinx/Vitis/2019.2/data/embeddedsw/ThirdParty/bsp/freertos10_xilinx_v1_4/src/Source/portable/GCC/ARM_CA9/portZynq7000.c ./src/Source/portable/GCC/ARM_CA9/portZynq7000.c
+203c203
+<       xil_printf( "vApplicationMallocFailedHook() called\n" );
+---
+>       xil_printf( "vApplicationMallocFailedHook() called\n\r" );
+
+diff /mnt/d/Xilinx/Vitis/2019.2/data/embeddedsw/ThirdParty/bsp/freertos10_xilinx_v1_4/data/freertos10_xilinx.mld ./data/freertos10_xilinx_sampler.mld
+30c30
+< BEGIN OS freertos10_xilinx
+---
+> BEGIN OS freertos10_xilinx_sampler
+35c35
+< OPTION NAME = freertos10_xilinx;
+---
+> OPTION NAME = freertos10_xilinx_sampler;
+53,54c53,54
+<       PARAM name = total_heap_size, type = int, default = 65536, desc = "Sets the amount of RAM reserved for use by FreeRTOS - used when tasks, queues, semaphores and event groups are created.";
+<       PARAM name = max_task_name_len, type = int, default = 10, desc = "The maximum number of characters that can be in the name of a task.";
+---
+>       PARAM name = total_heap_size, type = int, default = 268435456, desc = "Sets the amount of RAM reserved for use by FreeRTOS - used when tasks, queues, semaphores and event groups are created.";
+>       PARAM name = max_task_name_len, type = int, default = 50, desc = "The maximum number of characters that can be in the name of a task.";
+76c76
+<       PARAM name = num_thread_local_storage_pointers, type = int, default = 0, desc ="Sets the number of pointers each task has to store thread local values.";
+---
+>       PARAM name = num_thread_local_storage_pointers, type = int, default = 4, desc ="Sets the number of pointers each task has to store thread local values.";
+
+diff /mnt/d/Xilinx/Vitis/2019.2/data/embeddedsw/ThirdParty/bsp/freertos10_xilinx_v1_4/data/freertos10_xilinx.mss ./data/freertos10_xilinx_sampler.mss
+32c32
+<  PARAMETER OS_NAME = freertos10_xilinx
+---
+>  PARAMETER OS_NAME = freertos10_xilinx_sampler
+
+diff /mnt/d/Xilinx/Vitis/2019.2/data/embeddedsw/ThirdParty/bsp/freertos10_xilinx_v1_4/data/freertos10_xilinx.tcl ./data/freertos10_xilinx_sampler.tcl
+782a783
+>       puts $config_file "#define INCLUDE_xTaskGetHandle               1"
