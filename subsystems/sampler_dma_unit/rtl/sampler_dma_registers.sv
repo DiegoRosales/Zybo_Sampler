@@ -79,7 +79,7 @@ localparam BRAM_DEPTH              = 256;
 localparam NUM_OF_BRAM_REG_BITS    = clogb2( BRAM_DEPTH - 1 );
 localparam BRAM_ADDR_LSB           = 0;
 localparam BRAM_ADDR_MSB           = NUM_OF_BRAM_REG_BITS + BRAM_ADDR_LSB;
-localparam BRAM_START_ADDR         = 12'b0100_0000_0000;
+localparam BRAM_START_ADDR         = 12'b0100_0000_0000; // 0x400
 localparam BRAM_END_ADDR           = BRAM_START_ADDR + BRAM_DEPTH - 1;
 // DMA Register Address
 localparam DMA_BASE_ADDR_REG = 1'b0;

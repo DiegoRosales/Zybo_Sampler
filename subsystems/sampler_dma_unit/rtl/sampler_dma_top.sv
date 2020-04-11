@@ -36,7 +36,7 @@ module sampler_dma_top #(
 
     // Parameters of Axi Slave Bus Interface AXI_LITE_SLAVE
     parameter integer C_AXI_LITE_SLAVE_DATA_WIDTH = 32,
-    parameter integer C_AXI_LITE_SLAVE_ADDR_WIDTH = 32,
+    parameter integer C_AXI_LITE_SLAVE_ADDR_WIDTH = 16,
 
     // Parameters of Axi Slave Bus Interface S_AXI_INTR
     parameter integer C_S_AXI_INTR_DATA_WIDTH = 32,
