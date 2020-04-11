@@ -86,43 +86,51 @@ Before you build, you need to setup the environment. To do that, you need to run
 ```bash
 ## From the Windows CMD shell
 # Vivado
-[CMD]>> call D:\Xilinx\Vivado\2018.2\settings64.bat
+[CMD]>> call D:\Xilinx\Vivado\2019.2\settings64.bat
 # Xilinx SDK
-[CMD]>> call D:\Xilinx\SDK\2018.2\settings64.bat
+[CMD]>> call D:\Xilinx\Vitis\2019.2\settings64.bat
 ## From the Linux Bash shell (TODO)
 ...
 ```
 
+# Build stages
+The build process goes through the following stages
+
+### 1) Pack
+This stage will package the individual cores using the Vivado IP Packaging tool so that they can be easily integrated into the final build
+
+### 2) Integration
+This stage will import all the packaged cores and will perform all the connections necessary to build the final design
+
+### 3) Xilinx IP Synthesis
+This stage will individually synthesize all Xilinx IPs to save time on the final implementation
+
+### 4) Implementation
+This stage will import the generated sources from the integration stage and will perform Synthesis and Place and Route
+
+### 5) Firmware workspace generation
+This stage will create a Vitis workspace and configure the BSP and the Project application
+
 # Build instructions
-To build the project, you need to execute 1 script using Vivado: `run_design.tcl`. This script can take parameters using the `-tclparams <param>` argument to build whatever you need. Here are some examples
+To build the project, you need to execute 1 script using Vivado: `run_vivado.tcl`. This script can take parameters using the `-tclparams <param>` argument to build whatever you need. Here are some examples
 
+### Binary build
 ```bash
-## Run the complete flow from scratch and burn the bitfile once it is done
-[CMD]>> vivado -mode batch -source scripts\run_design.tcl -tclargs all
-## Run only the Design Integration (optional)
-[CMD]>> vivado -mode batch -source scripts\run_design.tcl -tclargs integ
-## To update the RTL (optional)
-[CMD]>> vivado -mode batch -source scripts\run_design.tcl -tclargs all_update
-## Only burn the bitfile (optional)
-[CMD]>> vivado -mode batch -source scripts\run_design.tcl -tclargs burn_only
+## Run the complete build flow from scratch
+>> vivado -mode batch -source scripts/run.tcl -tclargs -cfg cfg/zybo_sampler.cfg
 
-## To create the SDK Workspace
-[CMD]>> vivado -mode batch -source scripts\run_design.tcl -tclargs export_ws
-## To make the BSP (note, this won't add the source code to the workspace)
-[CMD]>> xsdk -batch scripts\fw\build_fw.tcl
+## Run only specific stages
+>> vivado -mode batch -source scripts/run.tcl -tclargs -cfg cfg/zybo_sampler.cfg -stages "<STAGE1>+<STAGE2>+..."
 ```
 
-To add the source code to the SDK Workspace, right clic on `src` and select `New -> Folder`. Then click on `Advanced` and select `Link to alternate location`. Browse to the `source\fw` directory and add click `Ok` and `Finish`.
-Once it has been added, Right click on the project and go to `C/C++ Build Settings`. Then go to `Directories` in the compiler section and add the following directories
-
-```tcl
-"${workspace_loc:/${ProjName}/src/fw/FreeRTOS-Plus-CLI}"
-"${workspace_loc:/${ProjName}/src/fw/FreeRTOS-Plus-FAT}"
-"${workspace_loc:/${ProjName}/src/fw/ZyboCLI}"
-"${workspace_loc:/${ProjName}/src/fw/ZyboSD}"
-"${workspace_loc:/${ProjName}/src/fw/nco}"
-"${workspace_loc:/${ProjName}/src/fw/sampler}"
+### Firmware build
+```bash
+# Note 1: This stage can also be executed from Vivado, but it will be calling this command
+# Note 2: For Vitis 2019.2, there's a Windows bug related to the Xilinx Software Command Tool (xsct) 
+#         You may need to apply this patch: https://www.xilinx.com/support/answers/73252.html
+>> xsct scripts/run.tcl -tclargs -cfg cfg/zybo_sampler.cfg -stages "BUILD_WS"
 ```
+
 
 # Runtime instructions
 Right now the project has very (**VERY**) limited functionality, but here's what you can do
