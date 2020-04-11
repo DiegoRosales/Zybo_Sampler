@@ -229,7 +229,7 @@ proc generate_xilinx_ips_xci {args} {
 
     ## Step 1 - Source the TCL scripts to generate 
     foreach ip $parsed_args(ip_list) {
-        set new_ip [add_files -force -norecurse ${ip} -copy_to ${generated_ip_path}]
+        set new_ip [add_files -force -norecurse ${ip}]
         generate_target all [get_files ${new_ip}]
         lappend xilinx_ip_file_list ${new_ip}
     }
