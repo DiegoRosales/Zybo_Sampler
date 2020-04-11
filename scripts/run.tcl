@@ -47,6 +47,7 @@ set core_file_lists  {}
 set core_pack_scripts {}
 
 ## Extract information from the cores' config files
+set xilinx_ip_list_all ""
 foreach core_root_dir $project_cores {
     ## Source all the core variables
     set core_root [file normalize $core_root_dir]
@@ -54,6 +55,10 @@ foreach core_root_dir $project_cores {
     source ${core_root}/cfg/core.cfg
     lappend core_file_lists   [list ${core_name} ${core_root} ${core_filelist}]
     lappend core_pack_scripts [list ${core_name} ${core_root} ${core_pack_script}]
+
+    ## Get the Xilinx IP TCL filelist
+    source $core_xilinx_ip_tcl_filelist
+    lappend xilinx_ip_list_all [subst $xilinx_ip_list]
 }
 
 #########################################
@@ -130,7 +135,7 @@ if {$tool == "vivado"} {
         }
 
         # IPs from TCL scripts
-        lappend generated_xilinx_ips [generate_xilinx_ips_tcl -ip_list $xilinx_ip_list  -part_number $ZYBO_FPGA_PART_NUMBER -dest_dir $xilinx_ip_tcl_path]
+        lappend generated_xilinx_ips [generate_xilinx_ips_tcl -ip_list [join $xilinx_ip_list_all]  -part_number $ZYBO_FPGA_PART_NUMBER -dest_dir $xilinx_ip_tcl_path]
         write_filelist -filelist [join $generated_xilinx_ips] -list_name "gen_xci_filelist" -description "Generated XCI Files" -output $results_dir/gen_xci_filelist.f
     }
 
