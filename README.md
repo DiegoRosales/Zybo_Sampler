@@ -82,12 +82,12 @@ You can find more about the board over at https://reference.digilentinc.com/refe
 
 ---
 # Setup instructions
-Before you build, you need to setup the environment. To do that, you need to run the Vivado and Xilinx SDK setup scripts like this
+Before you build, you need to setup the environment. To do that, you need to run the Vivado and Vitis (previously Xilinx SDK) setup scripts like this
 ```bash
 ## From the Windows CMD shell
 # Vivado
 [CMD]>> call D:\Xilinx\Vivado\2019.2\settings64.bat
-# Xilinx SDK
+# Xilinx Vitis (previously Xilinx SDK)
 [CMD]>> call D:\Xilinx\Vitis\2019.2\settings64.bat
 ## From the Linux Bash shell (TODO)
 ...
@@ -109,7 +109,7 @@ This stage will individually synthesize all Xilinx IPs to save time on the final
 This stage will import the generated sources from the integration stage and will perform Synthesis and Place and Route
 
 ### 5) Firmware workspace generation
-This stage will create a Vitis workspace and configure the BSP and the Project application
+This stage will create a Vitis workspace and configure the BSP and the Project application. Note that you will still need to open the Vitis GUI to compile the firmware and program the board
 
 # Build instructions
 To build the project, you need to execute 1 script using Vivado: `run_vivado.tcl`. This script can take parameters using the `-tclparams <param>` argument to build whatever you need. Here are some examples
@@ -126,7 +126,9 @@ To build the project, you need to execute 1 script using Vivado: `run_vivado.tcl
 ### Firmware build
 ```bash
 # Note 1: This stage can also be executed from Vivado, but it will be calling this command
-# Note 2: For Vitis 2019.2, there's a Windows bug related to the Xilinx Software Command Tool (xsct) 
+# Note 2: This stage will only build the Vitis Workspace. 
+#         You will need to load Vitis to compile the firmware and program the board
+# Note 3: For Vitis 2019.2, there's a Windows bug related to the Xilinx Software Command Tool (xsct) 
 #         You may need to apply this patch: https://www.xilinx.com/support/answers/73252.html
 >> xsct scripts/run.tcl -tclargs -cfg cfg/zybo_sampler.cfg -stages "BUILD_WS"
 ```
@@ -136,7 +138,7 @@ To build the project, you need to execute 1 script using Vivado: `run_vivado.tcl
 Right now the project has very (**VERY**) limited functionality, but here's what you can do
 
 ## Launch the project
-To launch the project, simply power on the Zybo and go into the Xilinx SDK with the compiled project. Once you're there go to `Xilinx -> Program FPGA`. Select the bitfile from the `results/audio_sampler_integ` directory and click on `Program`
+To launch the project, simply power on the Zybo and go into Vitis (previously Xilinx SDK) with the compiled project. Once you're there go to `Xilinx -> Program FPGA`. Select the bitfile from the `results/audio_sampler_integ` directory and click on `Program`
 
 Now that the bitfile has been downloaded, go to your Project Explorer and right click on the .elf file that is under `codec_fw -> Binaries -> codec_fw.elf`. On the menu, go to `Run As` and select `Run on Hardware (System Debugger)`.
 
