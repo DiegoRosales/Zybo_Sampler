@@ -7,14 +7,21 @@
 // as well as some initialization routines
 //////////////////////////////////////////////
 
-#include "codec_utils.h"
+// Xilinx Includes
+#include "xil_printf.h"
+#include "xparameters.h"
+
+// CODEC Includes
+#include "codec_controller_control_regs.h"
+#include "SSM2603_codec_registers.h"
+#include "codec_controller_reg_utils.h"
+#include "codec_controller_utils.h"
 
 int CodecRd(int addr, int display, int debug) {
 	int data_rd = 0;
-	int status  = 0;
 
 	// Step 0 - Check if there are no other transactions running. If there are none, clear all the Status bits
-	if ( CONTROL_REGISTER_ACCESS->CODEC_I2C_CTRL_REG.field.controller_busy_reg ) {
+	if ( CODEC_CONTROL_REGISTER_ACCESS->CODEC_I2C_CTRL_REG.field.controller_busy_reg ) {
 		xil_printf("============\n\r");
 		xil_printf("[ERROR] There is another transaction going on...\n\r");
 		xil_printf("============\n\r");
@@ -27,11 +34,11 @@ int CodecRd(int addr, int display, int debug) {
 	if (debug) xil_printf("-------------\n\r", addr);
 	if (debug) xil_printf("Reading CODEC Register %02x\n\n\r", addr);
 	if (debug) xil_printf("Writing the CODEC Address to register\n\r", addr);
-	CONTROL_REGISTER_ACCESS->CODEC_I2C_ADDR_REG.value = addr;
+	CODEC_CONTROL_REGISTER_ACCESS->CODEC_I2C_ADDR_REG.value = addr;
 
 	// Step 2 - Set the RD bit
 	if (debug) xil_printf("Setting the RD bit...\n\r", addr);
-	CONTROL_REGISTER_ACCESS->CODEC_I2C_CTRL_REG.field.codec_i2c_data_rd_reg = 1;
+	CODEC_CONTROL_REGISTER_ACCESS->CODEC_I2C_CTRL_REG.field.codec_i2c_data_rd_reg = 1;
 
 	// Step 3 - Wait for the Busy bit to clear
 	BusyBitIsClear(debug);
@@ -40,7 +47,7 @@ int CodecRd(int addr, int display, int debug) {
 
 	// Step 4 - Read the data
 	if (debug) xil_printf("Reading the Data from the Register...\n\r", addr);
-	data_rd = CONTROL_REGISTER_ACCESS->CODEC_I2C_RD_DATA_REG.value;
+	data_rd = CODEC_CONTROL_REGISTER_ACCESS->CODEC_I2C_RD_DATA_REG.value;
 
 	if (display | debug) xil_printf("CODEC Register[%02x] = 0x%02x\n\r", addr, data_rd);
 	if (debug) xil_printf("-------------\n\r", addr);
@@ -52,7 +59,7 @@ int CodecWr(int addr, int data, int check, int display, int debug) {
 	int error    = 0;
 	
 	// Step 0 - Check if there are no other transactions running. If there are none, clear all the Status bits
-	if ( CONTROL_REGISTER_ACCESS->CODEC_I2C_CTRL_REG.field.controller_busy_reg ) {
+	if ( CODEC_CONTROL_REGISTER_ACCESS->CODEC_I2C_CTRL_REG.field.controller_busy_reg ) {
 		xil_printf("============\n\r");
 		xil_printf("[ERROR] There is another transaction going on...\n\r");
 		xil_printf("============\n\r");
@@ -65,15 +72,15 @@ int CodecWr(int addr, int data, int check, int display, int debug) {
 
 	// Step 1 - Write the Address
 	if (debug) xil_printf("Writing the CODEC Address to the register\n\r");
-	CONTROL_REGISTER_ACCESS->CODEC_I2C_ADDR_REG.value = addr;
+	CODEC_CONTROL_REGISTER_ACCESS->CODEC_I2C_ADDR_REG.value = addr;
 
 	// Step 2 - Write the Data
 	if (debug) xil_printf("Writing the CODEC Data to the register\n\r");
-	CONTROL_REGISTER_ACCESS->CODEC_I2C_WR_DATA_REG.value = data;
+	CODEC_CONTROL_REGISTER_ACCESS->CODEC_I2C_WR_DATA_REG.value = data;
 
 	// Step 3 - Set the WR bit
 	if (debug) xil_printf("Setting the WR bit...\n\r");
-	CONTROL_REGISTER_ACCESS->CODEC_I2C_CTRL_REG.field.codec_i2c_data_wr_reg = 1;
+	CODEC_CONTROL_REGISTER_ACCESS->CODEC_I2C_CTRL_REG.field.codec_i2c_data_wr_reg = 1;
 
 	// Step 4 - Wait for the Busy bit to clear
 	if (debug) xil_printf("Waiting for the transfer to complete\n\r");
@@ -102,9 +109,9 @@ void ClearStatusBits(int debug) {
 	int status = 0;
 	if (debug) xil_printf("Clearing the Status Bits...\n\r");
 	// Read the status register
-	status = CONTROL_REGISTER_ACCESS->CODEC_I2C_CTRL_REG.value;
+	status = CODEC_CONTROL_REGISTER_ACCESS->CODEC_I2C_CTRL_REG.value;
 	// Write back the same value to clear the bits
-	CONTROL_REGISTER_ACCESS->CODEC_I2C_CTRL_REG.value = status;
+	CODEC_CONTROL_REGISTER_ACCESS->CODEC_I2C_CTRL_REG.value = status;
 	if (debug) xil_printf("Done!\n\r");
 
 }
@@ -117,7 +124,7 @@ void WaitUntilDataIsAvailable(int debug) {
 	if (debug) xil_printf("Waiting for the valid data bit...\n\r");
 	// Wait until the data_is_available bit is 1
 	do {
-		xfer_done         = CONTROL_REGISTER_ACCESS->CODEC_I2C_CTRL_REG;
+		xfer_done         = CODEC_CONTROL_REGISTER_ACCESS->CODEC_I2C_CTRL_REG;
 		data_is_available = xfer_done.field.data_in_valid_reg;
 		missed_ack        = xfer_done.field.missed_ack_reg;
 		if (missed_ack) {
@@ -126,7 +133,7 @@ void WaitUntilDataIsAvailable(int debug) {
 	} while (data_is_available == 0);
 	if (debug) xil_printf("Got valid data. Clearing the bit...\n\r");
 	// Clear that bit
-	CONTROL_REGISTER_ACCESS->CODEC_I2C_CTRL_REG.value = 0x10;
+	CODEC_CONTROL_REGISTER_ACCESS->CODEC_I2C_CTRL_REG.value = 0x10;
 	if (debug) xil_printf("Bit is clear!\n\r");
 }
 
@@ -134,7 +141,7 @@ void BusyBitIsClear(int debug) {
 	if (debug) xil_printf("Waiting for the transfer to complete...\n\r");
 
 	// Do nothing while the controller is busy
-	while( CONTROL_REGISTER_ACCESS->CODEC_I2C_CTRL_REG.field.controller_busy_reg );
+	while( CODEC_CONTROL_REGISTER_ACCESS->CODEC_I2C_CTRL_REG.field.controller_busy_reg );
 
 	if (debug) xil_printf("Busy Bit is Clear!\n\r");
 }
@@ -142,9 +149,9 @@ void BusyBitIsClear(int debug) {
 void ControllerReset(int debug) {
 	xil_printf("Resetting the controller...\n\r");
 	// Write the reset value	
-	CONTROL_REGISTER_ACCESS->CODEC_I2C_CTRL_REG.field.controller_reset_reg = 1;
+	CODEC_CONTROL_REGISTER_ACCESS->CODEC_I2C_CTRL_REG.field.controller_reset_reg = 1;
 	// Do nothing while the controller is in reset
-	while ( CONTROL_REGISTER_ACCESS->CODEC_I2C_CTRL_REG.field.controller_reset_reg );
+	while ( CODEC_CONTROL_REGISTER_ACCESS->CODEC_I2C_CTRL_REG.field.controller_reset_reg );
 	xil_printf("DONE\n\r");
 }
 
@@ -204,7 +211,6 @@ int SetInputVolume(int volume) {
 }
 
 void CodecInit(int debug) {
-	int readback  = 0;
 	int check     = 0;
 
 	CODEC_REGISTERS_t codec_registers;

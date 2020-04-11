@@ -2,12 +2,6 @@
 #ifndef CODEC_UTILS_H
 #define CODEC_UTILS_H
 
-//send data over UART
-#include "xil_printf.h"
-#include "reg_utils.h"
-#include "SSM2603_codec_registers.h"
-
-// Control Registers
 #define BUSY_BIT 2
 
 

@@ -1,11 +1,11 @@
+//////////////////////////////////////////////////
+// CODEC Controller Register Definition
+//////////////////////////////////////////////////
 
-#ifndef REG_UTILS_H
-#define REG_UTILS_H
+#ifndef _CODEC_CONTROLLER_REGS_H_
+#define _CODEC_CONTROLLER_REGS_H_
 
-
-
-// Controller Registers
-#define REGISTERS_BAR                          XPAR_SAMPLER_CODEC_CONTROLLER_AXI4_LITE_INTERFACE_BASEADDR
+#define CODEC_CONTROLLER_REGISTERS_BAR         XPAR_SAMPLER_CODEC_CONTROLLER_AXI4_LITE_INTERFACE_BASEADDR
 #define CODEC_I2C_CTRL_REG_ADDR                0x00
 #define CODEC_I2C_ADDR_REG_ADDR                0x01
 #define CODEC_I2C_WR_DATA_REG_ADDR             0x02
@@ -18,7 +18,7 @@
 #define DOWNSTREAM_AXIS_RD_DATA_COUNT_REG_ADDR 0x0a
 #define UPSTREAM_AXIS_WR_DATA_COUNT_REG_ADDR   0x0b
 
-#define CONTROL_REGISTER_ACCESS ((volatile CONTROLLER_REGISTERS_t *)(REGISTERS_BAR))
+#define CODEC_CONTROL_REGISTER_ACCESS ((volatile CONTROLLER_REGISTERS_t *)(CODEC_CONTROLLER_REGISTERS_BAR))
 
 /////////////////////////////////
 // CODEC I2C Control Register
@@ -92,14 +92,5 @@ typedef struct {
     uint32_t                DOWNSTREAM_AXIS_RD_DATA_COUNT_REG;      // Address a
     uint32_t                UPSTREAM_AXIS_WR_DATA_COUNT_REG;        // Address b
 } CONTROLLER_REGISTERS_t;
-
-// Control Register Bits
-#define WR_DATA_BIT          1
-#define RD_DATA_BIT          2
-#define CONTROLLER_RESET_BIT 31
-
-
-int RegWr(int addr, int value, int check, int display);
-int RegRd(int addr, int display);
 
 #endif

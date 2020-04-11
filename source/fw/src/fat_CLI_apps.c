@@ -139,7 +139,7 @@ size_t load_file_to_memory_malloc( char *file_name, uint8_t ** buffer, size_t ma
     // Step 1 - Open the file
     //xil_printf("[INFO] - Opening the file: \"%s\"\n\r", file_name);
     pxFile = ff_fopen( file_name, "r" );
-
+    xil_printf("Loading file %s ...\n\r", file_name);
     // Throw an error if the file cannot be opened
     if ( pxFile == NULL ) {
         xil_printf("[ERROR] - File %s could not be opened!\n\r", file_name);

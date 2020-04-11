@@ -11,14 +11,18 @@
 #include "xgpio.h"
 #include "portmacro.h"
 
+/////////////////////////////////////////
 // FreeRTOS Includes
+/////////////////////////////////////////
+
+// FreeRTOS Base
 #include "FreeRTOS.h"
 #include "task.h"
 
 // FreeRTOS+CLI Includes
 #include "FreeRTOS_CLI.h"
 #include "zybo_uart_driver.h" // Zybo UART Driver for FreeRTOS+CLI
-#include "codec_CLI_apps.h"   // CLI Applications
+#include "codec_controller_CLI_apps.h"   // CLI Applications
 
 // FreeRTOS+FAT includes
 #include "ff_stdio.h"
@@ -26,11 +30,18 @@
 #include "ff_sddisk.h"
 #include "fat_CLI_apps.h"
 
+/////////////////////////////////////////
+// Sampler Includes
+/////////////////////////////////////////
+// Register maps
+#include "codec_controller_control_regs.h"
+#include "sampler_dma_controller_regs.h"
+
 // FreeRTOS Tasks
 #include "sampler_FreeRTOS_tasks.h"
 
 // Other
-#include "codec_utils.h"
+#include "codec_controller_utils.h"
 #include "nco.h"
 #include "sampler.h"
 

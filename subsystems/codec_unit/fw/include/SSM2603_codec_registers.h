@@ -4,8 +4,8 @@
 // These are taken from the datasheet
 ///////////////////////////////////////
 
-#ifndef SSM2603_CODEC_REGISTERS_H
-#define SSM2603_CODEC_REGISTERS_H
+#ifndef _SSM2603_CODEC_REGISTERS_H_
+#define _SSM2603_CODEC_REGISTERS_H_
 
 // CODEC Registers
 #define LEFT_CHANN_INPUT_VOL_REG_ADDR   0x00

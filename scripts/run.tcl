@@ -81,16 +81,22 @@ if {$tool == "xsct"} {
         repo -set ${fw_source_path}/repo
         app create -name ${app_project_name} -hw ${workspace_project_path}/${platform_project_name}.xsa -proc {ps7_cortexa9_0} -os freertos10_xilinx_sampler -lang C -template {Empty Application}
         driver -peripheral ps7_sd_0 -name sdps -ver 3.5
-        platform generate
 
-        file link -symbolic ${workspace_project_path}/${app_project_name}/src/src ${project_root}/source/fw/src/
-        app config -name ${app_project_name} -add include-path {${workspace_loc:/${ProjName}/src/src/FreeRTOS-Plus-CLI}}
-        app config -name ${app_project_name} -add include-path {${workspace_loc:/${ProjName}/src/src/FreeRTOS-Plus-FAT}}
-        app config -name ${app_project_name} -add include-path {${workspace_loc:/${ProjName}/src/src/ZyboCLI}}
-        app config -name ${app_project_name} -add include-path {${workspace_loc:/${ProjName}/src/src/ZyboSD}}
-        app config -name ${app_project_name} -add include-path {${workspace_loc:/${ProjName}/src/src/nco}}
-        app config -name ${app_project_name} -add include-path {${workspace_loc:/${ProjName}/src/src/jsmn}}
-        app config -name ${app_project_name} -add include-path {${workspace_loc:/${ProjName}/src/src/sampler}}
+        file link -symbolic ${workspace_project_path}/${app_project_name}/src/common ${project_root}/source/fw/src/
+        file link -symbolic ${workspace_project_path}/${app_project_name}/src/codec_controller ${project_root}/subsystems/codec_unit/fw/
+        file link -symbolic ${workspace_project_path}/${app_project_name}/src/sampler_dma ${project_root}/subsystems/sampler_dma_unit/fw/
+
+        app config -name ${app_project_name} -add include-path {${workspace_loc:/${ProjName}/src/codec_controller/include}}
+        app config -name ${app_project_name} -add include-path {${workspace_loc:/${ProjName}/src/sampler_dma/include}}
+        app config -name ${app_project_name} -add include-path {${workspace_loc:/${ProjName}/src/common/FreeRTOS-Plus-CLI}}
+        app config -name ${app_project_name} -add include-path {${workspace_loc:/${ProjName}/src/common/FreeRTOS-Plus-FAT}}
+        app config -name ${app_project_name} -add include-path {${workspace_loc:/${ProjName}/src/common/ZyboCLI}}
+        app config -name ${app_project_name} -add include-path {${workspace_loc:/${ProjName}/src/common/ZyboSD}}
+        app config -name ${app_project_name} -add include-path {${workspace_loc:/${ProjName}/src/common/nco}}
+        app config -name ${app_project_name} -add include-path {${workspace_loc:/${ProjName}/src/common/jsmn}}
+        app config -name ${app_project_name} -add include-path {${workspace_loc:/${ProjName}/src/common/sampler}}
+
+        platform generate
     }
 }
 
