@@ -21,8 +21,7 @@
 
 // FreeRTOS+CLI Includes
 #include "FreeRTOS_CLI.h"
-#include "zybo_uart_driver.h" // Zybo UART Driver for FreeRTOS+CLI
-#include "codec_controller_CLI_apps.h"   // CLI Applications
+#include "zybo_uart_driver.h"                  // Zybo UART Driver for FreeRTOS+CLI
 
 // FreeRTOS+FAT includes
 #include "ff_stdio.h"
@@ -36,6 +35,10 @@
 // Register maps
 #include "codec_controller_control_regs.h"
 #include "sampler_dma_controller_regs.h"
+
+// CLI Applications
+#include "codec_controller_CLI_apps.h"         // CLI Applications
+#include "sampler_dma_controller_CLI_apps.h"   // CLI Applications
 
 // FreeRTOS Tasks
 #include "sampler_FreeRTOS_tasks.h"
@@ -63,6 +66,7 @@ void main_rtos_program() {
     register_codec_cli_commands();
     register_fat_cli_commands();
     register_sampler_cli_commands();
+    register_sampler_dma_ctrl_cli_commands();
 
     pxSDDisk = FF_SDDiskInit( mainSD_CARD_DISK_NAME );
 
