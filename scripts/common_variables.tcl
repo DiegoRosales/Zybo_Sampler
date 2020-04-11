@@ -3,8 +3,8 @@ set ZYBO_FPGA_PART_NUMBER  "xc7z010clg400-1"
 set ZYBO_BOARD_PART_NUMBER "digilentinc.com:zybo:part0:1.0"
 
 ## Xilinx variables
-#set vivado_install_path        $::env(XILINX_VIVADO)
-#set vivado_interface_path      ${vivado_install_path}/data/ip/interfaces
+set vivado_install_path        $::env(XILINX_VIVADO)
+set vivado_interface_path      ${vivado_install_path}/data/ip/interfaces
 
 ## Project Path Variables
 set results_dir                "${project_root}/results"
