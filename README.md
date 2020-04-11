@@ -112,7 +112,7 @@ This stage will import the generated sources from the integration stage and will
 This stage will create a Vitis workspace and configure the BSP and the Project application. Note that you will still need to open the Vitis GUI to compile the firmware and program the board
 
 # Build instructions
-To build the project, you need to execute 1 script using Vivado: `run_vivado.tcl`. This script can take parameters using the `-tclparams <param>` argument to build whatever you need. Here are some examples
+To build the project, you need to run one script using Vivado: `run.tcl`.
 
 ### Binary build
 ```bash
