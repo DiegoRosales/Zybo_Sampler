@@ -52,8 +52,8 @@ foreach core_root_dir $project_cores {
     set core_root [file normalize $core_root_dir]
 
     source ${core_root}/cfg/core.cfg
-    lappend core_file_lists   [list ${core_name} ${core_root} "${core_root}/cfg/${core_filelist}"]
-    lappend core_pack_scripts [list ${core_name} ${core_root} "${core_root}/cfg/${core_pack_script}"]
+    lappend core_file_lists   [list ${core_name} ${core_root} ${core_filelist}]
+    lappend core_pack_scripts [list ${core_name} ${core_root} ${core_pack_script}]
 }
 
 #########################################
@@ -147,7 +147,7 @@ if {$tool == "vivado"} {
             source $core_filelist
 
             foreach synth_file ${synthesis_file_list} {
-                read_verilog -library $libname -sv ${core_root}/$synth_file
+                read_verilog -library $libname -sv [subst $synth_file]
             }
         }
 

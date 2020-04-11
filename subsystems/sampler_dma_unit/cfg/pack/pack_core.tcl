@@ -5,8 +5,8 @@
 source ${project_root}/scripts/pack/pack_utils.tcl
 
 set script_dir           [file normalize [file dirname [info script]]]
-set rtl_top              "codec_unit_top"
-set rtl_top_file         "${core_root}/codec_unit_top.sv"
+set rtl_top              "sampler_dma_top"
+set rtl_top_file         "${core_root}/rtl/sampler_dma_top.sv"
 set package_project_name ${core_name}_pack
 set package_project_dir  ${packaged_cores_dirname}/${package_project_name}
 set revision             1
@@ -40,51 +40,27 @@ set axi_interfaces ""
 
 ## Create AXIS Interfaces
 source ${script_dir}/config_axis_if.tcl
+lappend axi_interfaces $interface_name
+
 ## Create AXI4 Lite Interface
 source ${script_dir}/config_axi4_if.tcl
-## Create I2S Interface
-source ${script_dir}/config_i2s_if.tcl
+lappend axi_interfaces $interface_name
 
-## Create the GPIO interface for the LEDs
-pack_utils::create_xilinx_gpio_interface led_status \
-                                        -rtl_port_name led_status \
-                                        -mode master -description \
-                                        "LED Status" -display_name \
-                                        "led_status" -direction "out"
+## Create AXI4 DMA Interface
+source ${script_dir}/config_axi_dma_if.tcl
+lappend axi_interfaces $interface_name
 
-## Create the interrupt interface
-pack_utils::create_xilinx_interrupt_interface DOWNSTREAM_almost_empty_intr \
-                                              -rtl_port_name DOWNSTREAM_almost_empty \
-                                              -mode master \
-                                              -description "Downstream interrupt signaling FIFO is almost empty" \
-                                              -display_name "DOWNSTREAM_almost_empty" \
-                                              -sensitivity "LEVEL_HIGH" \
-
-## Create the clocks
-# Board Clock (50MHz)
-set clk_associated_if ""
-set clk_frequency     50000000
-set clk_name          "board_clk"
-set clk_description   "Board Clock"
-pack_utils::create_xilinx_clock_interface $clk_name \
-                                          -rtl_port_name $clk_name \
-                                          -mode          slave \
-                                          -description   $clk_description \
-                                          -display_name  $clk_name \
-                                          -frequency     $clk_frequency \
-                                          -associated_if $clk_associated_if
-
-# AXI Clock (120MHz)
+## AXI Clock (120MHz)
 set clk_associated_if $axi_interfaces
 set clk_frequency     125000000
-set clk_name          "axi_clk"
+set clk_name          axi_clk
 set clk_description   "AXI Clock"
 pack_utils::create_xilinx_clock_interface $clk_name \
                                           -rtl_port_name $clk_name \
-                                          -mode          slave \
                                           -description   $clk_description \
                                           -display_name  $clk_name \
                                           -frequency     $clk_frequency \
-                                          -associated_if $clk_associated_if
+                                          -associated_if $clk_associated_if \
+                                          -mode          slave
 
 pack_utils::finalize_packaging
