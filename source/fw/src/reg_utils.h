@@ -5,7 +5,7 @@
 
 
 // Controller Registers
-#define REGISTERS_BAR                          XPAR_AUDIO_SAMPLER_INST_S00_AXI_BASEADDR
+#define REGISTERS_BAR                          XPAR_SAMPLER_CODEC_CONTROLLER_AXI4_LITE_INTERFACE_BASEADDR
 #define CODEC_I2C_CTRL_REG_ADDR                0x00
 #define CODEC_I2C_ADDR_REG_ADDR                0x01
 #define CODEC_I2C_WR_DATA_REG_ADDR             0x02
