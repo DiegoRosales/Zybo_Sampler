@@ -1,7 +1,7 @@
-## This file is a general .xdc for the ZYBO Rev B board
-## To use it in a project:
-## - uncomment the lines corresponding to used pins
-## - rename the used signals according to the project
+########################################
+## Pin assignments
+########################################
+
 
 
 ##Clock signal
@@ -30,13 +30,13 @@ set_property -dict {PACKAGE_PIN D18 IOSTANDARD LVCMOS33} [get_ports {LED_tri_o[3
 
 
 ##I2S Audio Codec
-set_property -dict {PACKAGE_PIN K18 IOSTANDARD LVCMOS33} [get_ports ac_bclk]
-set_property -dict {PACKAGE_PIN T19 IOSTANDARD LVCMOS33} [get_ports ac_mclk]
-set_property -dict {PACKAGE_PIN P18 IOSTANDARD LVCMOS33} [get_ports ac_muten]
-set_property -dict {PACKAGE_PIN M17 IOSTANDARD LVCMOS33} [get_ports ac_pbdat]
-set_property -dict {PACKAGE_PIN L17 IOSTANDARD LVCMOS33} [get_ports ac_pblrc]
-set_property -dict {PACKAGE_PIN K17 IOSTANDARD LVCMOS33} [get_ports ac_recdat]
-set_property -dict {PACKAGE_PIN M18 IOSTANDARD LVCMOS33} [get_ports ac_reclrc]
+set_property -dict {PACKAGE_PIN K18 IOSTANDARD LVCMOS33} [get_ports codec_i2s_bclk]
+set_property -dict {PACKAGE_PIN T19 IOSTANDARD LVCMOS33} [get_ports codec_i2s_mclk]
+set_property -dict {PACKAGE_PIN P18 IOSTANDARD LVCMOS33} [get_ports codec_i2s_muten]
+set_property -dict {PACKAGE_PIN M17 IOSTANDARD LVCMOS33} [get_ports codec_i2s_pbdat]
+set_property -dict {PACKAGE_PIN L17 IOSTANDARD LVCMOS33} [get_ports codec_i2s_pblrc]
+set_property -dict {PACKAGE_PIN K17 IOSTANDARD LVCMOS33} [get_ports codec_i2s_recdat]
+set_property -dict {PACKAGE_PIN M18 IOSTANDARD LVCMOS33} [get_ports codec_i2s_reclrc]
 
 
 ##Audio Codec/external EEPROM IIC bus
