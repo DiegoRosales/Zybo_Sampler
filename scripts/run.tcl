@@ -55,18 +55,18 @@ foreach core_root_dir $project_cores {
     source ${core_root}/cfg/core.cfg
 
     if {$core_filelist != ""} {
-    lappend core_file_lists   [list ${core_name} ${core_root} ${core_filelist}]
+        lappend core_file_lists   [list ${core_name} ${core_root} ${core_filelist}]
     }
 
     if {$core_pack_script != ""} {
-    lappend core_pack_scripts [list ${core_name} ${core_root} ${core_pack_script}]
+        lappend core_pack_scripts [list ${core_name} ${core_root} ${core_pack_script}]
     }
 
     ## Get the Xilinx IP TCL filelist
     if {$core_xilinx_ip_tcl_filelist != ""} {
-    source $core_xilinx_ip_tcl_filelist
-    lappend xilinx_ip_list_all [subst $xilinx_ip_list]
-}
+        source $core_xilinx_ip_tcl_filelist
+        lappend xilinx_ip_list_all [subst $xilinx_ip_list]
+    }
 }
 
 #########################################
@@ -170,42 +170,61 @@ if {$tool == "vivado"} {
             }
         }
 
-        # Generated RTL files
+        # Add generated RTL files
         if {[file exists ${integ_project_dir}/gen_rtl_filelist.f]} {
             source ${integ_project_dir}/gen_rtl_filelist.f
             read_verilog -library gen_rtl_lib -sv $gen_rtl_filelist
         }
 
-        # Generated XCI Files from the integration stage
+        # Add generated XCI Files from the integration stage
         if {[file exists $results_dir/gen_xci_filelist.f]} {
             source $results_dir/gen_xci_filelist.f
             read_ip $gen_xci_filelist
         }
 
+        ## Add Constraints
+        create_fileset -constrset constraints
+        # Add synthesis constraints
+        set synth_constr_files [add_files $constraints_synth -fileset constraints]
+        set_property FILE_TYPE              TCL [get_files $synth_constr_files]
+        set_property USED_IN_SIMULATION     0   [get_files $synth_constr_files]
+        set_property USED_IN_SYNTHESIS      1   [get_files $synth_constr_files]
+        set_property USED_IN_IMPLEMENTATION 1   [get_files $synth_constr_files]
+        # Add place and route constraints
+        set par_constr_files [add_files $constraints_par -fileset constraints]
+        set_property FILE_TYPE              TCL [get_files $par_constr_files]
+        set_property USED_IN_SIMULATION     0   [get_files $par_constr_files]
+        set_property USED_IN_SYNTHESIS      0   [get_files $par_constr_files]
+        set_property USED_IN_IMPLEMENTATION 1   [get_files $par_constr_files]
+
         ######################################################
-        ## START THE BUILD PROCESS
+        ## START THE BUILD PROCESS (Project Mode)
         ######################################################
+        set_property top $integ_project_top [current_fileset]
+        update_compile_order
 
-        ## Run Elaboration
-        synth_design -rtl -name rtl_elaboration -top $integ_project_top
+        ## Create the synthesis run
+        create_run synthesis -constrset constraints -flow {Vivado Synthesis 2019}
 
-        ## Load constraints
-        read_xdc -unmanaged $constraints_synth
+        ## Create the place and route run
+        create_run place_and_route -parent_run synthesis -constrset constraints -flow {Vivado Implementation 2019}
 
-        ## Run synthesis
-        synth_design -name rtl_synthesis -top $integ_project_top
-        
-        read_xdc -unmanaged $constraints_par
-        ## Run place and route
-        # Opt Desgin
-        opt_design
-        # Place Desgin
-        place_design
-        # Physical Optimization
-        phys_opt_design
-        # Route design
-        route_design
+        ## Launch Synthesis
+        puts "Starting Synthesis"
+        launch_runs synthesis -jobs 8
+        wait_on_run -run synthesis
+        puts "Synthesis Done!"
+        ## Launch Place and route
+        puts "Starting Place and Route"
+        launch_runs place_and_route -jobs 8
+        wait_on_run -run place_and_route
+        puts "Place and Route Done!"
 
+        ## Open the place and route run
+        current_run [get_runs place_and_route]
+        open_run place_and_route
+
+        ## Export the HW Platform for the Vitis Workspace
         write_hw_platform -fixed -force  -include_bit -file ${workspace_project_path}/${platform_project_name}.xsa
 
         if {$parsed_args(debug) == 0} {
