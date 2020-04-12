@@ -13,8 +13,6 @@ set synthesis_file_list {
     ${core_root}/rtl/register_unit/register_unit.sv
     ${core_root}/rtl/audio_unit/audio_unit_top.sv
     ${core_root}/rtl/audio_unit/audio_data_serializer.sv
-    ${core_root}/rtl/pulse_synchronizer.sv
-    ${core_root}/rtl/synchronizer.sv
     ${core_root}/rtl/controller_unit/i2c_core/verilog-i2c/rtl/i2c_master.v
     ${core_root}/rtl/controller_unit/i2c_core/verilog-i2c/rtl/i2c_master_wbs_8.v
     ${core_root}/rtl/controller_unit/i2c_core/verilog-i2c/rtl/axis_fifo.v

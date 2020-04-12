@@ -53,12 +53,20 @@ foreach core_root_dir $project_cores {
     set core_root [file normalize $core_root_dir]
 
     source ${core_root}/cfg/core.cfg
+
+    if {$core_filelist != ""} {
     lappend core_file_lists   [list ${core_name} ${core_root} ${core_filelist}]
+    }
+
+    if {$core_pack_script != ""} {
     lappend core_pack_scripts [list ${core_name} ${core_root} ${core_pack_script}]
+    }
 
     ## Get the Xilinx IP TCL filelist
+    if {$core_xilinx_ip_tcl_filelist != ""} {
     source $core_xilinx_ip_tcl_filelist
     lappend xilinx_ip_list_all [subst $xilinx_ip_list]
+}
 }
 
 #########################################
