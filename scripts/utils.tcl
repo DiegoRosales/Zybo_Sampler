@@ -35,56 +35,97 @@ proc arg_parser { arg_list parsed_args args } {
     }
 
     ## Parse arguments
-    set cur_arg_pos 1
+    set cur_arg_pos   1
+    set curr_list_arg ""
     while { [llength $args_int] } {
-        set arg [lshift args_int]
-        #puts "arg = $arg"
+        set arg           [lshift args_int]
+        set found_new_arg 0
+
+        puts "arg = $arg"
 
         if {$arg != ""} {
-            ## If argument starts with '-' (-something)
-            if {[string index $arg 0] == "-"} {
-                set arg_name [string range $arg 1 end]
+            switch -regexp $arg {
+                ^-[a-zA-Z]+ {
+                    if {$curr_list_arg == ""} {
+                        set found_new_arg 1
+                        set arg_name      [string range $arg 1 end]
 
-                ## Search for the argument in the argument list
-                if {[lsearch -exact [array names arg_list_int] "$arg_name"] != -1} {
-                    set action        [lindex $arg_list_int($arg_name) 0]
-                    #puts "$arg_name is in arg_list"
-                    switch -exact -- $action {
-                        store {
-                            set parsed_args_int($arg_name) [lshift args_int]
-                            #puts "$arg_name = $parsed_args_int($arg_name)"
-                        }
-                        
-                        store_true {
-                            set parsed_args_int($arg_name) 1
-                        }
-
-                        store_false {
-                            set parsed_args_int($arg_name) 0
+                        ## Search for the argument in the argument list
+                        if {[lsearch -exact [array names arg_list_int] "$arg_name"] != -1} {
+                            set action        [lindex $arg_list_int($arg_name) 0]
+                            #puts "$arg_name is in arg_list"
+                            switch -exact -- $action {
+                                store {
+                                    set parsed_args_int($arg_name) [lshift args_int]
+                                    #puts "$arg_name = $parsed_args_int($arg_name)"
+                                }
+                                store_true {
+                                    set parsed_args_int($arg_name) 1
+                                }
+                                store_false {
+                                    set parsed_args_int($arg_name) 0
+                                }
+                            }
                         }
                     }
                 }
-            ## If it doesn't start with '-' check if it's a positional argument
-            } else {
-                #puts "Checking if this is an indexed argument"
-                set found_arg 0
-                foreach arg_name [array names arg_list_int] {
-                    set argument_position [lindex $arg_list_int($arg_name) 3]
-                    if {$argument_position == $cur_arg_pos} {
-                        set parsed_args_int($arg_name) $arg
-                        set found_arg 1
-                        #puts "$arg_name = $parsed_args_int($arg_name)"
-                        break
+
+                ^--[a-zA-Z]+ {
+                    if {$curr_list_arg == ""} {
+                        set found_new_arg 1
+                        set arg_name      [string range $arg 2 end]
+
+                        ## Search for the argument in the argument list
+                        if {[lsearch -exact [array names arg_list_int] "$arg_name"] != -1} {
+                            set action        [lindex $arg_list_int($arg_name) 0]
+                            #puts "$arg_name is in arg_list"
+                            switch -exact -- $action {
+                                store_list {
+                                    set     curr_list_arg $arg_name
+                                    puts    "Starting adding arguments for $curr_list_arg"
+                                }
+                                default {
+                                    puts "WARNING: $arg_name is not of List type"
+                                }
+                            }
+                        }
                     }
                 }
 
-                if {$found_arg == 0} {
-                    puts "ERROR - Unknown argument $arg"
-                    set exit_status 1
+                ^--$ {
+                    puts "Finished adding arguments for $curr_list_arg"
+                    set curr_list_arg ""
+                    set found_new_arg 1
+                }
+
+                default {
+                    set found_new_arg 0
                 }
             }
-        }
 
+            if {$found_new_arg == 0} {
+                if {$curr_list_arg == ""} {
+                    ## Check if this is a positional argument
+                    set found_arg 0
+                    foreach arg_name [array names arg_list_int] {
+                        set argument_position [lindex $arg_list_int($arg_name) 3]
+                        if {$argument_position == $cur_arg_pos} {
+                            set parsed_args_int($arg_name) $arg
+                            set found_arg 1
+                            #puts "$arg_name = $parsed_args_int($arg_name)"
+                            break
+                        }
+                    }
+
+                    if {$found_arg == 0} {
+                        puts "ERROR - Unknown argument $arg"
+                        set exit_status 1
+                    }
+                } else {
+                    lappend parsed_args_int($curr_list_arg) $arg
+                }
+            }
+            
         incr cur_arg_pos
     }
 
