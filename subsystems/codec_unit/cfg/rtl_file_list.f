@@ -8,7 +8,6 @@ set synthesis_file_list {
     ${core_root}/rtl/controller_unit/controller_unit_top.sv
     ${core_root}/rtl/controller_unit/i2c_seq_sm.sv
     ${core_root}/rtl/controller_unit/wb_master_controller.sv
-    ${core_root}/rtl/register_unit/axi_slave_controller.sv
     ${core_root}/rtl/register_unit/codec_registers.sv
     ${core_root}/rtl/register_unit/register_unit.sv
     ${core_root}/rtl/audio_unit/audio_unit_top.sv
