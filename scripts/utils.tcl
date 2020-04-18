@@ -20,6 +20,7 @@ proc arg_parser { arg_list parsed_args args } {
 
     set   required_list {}
     set   exit_status   0
+    puts $args_int
     
     ## Fill defaults
     foreach arg_name [array names arg_list_int] {
@@ -57,7 +58,7 @@ proc arg_parser { arg_list parsed_args args } {
                             switch -exact -- $action {
                                 store {
                                     set parsed_args_int($arg_name) [lshift args_int]
-                                    #puts "$arg_name = $parsed_args_int($arg_name)"
+                                    puts "$arg_name = $parsed_args_int($arg_name)"
                                 }
                                 store_true {
                                     set parsed_args_int($arg_name) 1
@@ -122,11 +123,13 @@ proc arg_parser { arg_list parsed_args args } {
                         set exit_status 1
                     }
                 } else {
+                    puts "Adding argument $arg to $curr_list_arg"
                     lappend parsed_args_int($curr_list_arg) $arg
                 }
             }
-            
-        incr cur_arg_pos
+
+            incr cur_arg_pos
+        }
     }
 
     ## Check if there are missing
@@ -354,13 +357,14 @@ proc process_stages {args} {
     array set my_arglist {
         "stage_list"        {"store"         ""       "required"   0}
         "input_stages"      {"store"         ""       "required"   0}
+        "input_stage_args"  {"store"         ""       "required"   0}
     }
 
     set status [arg_parser my_arglist parsed_args args]
 
     if {$status != 0} {
         puts "ERROR: There was an error processing the arguments"
-        return ""
+        return 1
     }
 
     set input_stages_split [split $parsed_args(input_stages) "+"]
@@ -373,8 +377,10 @@ proc process_stages {args} {
     }
 
     foreach stage $parsed_args(stage_list) {
-        # Create a variable a level up
-        upvar STAGE_${stage} curr_stage
+        ## Create a variable a level up
+        upvar STAGE_${stage}      curr_stage
+        upvar STAGE_${stage}_ARGS curr_stage_args
+
 
         ## Find the stage in the stage list
         if { ([lsearch -exact $input_stages_split $stage] != -1) || ($enable_all == 1) } {
@@ -383,6 +389,23 @@ proc process_stages {args} {
         } else {
             puts "Disabling $stage"
             set curr_stage 0
+        }
+
+        ## Find all stage arguments for this stage
+        set stage_args [lsearch -all -regexp -inline $parsed_args(input_stage_args) "^${stage}_"]
+
+        ## Process each argument
+        if {$stage_args != {}} {
+            foreach stage_arg $stage_args {
+                set arg_split [split $stage_arg "="]
+                set arg_name  [lindex $arg_split 0]
+                if {[llength $arg_split] == 1} {
+                    lappend curr_stage_args($arg_name) 1
+                } else {
+                    lappend curr_stage_args($arg_name) [lindex $arg_split 1]
+                }
+                puts "\$STAGE_${stage}_ARGS($arg_name) = $curr_stage_args($arg_name)"
+            }
         }
     }
 }
@@ -399,7 +422,7 @@ proc write_filelist {args} {
 
     if {$status != 0} {
         puts "ERROR: There was an error processing the arguments"
-        return ""
+        return 1
     }
 
     ####################################
