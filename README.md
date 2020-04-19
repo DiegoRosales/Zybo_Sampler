@@ -120,7 +120,11 @@ To build the project, you need to run one script using Vivado: `run.tcl`.
 >> vivado -mode batch -source scripts/run.tcl -tclargs -cfg cfg/zybo_sampler.cfg
 
 ## Run only specific stages
+# Stages: PACK | INTEG | GEN_XILINX_IP | IMPL | BUILD_WS
 >> vivado -mode batch -source scripts/run.tcl -tclargs -cfg cfg/zybo_sampler.cfg -stages "<STAGE1>+<STAGE2>+..."
+
+## Run with stage arguments
+>> vivado -mode batch -source scripts/run.tcl -tclargs -cfg cfg/zybo_sampler.cfg -stages "<STAGE1>+<STAGE2>+..." --stage_args "<STAGE1>_ARG1=1" "<STAGE2>_ARG2=MyValue" --
 ```
 
 ### Firmware build

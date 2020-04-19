@@ -15,15 +15,24 @@ set bus_definition_list  [list ${vivado_interface_path}/gpio_v1_0/gpio.xml      
                                ${vivado_interface_path}/reset_v1_0/reset.xml         \
                                ${user_interfaces_dir}/i2s/i2s.xml                    \
                                ]
+## Check for a debug flag
+set project_debug 0
+if {[info exists STAGE_INTEG_ARGS(INTEG_DEBUG)]} {
+  if {$STAGE_INTEG_ARGS(INTEG_DEBUG) == 1} {
+    puts "Setting the project debug flag"
+    set project_debug 1
+  }
+}
 
 ## Initialize the packaging
-integ_utils::init -project_name          $project_name          \
-                  -project_dir           $project_dir           \
-                  -project_top           $project_top           \
-                  -part_number           $ZYBO_FPGA_PART_NUMBER \
-                  -ip_repo_list          $ip_repo_list          \
-                  -bus_def_xml_list      $bus_definition_list   \
-                  -board_part            $ZYBO_BOARD_PART_NUMBER
+integ_utils::init -project_name          $project_name           \
+                  -project_dir           $project_dir            \
+                  -project_top           $project_top            \
+                  -part_number           $ZYBO_FPGA_PART_NUMBER  \
+                  -ip_repo_list          $ip_repo_list           \
+                  -bus_def_xml_list      $bus_definition_list    \
+                  -board_part            $ZYBO_BOARD_PART_NUMBER \
+                  -debug                 $project_debug
 
 ################################################
 ## Top Hierarchy

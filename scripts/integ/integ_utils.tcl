@@ -8,6 +8,7 @@ namespace eval integ_utils {
   variable bd_name
   variable bd_dir
   variable bd_file
+  variable keep_open
 }
 
 ## Initialize the utilities
@@ -18,8 +19,9 @@ proc integ_utils::init {args} {
     "project_top"          {"store"    ""       "required"   0}
     "part_number"          {"store"    ""       "required"   0}
     "board_part"           {"store"    ""       "optional"   0}
-    "ip_repo_list" {"store"    ""       "optional"   0}
+    "ip_repo_list"         {"store"    ""       "optional"   0}
     "bus_def_xml_list"     {"store"    ""       "optional"   0}
+    "debug"                {"store"    ""       "optional"   0}
   }
 
   set status [arg_parser my_arglist parsed_args args]
@@ -35,6 +37,7 @@ proc integ_utils::init {args} {
   set integ_utils::bd_name          $parsed_args(project_top)
   set integ_utils::bd_dir           $integ_utils::project_dir/bd
   set integ_utils::bd_file          $integ_utils::bd_dir/$integ_utils::bd_name/$integ_utils::bd_name.bd
+  set integ_utils::keep_open        $parsed_args(debug)
 
   puts "Initializing project integration"
 
@@ -406,5 +409,13 @@ proc integ_utils::finalize {args} {
   }
   puts  $handle "\]"
   close $handle
+
+  puts "keep_open = $integ_utils::keep_open"
+  if {$integ_utils::keep_open} {
+    puts "Keeping the project open"
+  } else {
+    puts "Closing project"
+    close_project
+  }
 
 }
