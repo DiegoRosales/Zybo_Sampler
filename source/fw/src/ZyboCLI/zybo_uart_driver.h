@@ -11,6 +11,9 @@ buffer at all. */
 /* DEL acts as a backspace. */
 #define cmdASCII_DEL		( 0x7F )
 
+/* Check if backspace is pressed */
+#define cmdIS_BACKSPACE(myChar) ((( myChar == '\b' ) || ( myChar == cmdASCII_DEL )))
+
 /* The maximum time to wait for the mutex that guards the UART to become
 available. */
 #define cmdMAX_MUTEX_WAIT		pdMS_TO_TICKS( 300 )

@@ -73,8 +73,10 @@ static void prvUARTCommandConsoleTask( void *pvParameters )
 		/* Ensure exclusive access to the UART Tx. */
 		if( xSemaphoreTake( xTxMutex, cmdMAX_MUTEX_WAIT ) == pdPASS )
 		{
-			/* Echo the character back. */
-			xSerialPutChar( xPort, cRxedChar, portMAX_DELAY );
+			/* Echo the character back unless it's a backspace and there's nothing there. */
+			if ( !( cmdIS_BACKSPACE(cRxedChar)  && ( ucInputIndex <= 0 ) ) ) {
+				xSerialPutChar( xPort, cRxedChar, portMAX_DELAY );
+			}
 
 			/* Was it the end of the line? */
 			if( cRxedChar == '\n' || cRxedChar == '\r' )
@@ -126,7 +128,7 @@ static void prvUARTCommandConsoleTask( void *pvParameters )
 				{
 					/* Ignore the character. */
 				}
-				else if( ( cRxedChar == '\b' ) || ( cRxedChar == cmdASCII_DEL ) )
+				else if( cmdIS_BACKSPACE(cRxedChar) )
 				{
 					/* Backspace was pressed.  Erase the last character in the
 					string - if any. */
@@ -134,6 +136,8 @@ static void prvUARTCommandConsoleTask( void *pvParameters )
 					{
 						ucInputIndex--;
 						cInputString[ ucInputIndex ] = '\0';
+						xSerialPutChar( xPort, ' ', portMAX_DELAY );
+						xSerialPutChar( xPort, '\b', portMAX_DELAY );
 					}
 				}
 				else
