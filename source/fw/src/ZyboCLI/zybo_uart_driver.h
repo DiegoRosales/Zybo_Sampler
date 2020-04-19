@@ -12,7 +12,7 @@ buffer at all. */
 #define cmdASCII_DEL		( 0x7F )
 
 /* Check if backspace is pressed */
-#define cmdIS_BACKSPACE(myChar) ((( myChar == '\b' ) || ( myChar == cmdASCII_DEL )))
+#define cmdIS_BACKSPACE(myChar) ( (( myChar == '\b' ) || ( myChar == cmdASCII_DEL )) )
 
 /* The maximum time to wait for the mutex that guards the UART to become
 available. */
@@ -27,6 +27,9 @@ available. */
 
 // If this flag is set to 1, the driver will ignore all non-character inputs
 #define INPUT_IS_ASCII_ONLY 0
+
+// If this flag is set to 1, if the user presses Return without typing anything, the last command will be executed
+#define EXEC_LAST_CMD_ON_EMPTY_RETURN 0
 
 static void prvUARTCommandConsoleTask( void *pvParameters );
 

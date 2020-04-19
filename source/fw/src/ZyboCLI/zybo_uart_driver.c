@@ -23,8 +23,12 @@
 
 /* Const messages output by the command console. */
 static const char * const pcWelcomeMessage = "Welcome to the Zybo Sampler!.\r\nType help to view a list of registered commands.\r\n\r\n>> ";
-static const char * const pcEndOfOutputMessage = "\r\n[Press ENTER to execute the previous command again]\r\n>> ";
 static const char * const pcNewLine = "\r\n";
+#if( EXEC_LAST_CMD_ON_EMPTY_RETURN == 1 )
+	static const char * const pcEndOfOutputMessage = "\r\n[Press ENTER to execute the previous command again]\r\n>> ";
+#else
+	static const char * const pcEndOfOutputMessage = "\r\n>> ";
+#endif
 
 /* Used to guard access to the UART in case messages are sent to the UART from
 more than one task. */
@@ -87,13 +91,17 @@ static void prvUARTCommandConsoleTask( void *pvParameters )
 				is to be executed again. */
 				if( ucInputIndex == 0 )
 				{
-					/* Copy the last command back into the input string. */
-					strcpy( cInputString, cLastInputString );
-                    // Printout the command
-                    vSerialPutString( xPort, ( signed char * ) cInputString, ( unsigned short ) strlen( cInputString ) );
+					#if( EXEC_LAST_CMD_ON_EMPTY_RETURN == 1 )
+						/* Copy the last command back into the input string. */
+						strcpy( cInputString, cLastInputString );
+						// Printout the command
+						vSerialPutString( xPort, ( signed char * ) cInputString, ( unsigned short ) strlen( cInputString ) );
+					#else
+						goto printEndOfOutputMessage;
+					#endif
 				} 
 
-                /* Just to space the output from the input. */
+        /* Just to space the output from the input. */
 				vSerialPutString( xPort, ( signed char * ) pcNewLine, ( unsigned short ) strlen( pcNewLine ) );
 
 				/* Pass the received command to the command interpreter.  The
@@ -120,7 +128,7 @@ static void prvUARTCommandConsoleTask( void *pvParameters )
 				ucInputIndex = 0;
 				memset( cInputString, 0x00, cmdMAX_INPUT_SIZE );
 
-				vSerialPutString( xPort, ( signed char * ) pcEndOfOutputMessage, ( unsigned short ) strlen( pcEndOfOutputMessage ) );
+				printEndOfOutputMessage: vSerialPutString( xPort, ( signed char * ) pcEndOfOutputMessage, ( unsigned short ) strlen( pcEndOfOutputMessage ) );
 			}
 			else
 			{
