@@ -17,7 +17,35 @@
 // Other
 #include "fat_CLI_apps.h"
 
-extern pxSDDisk;
+extern FF_Disk_t *pxSDDisk;
+//////////////////////////////////////////////////////////
+// Static Functions
+//////////////////////////////////////////////////////////
+static BaseType_t sd_initialization_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
+
+/////////////
+// Commands
+/////////////
+/*
+ * Implements the DIR command.
+ */
+static BaseType_t prvDIRCommand( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
+
+/*
+ * Implements the CD command.
+ */
+static BaseType_t prvCDCommand( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
+
+/*
+ * Implements the TYPE command.
+ */
+static BaseType_t prvTYPECommand( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
+
+/*
+ * Implements the PWD (print working directory) command.
+ */
+static BaseType_t prvPWDCommand( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
+
 
 ////////////////////////////////////////////////////////
 // Command Register
