@@ -20,6 +20,10 @@
 #include "sampler.h"
 #include "nco.h"
 
+// Defines
+#define cliNEW_LINE "\n\r"
+#define APPEND_NEWLINE(BUFFER) strcat( BUFFER, cliNEW_LINE )
+
 
 static BaseType_t play_key_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
 static BaseType_t stop_all_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
@@ -411,7 +415,7 @@ static BaseType_t load_instrument_command( char *pcWriteBuffer, size_t xWriteBuf
         if ( pcParameter[0] == '/' ) {
             sprintf(my_file_path.file_path, "%s", pcParameter);
         } else { // If it's a relative directory, prepend the root slash
-            strncat( my_file_path.file_path, "/", 1);
+            strcat( my_file_path.file_path, "/");
         }
         ff_get_file_dir( pcParameter, my_file_path.file_dir );
         //strncat( my_file_path.file_path, my_file_path.file_dir, STRLEN( my_file_path.file_dir ) );
@@ -422,7 +426,7 @@ static BaseType_t load_instrument_command( char *pcWriteBuffer, size_t xWriteBuf
             sprintf(my_file_path.file_path, "%s", pcParameter);
         } else { // If it's a relative path, prepend the current directory
             strncat( my_file_path.file_path, my_file_path.file_dir, cwd_path_len);
-            strncat( my_file_path.file_path, "/", 1);
+            strcat( my_file_path.file_path, "/");
             strncat( my_file_path.file_path, pcParameter, xParameterStringLength );
         }
     }

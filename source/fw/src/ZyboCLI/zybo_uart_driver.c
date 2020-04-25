@@ -21,6 +21,9 @@
 
 #include "zybo_uart_driver.h"
 
+/* Static Functions */
+static void prvUARTCommandConsoleTask( void *pvParameters );
+
 /* Const messages output by the command console. */
 static const char * const pcWelcomeMessage = "Welcome to the Zybo Sampler!.\r\nType help to view a list of registered commands.\r\n\r\n>> ";
 static const char * const pcNewLine = "\r\n";

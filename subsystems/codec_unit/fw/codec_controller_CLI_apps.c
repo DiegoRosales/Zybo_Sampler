@@ -18,6 +18,10 @@
 #include "nco.h"
 #include "sampler.h"
 
+// Defines
+#define cliNEW_LINE "\n\r"
+#define APPEND_NEWLINE(BUFFER) strcat( BUFFER, cliNEW_LINE )
+
 // Commands
 static BaseType_t echo_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
 static BaseType_t control_reg_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
@@ -140,7 +144,7 @@ static BaseType_t echo_command( char *pcWriteBuffer, size_t xWriteBufferLen, con
 			memset( pcWriteBuffer, 0x00, xWriteBufferLen );
 			sprintf( pcWriteBuffer, "%d: ", ( int ) uxParameterNumber );
 			strncat( pcWriteBuffer, ( char * ) pcParameter, ( size_t ) xParameterStringLength );
-			strncat( pcWriteBuffer, "\r\n", strlen( "\r\n" ) );
+			APPEND_NEWLINE(pcWriteBuffer);
 
             uxParameterNumber = 0;
 			/* There might be more parameters to return after this one. */

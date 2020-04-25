@@ -22,6 +22,7 @@ extern FF_Disk_t *pxSDDisk;
 // Static Functions
 //////////////////////////////////////////////////////////
 static BaseType_t sd_initialization_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
+static void       prvCreateFileInfoString( char *pcBuffer, FF_FindData_t *pxFindStruct );
 
 /////////////
 // Commands

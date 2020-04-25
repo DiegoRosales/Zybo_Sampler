@@ -18,6 +18,10 @@
 // Sampler DMA Controller CLI Apps
 #include "sampler_dma_controller_CLI_apps.h"
 
+// Defines
+#define cliNEW_LINE "\n\r"
+#define APPEND_NEWLINE(BUFFER) strcat( BUFFER, cliNEW_LINE )
+
 static BaseType_t sampler_reg_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
 static BaseType_t get_sampler_version_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
 
