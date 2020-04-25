@@ -22,6 +22,7 @@ typedef struct nco_struct {
 } nco_t;
 
 void nco_init(nco_t * nco, uint32_t frequency, uint32_t sample_frequency);
+void nco_load_sine_to_mem(nco_t *nco);
 float nco_normalize_frequency(uint32_t frequency, uint32_t sample_frequency);
 uint32_t nco_phase_init(float frequency_norm);
 

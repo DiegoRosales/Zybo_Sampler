@@ -4,7 +4,9 @@
 /////////////////////////////////////////////////////////////////////////
 
 // C includes
+#include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 // FreeRTOS Includes
 #include "FreeRTOS.h"
@@ -78,9 +80,9 @@ void register_codec_cli_commands( void ) {
 }
 
 // This function converts an string in int or hex to a uint32_t
-static uint32_t str2int( char *input_string, BaseType_t input_string_length ) {
+static uint32_t str2int( const char *input_string, BaseType_t input_string_length ) {
 
-    char *start_char = input_string;
+    const char *start_char = input_string;
     char *end_char;
     uint32_t output_int;
 
@@ -221,14 +223,14 @@ static BaseType_t control_reg_command( char *pcWriteBuffer, size_t xWriteBufferL
 			{
 				case 1: // Address
 					addr_int = str2int(pcParameter, xParameterStringLength);
-					sprintf( pcWriteBuffer, "Address = 0x%x", addr_int );
+					sprintf( pcWriteBuffer, "Address = 0x%lx", addr_int );
 					break;
 				case 2: // Data
 					data_int = str2int(pcParameter, xParameterStringLength);
-					sprintf( pcWriteBuffer, "Data = 0x%x", addr_int );
+					sprintf( pcWriteBuffer, "Data = 0x%lx", addr_int );
 					break;
 				default:
-					sprintf( pcWriteBuffer, "Unknown Parameter %d: %x", uxParameterNumber, pcParameter );
+					sprintf( pcWriteBuffer, "Unknown Parameter %lu: %s", uxParameterNumber, pcParameter );
 					break;
 			}
 
@@ -244,13 +246,13 @@ static BaseType_t control_reg_command( char *pcWriteBuffer, size_t xWriteBufferL
 			if ( uxParameterNumber == 2 ) {
 				// Read the data
 				reg_output = CodecCtrlRegRd(addr_int, 0);
-				sprintf( pcWriteBuffer, "SAMPLER[0x%x] = 0x%x", addr_int, reg_output );
+				sprintf( pcWriteBuffer, "SAMPLER[0x%lx] = 0x%lx", addr_int, reg_output );
 			} else if ( uxParameterNumber == 3 ) {
 				// Write the data
 				CodecCtrlRegWr( addr_int, data_int, 0, 0 );
-				sprintf( pcWriteBuffer, "SAMPLER[0x%x] <== 0x%x", addr_int, data_int );
+				sprintf( pcWriteBuffer, "SAMPLER[0x%lx] <== 0x%lx", addr_int, data_int );
 			} else {
-				sprintf( pcWriteBuffer, "[ERROR] - Bad number of arguments. Number of parameters = %d", (uxParameterNumber - 1) );
+				sprintf( pcWriteBuffer, "[ERROR] - Bad number of arguments. Number of parameters = %lu", (uxParameterNumber - 1) );
 			}
 
 
@@ -328,14 +330,14 @@ static BaseType_t codec_reg_command( char *pcWriteBuffer, size_t xWriteBufferLen
 			{
 				case 1: // Address
 					addr_int = str2int(pcParameter, xParameterStringLength);
-					sprintf( pcWriteBuffer, "Address = 0x%x", addr_int );
+					sprintf( pcWriteBuffer, "Address = 0x%lx", addr_int );
 					break;
 				case 2: // Data
 					data_int = str2int(pcParameter, xParameterStringLength);
-					sprintf( pcWriteBuffer, "Data = 0x%x", addr_int );
+					sprintf( pcWriteBuffer, "Data = 0x%lx", addr_int );
 					break;
 				default:
-					sprintf( pcWriteBuffer, "[ERROR] - Bad number of arguments. Number of parameters = %d", (uxParameterNumber - 1) );
+					sprintf( pcWriteBuffer, "[ERROR] - Bad number of arguments. Number of parameters = %lu", (uxParameterNumber - 1) );
 					break;
 			}
 			APPEND_NEWLINE(pcWriteBuffer);
@@ -349,13 +351,13 @@ static BaseType_t codec_reg_command( char *pcWriteBuffer, size_t xWriteBufferLen
 			if ( uxParameterNumber == 2 ) {
 				// Read the data
 				reg_output = CodecRd(addr_int, 0, 0);
-				sprintf( pcWriteBuffer, "CODEC[0x%x] = 0x%x", addr_int, reg_output );
+				sprintf( pcWriteBuffer, "CODEC[0x%lx] = 0x%lx", addr_int, reg_output );
 			} else if ( uxParameterNumber == 3 ) {
 				// Write the data
 				CodecWr( addr_int, data_int, 0, 0, 0 );
-				sprintf( pcWriteBuffer, "CODEC[0x%x] <== 0x%x", addr_int, data_int );
+				sprintf( pcWriteBuffer, "CODEC[0x%lx] <== 0x%lx", addr_int, data_int );
 			} else {
-				sprintf( pcWriteBuffer, "Number of parameters = %d", uxParameterNumber );
+				sprintf( pcWriteBuffer, "Number of parameters = %lu", uxParameterNumber );
 			}
 
 

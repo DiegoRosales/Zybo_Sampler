@@ -17,6 +17,7 @@
 // Sampler Includes
 #include "sampler_CLI_apps.h"
 #include "sampler_FreeRTOS_tasks.h"
+#include "sampler_dma_voice_pb.h"
 #include "sampler.h"
 #include "nco.h"
 
@@ -169,12 +170,9 @@ void register_sampler_cli_commands( void ) {
 
 static BaseType_t midi_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString ) {
 
-    const char *key;
-    const char *velocity;
-
-    uint8_t *command = NULL;
-    uint8_t *byte1   = NULL;
-    uint8_t *byte2   = NULL;
+    const char *command = NULL;
+    const char *byte1   = NULL;
+    const char *byte2   = NULL;
 
     uint32_t full_cmd = 0;
 
@@ -183,7 +181,6 @@ static BaseType_t midi_command( char *pcWriteBuffer, size_t xWriteBufferLen, con
 
     // Variables for the key playback task
     TaskHandle_t     run_midi_cmd_task_handle = xTaskGetHandle( RUN_MIDI_CMD_TASK_NAME );
-    key_parameters_t key_parameters;
 
     // First parameter
     command = FreeRTOS_CLIGetParameter
@@ -228,12 +225,9 @@ static BaseType_t midi_command( char *pcWriteBuffer, size_t xWriteBufferLen, con
 
 static BaseType_t midi_ascii_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString ) {
 
-    const char *key;
-    const char *velocity;
-
-    char *command = NULL;
-    char *byte1   = NULL;
-    char *byte2   = NULL;
+    const char *command = NULL;
+    const char *byte1   = NULL;
+    const char *byte2   = NULL;
 
     uint8_t command_int = 0;
     uint8_t byte1_int   = 0;
@@ -248,7 +242,6 @@ static BaseType_t midi_ascii_command( char *pcWriteBuffer, size_t xWriteBufferLe
 
     // Variables for the key playback task
     TaskHandle_t     run_midi_cmd_task_handle = xTaskGetHandle( RUN_MIDI_CMD_TASK_NAME );
-    key_parameters_t key_parameters;
 
     // First parameter
     command = FreeRTOS_CLIGetParameter
@@ -537,13 +530,12 @@ static BaseType_t playback_sine_command( char *pcWriteBuffer, size_t xWriteBuffe
 			Xil_DCacheFlushRange(sine_nco.audio_data, (0x100000 * 2));
 
 			// Step 5 - Start the playback
-			voice_slot = start_voice_playback( sine_nco.audio_data, sine_nco.target_memory_size );
-			uint32_t addr = sine_nco.audio_data;
-			//uint32_t addr = SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_start_addr.value;
+			voice_slot    = start_voice_playback( sine_nco.audio_data, sine_nco.target_memory_size );
+			uint32_t addr = (uint32_t) sine_nco.audio_data;
 
 			/* Return the parameter string. */
 			memset( pcWriteBuffer, 0x00, xWriteBufferLen ); // Initialize the buffer
-			sprintf( pcWriteBuffer, "Sine wave of frequency %dHz loaded\n\rNumber of samples = %d\n\rStart address = 0x%x\n\rVoice Slot ID = %d\n\rWritten Address = 0x%x", frequency, sine_nco.target_memory_size, sine_nco.audio_data, voice_slot, addr );
+			sprintf( pcWriteBuffer, "Sine wave of frequency %luHz loaded\n\rNumber of samples = %lu\n\rStart address = 0x%lX\n\rVoice Slot ID = %lu\n\rWritten Address = 0x%lX", frequency, sine_nco.target_memory_size, (uint32_t) sine_nco.audio_data, voice_slot, addr );
 			APPEND_NEWLINE(pcWriteBuffer);
 
 			/* There might be more parameters to return after this one. */
@@ -626,7 +618,7 @@ static BaseType_t load_sine_command( char *pcWriteBuffer, size_t xWriteBufferLen
 
 			/* Return the parameter string. */
 			memset( pcWriteBuffer, 0x00, xWriteBufferLen ); // Initialize the buffer
-			sprintf( pcWriteBuffer, "Sine wave of frequency %dHz loaded\n\rNumber of samples = %d\n\rStart address = 0x%x", frequency, sine_nco.target_memory_size, sine_nco.audio_data );
+			sprintf( pcWriteBuffer, "Sine wave of frequency %luHz loaded\n\rNumber of samples = %lu\n\rStart address = 0x%lX", frequency, sine_nco.target_memory_size, (uint32_t) sine_nco.audio_data );
 			APPEND_NEWLINE(pcWriteBuffer);
 
 			/* There might be more parameters to return after this one. */

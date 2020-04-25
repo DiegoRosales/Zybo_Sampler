@@ -1,6 +1,11 @@
 ////////////////////////////////////////////////////////
 // Sampler Driver
 ////////////////////////////////////////////////////////
+// C includes
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+
 // Xilinx Includes
 #include "xil_io.h"
 
@@ -62,14 +67,14 @@ static int jsoneq(const char *json, jsmntok_t *tok, const char *s) {
 }
 
 static int jsonprint(const char *json, jsmntok_t *tok) {
-    int token_end        = tok->end;
-    int token_start      = tok->start;
-    int token_len        = token_end - token_start + 1;
-    char *token_str[MAX_CHAR_IN_TOKEN_STR];
-    memset( token_str, 0x00, (MAX_CHAR_IN_TOKEN_STR * sizeof(char)) );
+    uint32_t token_end        = (uint32_t) tok->end;
+    uint32_t token_start      = (uint32_t) tok->start;
+    size_t   token_len        = (size_t)   (token_end - token_start + 1);
+    char token_str[MAX_CHAR_IN_TOKEN_STR];
+    memset( token_str, (char) '\0', (MAX_CHAR_IN_TOKEN_STR * sizeof(char)) );
 
     if ( ( tok->type == JSMN_STRING ) && ( token_len <= MAX_CHAR_IN_TOKEN_STR ) ) {
-        snprintf( token_str, token_len, json + token_start );
+        snprintf( token_str, token_len, (const char *) (json + token_start) );
         xil_printf( token_str );
         return 0;
     }
@@ -272,8 +277,6 @@ INSTRUMENT_INFORMATION_t* init_instrument_information() {
         return NULL;
     } else {
         xil_printf("[INFO] - Memory allocation for the instrument info succeeded. Memory location: 0x%x\n\r", instrument_info );
-        int key       = 0;
-        int vel_range = 0;
 
         // Initialize the structure
         memset( instrument_info, 0x00 , sizeof(INSTRUMENT_INFORMATION_t) );
@@ -341,7 +344,6 @@ uint32_t extract_sample_paths( uint32_t sample_start_token_index, uint32_t numbe
     KEY_INFORMATION_t       *current_key   = NULL;
     KEY_VOICE_INFORMATION_t *current_voice = NULL;
 
-    //for( int i = sample_start_token_index; i < (number_of_samples * NUM_OF_SAMPLE_JSON_MEMBERS * 2); i = i + (NUM_OF_SAMPLE_JSON_MEMBERS * 2) + 1 ) {
     for( int i = 0; i < number_of_samples ; i++) {
         note_name_index = sample_start_token_index + (i * (NUM_OF_SAMPLE_JSON_MEMBERS + 1) * 2);
         key_info_index  = note_name_index + 2;
@@ -376,12 +378,14 @@ uint32_t extract_sample_paths( uint32_t sample_start_token_index, uint32_t numbe
                     //xil_printf("KEY[%d]: velocity_max = %d\n\r", midi_note, instrument_info->key_information[midi_note].key_voice_information[0].velocity_max);
                 } else if( jsoneq( (const char *)instrument_info_buffer, &tokens[j], SAMPLE_PATH_TOKEN_STR ) ) {
                     current_voice->sample_present = 1;
-                    json_snprintf( (const char *)instrument_info_buffer, &tokens[j + 1], current_voice->sample_path );
+                    json_snprintf( (const char *)instrument_info_buffer, &tokens[j + 1], (char *) current_voice->sample_path );
                     xil_printf("KEY[%d]: sample_path = %s\n\r", midi_note, current_voice->sample_path);
                 }
             }
         }
     }
+
+    return 0;
 
 }
 
@@ -403,7 +407,7 @@ uint32_t decode_instrument_information( uint8_t *instrument_info_buffer, INSTRUM
     // js - pointer to JSON string
     // tokens - an array of tokens available
     // 1000 - number of tokens available
-    parser_result = jsmn_parse(&parser, instrument_info_buffer, strlen(instrument_info_buffer), tokens, 1000);
+    parser_result = jsmn_parse(&parser, (const char *) instrument_info_buffer, strlen((const char *) instrument_info_buffer), tokens, 1000);
 
     // Step 3 - Check for errors
     if ( parser_result < 0 ) {
@@ -417,8 +421,8 @@ uint32_t decode_instrument_information( uint8_t *instrument_info_buffer, INSTRUM
     // Step 4 - Extract the information
     // Step 4.1 - Get the instrument name
     for ( int i = 0; i < parser_result ; i++ ) {
-        if ( jsoneq( instrument_info_buffer, &tokens[i], INSTRUMENT_NAME_TOKEN_STR ) ) {
-            json_snprintf(instrument_info_buffer, &tokens[i + 1], instrument_info->instrument_name );
+        if ( jsoneq( (const char *) instrument_info_buffer, &tokens[i], INSTRUMENT_NAME_TOKEN_STR ) ) {
+            json_snprintf((const char *) instrument_info_buffer, &tokens[i + 1], (char *) instrument_info->instrument_name );
             xil_printf("Instrument Name: %s", instrument_info->instrument_name );
             xil_printf("\n\r");
             break;
@@ -427,7 +431,7 @@ uint32_t decode_instrument_information( uint8_t *instrument_info_buffer, INSTRUM
 
     // Step 4.2 - Extract the sample paths
     for ( int i = 0; i < parser_result ; i++ ) {
-        if ( jsoneq( instrument_info_buffer, &tokens[i], INSTRUMENT_SAMPLES_TOKEN_STR ) ) {
+        if ( jsoneq( (const char *) instrument_info_buffer, &tokens[i], INSTRUMENT_SAMPLES_TOKEN_STR ) ) {
             number_of_samples        = (uint32_t) tokens[i + 1].size;
             sample_start_token_index = i + 2;
             xil_printf("Number of samples: %d\n\r", number_of_samples );
@@ -435,6 +439,7 @@ uint32_t decode_instrument_information( uint8_t *instrument_info_buffer, INSTRUM
             break;
         }
     }
+    return 0;
 
 }
 
