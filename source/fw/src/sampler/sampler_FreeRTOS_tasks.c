@@ -1,6 +1,14 @@
 // C includes
 #include <string.h>
 
+/////////////////////////////////////////
+// Xilinx Includes
+/////////////////////////////////////////
+
+#include "xil_printf.h"
+#include "xparameters.h"
+#include "xgpio.h"
+
 // FreeRTOS Includes
 #include "FreeRTOS.h"
 #include "task.h"
@@ -11,7 +19,7 @@
 #include "ff_stdio.h"
 #include "ff_ramdisk.h"
 #include "ff_sddisk.h"
-//#include "fat_CLI_apps.h"
+#include "fat_CLI_apps.h"
 
 // Serial includes
 #include "serial.h"
@@ -60,11 +68,9 @@ uint32_t load_samples_into_memory( INSTRUMENT_INFORMATION_t *instrument_informat
 
                         // Copy the full path
                         memset( full_path, 0x00, MAX_PATH_LEN );
-                        strncat( full_path, json_file_root_dir, strlen( json_file_root_dir ));
-                        strncat( full_path, "/", 1);
-                        strncat( full_path, \
-                                 current_voice->sample_path, \
-                                 strlen(current_voice->sample_path) );
+                        strcat( full_path, json_file_root_dir);
+                        strcat( full_path, "/");
+                        strcat( full_path, (const char *) current_voice->sample_path);
 
                         current_voice->sample_buffer = NULL;
                         //xil_printf("[INFO] - [%d][%d] Loading Sample \"%s\"\n\r", key, vel_range, current_voice->sample_path );
@@ -321,7 +327,7 @@ static void load_instrument_task( void *pvParameters ) {
 
                 // Step 1 - Open the json file containing the instrument information
                 xil_printf("Step 1 - Load the JSON File\n\r");
-                load_file_to_memory( &path->file_path, instrument_info_buffer, (size_t) MAX_INST_FILE_SIZE );
+                load_file_to_memory( path->file_path, instrument_info_buffer, (size_t) MAX_INST_FILE_SIZE );
 
                 // Step 2 - Initialize the instrument information
                 xil_printf("Step 2 - Initializing the instrument information\n\r");
@@ -345,14 +351,14 @@ static void load_instrument_task( void *pvParameters ) {
 
                 // Step 3 - Decode the JSON file using JSMN
                 xil_printf("Step 3 - Decoding the instrument information...\n\r");
-                decode_instrument_information( &instrument_info_buffer, instrument_information);
+                decode_instrument_information( instrument_info_buffer, instrument_information );
                 xil_printf("Step 3 - Done!\n\r");
 
                 // Step 4 - Load all the samples into memory
                 // Initialize the variables
 
                 xil_printf("Step 4 - Loading samples into memory...\n\r");
-                error = load_samples_into_memory( instrument_information, &path->file_dir );
+                error = load_samples_into_memory( instrument_information, path->file_dir );
                 if ( error ) {
                     xil_printf("[ERROR] - There was a problem when loading the samples into memory!!\n\r");
                     return_value = 1;
@@ -405,7 +411,6 @@ static void serial_midi_listener_task( void *pvParameters ) {
     uint32_t          index;
 
     // MIDI Variables
-    uint32_t full_command = 0;
     uint8_t  bytes_rcvd[3];
 
     for( ;; )

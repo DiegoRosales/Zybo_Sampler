@@ -4,9 +4,10 @@
 // Many of these are taken from the Demo source code of FreeRTOS
 //////////////////////////////////////////////////////////////////
 
-/* Standard includes. */
-#include "string.h"
-#include "stdio.h"
+// C includes
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
 
 /* FreeRTOS includes. */
 #include "FreeRTOS.h"

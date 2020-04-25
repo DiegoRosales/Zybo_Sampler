@@ -38,9 +38,9 @@ static const NOTE_LUT_STRUCT_t MIDI_NOTES_LUT[12] = {
 };
 
 // This function converts an string in int or hex to a uint32_t
-static uint32_t str2int( char *input_string, uint32_t input_string_length ) {
+static uint32_t str2int( const char *input_string, uint32_t input_string_length ) {
 
-    char *start_char = input_string;
+    const char *start_char = input_string;
     char *end_char;
     uint32_t output_int;
 
@@ -313,12 +313,12 @@ uint8_t get_json_midi_note_number( jsmntok_t *tok, uint8_t *instrument_info_buff
     return 0;
 }
 
-uint8_t get_midi_note_number( char *note_name ) {
+uint8_t get_midi_note_number( const char *note_name ) {
     uint8_t midi_note = 0;
 
-    char *note_letter = note_name;
-    char *note_number = note_letter + 1;
-    char *sharp_flag  = note_letter + 3;
+    const char *note_letter = note_name;
+    const char *note_number = note_letter + 1;
+    const char *sharp_flag  = note_letter + 3;
 
     uint32_t note_number_int = str2int( note_number, 1 );
 

@@ -316,7 +316,8 @@ use of the +FAT library. In some API's, a character buffer of size
 conform with the coding standard, so use this function with care! */
 #define ffconfigUSE_DELTREE					1
 
-
+// Xilinx include
+#include "xil_printf.h"
 #define FF_PRINTF xil_printf
 #define FF_ERR_NONE 0
 

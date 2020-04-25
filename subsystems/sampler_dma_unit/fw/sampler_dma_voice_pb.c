@@ -9,6 +9,7 @@
 #include "xparameters.h"
 #include "xil_printf.h"
 #include "xil_io.h"
+#include "xil_cache.h"
 
 // Sampler DMA Includes
 #include "sampler_dma_controller_regs.h"
@@ -196,8 +197,6 @@ uint32_t stop_voice_playback( uint32_t voice_slot ) {
     // Sanity check
     if( voice_slot >= MAX_VOICES ) return 1;
     
-    SAMPLER_DMA_REGISTERS_t temp_reg;
-
     // Step 1 - Remove the sample from the chain
     if ( number_of_active_slots > 1 ) {
         previous_voice_slot = sampler_voices[voice_slot].previous_voice_slot;

@@ -4,6 +4,8 @@
 /////////////////////////////////////////////////////////////////////////
 
 // C includes
+#include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 // FreeRTOS Includes
@@ -18,6 +20,9 @@
 // Sampler DMA Controller CLI Apps
 #include "sampler_dma_controller_CLI_apps.h"
 
+// Sampler Utils
+#include "sampler.h"
+
 // Defines
 #define cliNEW_LINE "\n\r"
 #define APPEND_NEWLINE(BUFFER) strcat( BUFFER, cliNEW_LINE )
@@ -26,9 +31,9 @@ static BaseType_t sampler_reg_command( char *pcWriteBuffer, size_t xWriteBufferL
 static BaseType_t get_sampler_version_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
 
 // This function converts an string in int or hex to a uint32_t
-static uint32_t str2int( char *input_string, BaseType_t input_string_length ) {
+static uint32_t str2int( const char *input_string, BaseType_t input_string_length ) {
 
-    char *start_char = input_string;
+    const char *start_char = input_string;
     char *end_char;
     uint32_t output_int;
 
@@ -123,14 +128,14 @@ static BaseType_t sampler_reg_command( char *pcWriteBuffer, size_t xWriteBufferL
 			{
 				case 1: // Address
 					addr_int = str2int(pcParameter, xParameterStringLength);
-					sprintf( pcWriteBuffer, "Address = 0x%x", addr_int );
+					sprintf( pcWriteBuffer, "Address = 0x%lx", addr_int );
 					break;
 				case 2: // Data
 					data_int = str2int(pcParameter, xParameterStringLength);
-					sprintf( pcWriteBuffer, "Data = 0x%x", addr_int );
+					sprintf( pcWriteBuffer, "Data = 0x%lx", addr_int );
 					break;
 				default:
-					sprintf( pcWriteBuffer, "Unknown Parameter %d: %x", uxParameterNumber, pcParameter );
+					sprintf( pcWriteBuffer, "Unknown Parameter %lu: %s", uxParameterNumber, pcParameter );
 					break;
 			}
 
@@ -146,13 +151,13 @@ static BaseType_t sampler_reg_command( char *pcWriteBuffer, size_t xWriteBufferL
 			if ( uxParameterNumber == 2 ) {
 				// Read the data
 				reg_output = SamplerRegRd(addr_int);
-				sprintf( pcWriteBuffer, "SAMPLER[0x%x] = 0x%x", addr_int, reg_output );
+				sprintf( pcWriteBuffer, "SAMPLER[0x%lx] = 0x%lx", addr_int, reg_output );
 			} else if ( uxParameterNumber == 3 ) {
 				// Write the data
 				SamplerRegWr( addr_int, data_int, 0);
-				sprintf( pcWriteBuffer, "SAMPLER[0x%x] <== 0x%x", addr_int, data_int );
+				sprintf( pcWriteBuffer, "SAMPLER[0x%lx] <== 0x%lx", addr_int, data_int );
 			} else {
-				sprintf( pcWriteBuffer, "[ERROR] - Bad number of arguments. Number of parameters = %d", (uxParameterNumber - 1) );
+				sprintf( pcWriteBuffer, "[ERROR] - Bad number of arguments. Number of parameters = %lu", (uxParameterNumber - 1) );
 			}
 
 
@@ -178,10 +183,7 @@ static BaseType_t sampler_reg_command( char *pcWriteBuffer, size_t xWriteBufferL
 
 // This loads a section of memory with a sine wave of a give frequency
 static BaseType_t get_sampler_version_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString ) {
-    const char         *pcParameter;
-    BaseType_t         xParameterStringLength;
     BaseType_t         xReturn;
-    static UBaseType_t uxParameterNumber = 0;
 
 	// Custom variables
     uint32_t sampler_version;
@@ -204,7 +206,7 @@ static BaseType_t get_sampler_version_command( char *pcWriteBuffer, size_t xWrit
 
 
 		memset( pcWriteBuffer, 0x00, xWriteBufferLen ); // Initialize the buffer
-		sprintf( pcWriteBuffer, "Sampler DMA Controller Version %d.%d", major_version, minor_version );
+		sprintf( pcWriteBuffer, "Sampler DMA Controller Version %lu.%lu", major_version, minor_version );
 		APPEND_NEWLINE(pcWriteBuffer);
 
 		command_done = pdTRUE;
@@ -216,9 +218,6 @@ static BaseType_t get_sampler_version_command( char *pcWriteBuffer, size_t xWrit
 
 		/* No more data to return. */
 		xReturn = pdFALSE;
-
-		/* Start over the next time this command is executed. */
-		uxParameterNumber = 0;
 
 		command_done = pdFALSE;
 	}

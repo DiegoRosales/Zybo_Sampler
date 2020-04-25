@@ -2,6 +2,10 @@
 // C includes
 #include <string.h>
 
+// Xilinx includes
+#include "xil_cache.h"
+#include "xil_printf.h"
+
 // FreeRTOS Includes
 #include "FreeRTOS.h"
 #include "task.h"
@@ -48,9 +52,9 @@ static xQueueHandle my_return_queue_handler;
 static xQueueHandle my_key_parameters_queue_handler;
 
 // This function converts an string in int or hex to a uint32_t
-static uint32_t str2int( char *input_string, BaseType_t input_string_length ) {
+static uint32_t str2int( const char *input_string, BaseType_t input_string_length ) {
 
-    char *start_char = input_string;
+    const char *start_char = input_string;
     char *end_char;
     uint32_t output_int;
 
@@ -66,7 +70,7 @@ static uint32_t str2int( char *input_string, BaseType_t input_string_length ) {
 
 }
 
-static void ff_get_file_dir ( char *file_path, char* dest ) {
+static void ff_get_file_dir ( const char *file_path, char* dest ) {
     size_t path_len = strlen( file_path );
     char     current_char = '\00';
     uint32_t last_slash = 0;
@@ -337,7 +341,7 @@ static BaseType_t play_key_command( char *pcWriteBuffer, size_t xWriteBufferLen,
 
     // Wake up the task and send the queue handler of the parameters
     xTaskNotify( key_playback_task_handle,
-                 my_key_parameters_queue_handler,
+                 (uint32_t) my_key_parameters_queue_handler,
                  eSetValueWithOverwrite );
 
     // Don't wait for any feedback
@@ -369,7 +373,6 @@ static BaseType_t load_instrument_command( char *pcWriteBuffer, size_t xWriteBuf
 
     // Variables for the CLI Parameter Parser
     BaseType_t   xParameterStringLength;
-    BaseType_t   xReturn = pdTRUE;
 
     // Variables for the instrument loader task
     TaskHandle_t task_handle = xTaskGetHandle( LOAD_INSTRUMENT_TASK_NAME );
@@ -432,7 +435,7 @@ static BaseType_t load_instrument_command( char *pcWriteBuffer, size_t xWriteBuf
     xQueueSend(my_filename_queue_handler, &my_file_path , 1000);
 
     xTaskNotify(    task_handle,
-                    my_filename_queue_handler,
+                    (uint32_t) my_filename_queue_handler,
                     eSetValueWithOverwrite );
 
     if( ! xQueueReceive(my_return_queue_handler, &return_value, 10000) ) {
@@ -455,7 +458,7 @@ static BaseType_t start_midi_listener_command( char *pcWriteBuffer, size_t xWrit
 
     // Wake up the task and send the full MIDI command the parameters
     xTaskNotify( serial_midi_listener_task_handler,
-                 my_return_queue_handler,
+                 (uint32_t) my_return_queue_handler,
                  eSetValueWithOverwrite );
 
 
@@ -527,10 +530,10 @@ static BaseType_t playback_sine_command( char *pcWriteBuffer, size_t xWriteBuffe
 			nco_load_sine_to_mem(&sine_nco);
 
 			// Step 4 - Flush the data to the DDR
-			Xil_DCacheFlushRange(sine_nco.audio_data, (0x100000 * 2));
+			Xil_DCacheFlushRange( (unsigned int) sine_nco.audio_data, (0x100000 * 2));
 
 			// Step 5 - Start the playback
-			voice_slot    = start_voice_playback( sine_nco.audio_data, sine_nco.target_memory_size );
+			voice_slot    = start_voice_playback( (uint32_t) sine_nco.audio_data, sine_nco.target_memory_size );
 			uint32_t addr = (uint32_t) sine_nco.audio_data;
 
 			/* Return the parameter string. */
@@ -614,7 +617,7 @@ static BaseType_t load_sine_command( char *pcWriteBuffer, size_t xWriteBufferLen
 			nco_load_sine_to_mem(&sine_nco);
 
 			// Step 4 - Flush the data to the DDR
-			Xil_DCacheFlushRange(sine_nco.audio_data, (0x100000 * 2));
+			Xil_DCacheFlushRange( (unsigned int) sine_nco.audio_data, (0x100000 * 2));
 
 			/* Return the parameter string. */
 			memset( pcWriteBuffer, 0x00, xWriteBufferLen ); // Initialize the buffer

@@ -3,6 +3,12 @@
 // C includes
 #include <string.h>
 
+// Xilinx Includes
+#include "xparameters.h"
+#include "xil_printf.h"
+#include "xil_io.h"
+#include "xil_cache.h"
+
 // FreeRTOS Includes
 #include "FreeRTOS.h"
 #include "task.h"
@@ -106,15 +112,11 @@ static const CLI_Command_Definition_t xPWD =
 
 // This function loads a file in the form of a FF_FILE into memory
 void file_to_buffer( FF_FILE *pxFile, uint8_t *buffer, size_t buffer_len ) {
-    size_t xByte;
-    int    iChar;
-
-
     //xil_printf("[INFO] - Loading the file into memory\n\r");
     memset( buffer, 0x00, buffer_len );
 
     ff_fread( buffer, buffer_len, 1, pxFile );
-    Xil_DCacheFlushRange( buffer, buffer_len );
+    Xil_DCacheFlushRange( (unsigned int) buffer, (unsigned int) buffer_len );
     //xil_printf("[INFO] - File succesfully loaded into memory. Loaded %d bytes. Address = 0x%x\n\r", buffer_len, buffer);
 }
 

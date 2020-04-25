@@ -25,8 +25,6 @@ typedef struct {
 } key_parameters_t;
 
 uint32_t load_samples_into_memory( INSTRUMENT_INFORMATION_t *instrument_information, char *json_file_root_dir );
-
-
-
+void create_sampler_tasks ( void );
 
 #endif

@@ -31,4 +31,6 @@ available. */
 // If this flag is set to 1, if the user presses Return without typing anything, the last command will be executed
 #define EXEC_LAST_CMD_ON_EMPTY_RETURN 0
 
+void vUARTCommandConsoleStart( configSTACK_DEPTH_TYPE usStackSize, UBaseType_t uxPriority );
+
 #endif

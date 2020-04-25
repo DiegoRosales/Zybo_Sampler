@@ -48,12 +48,16 @@
 
 // Peripheral utilities
 #include "codec_controller_utils.h"
+#include "sampler_dma_voice_pb.h"
 
 /////////////////////////////////////////
 // Sampler Includes
 /////////////////////////////////////////
 // FreeRTOS Tasks
 #include "sampler_FreeRTOS_tasks.h"
+
+// FreeRTOS CLI Commands
+#include "sampler_CLI_apps.h"
 
 // Other
 #include "nco.h"
@@ -69,7 +73,7 @@ static void system_init( void );
 static void main_rtos_program( void );
 
 // Global Variables
-static volatile audio_data_t output_stream_audio_data[ NUM_OF_SINE_SAMPLES ];
+static audio_data_t output_stream_audio_data[ NUM_OF_SINE_SAMPLES ];
 FF_Disk_t *pxSDDisk;
 nco_t      sine_nco;
 
@@ -114,7 +118,7 @@ void system_init( void ) {
 
     xil_printf("Initializing the Sine NCO memory...\n\r");
     sine_nco.target_memory_size = NUM_OF_SINE_SAMPLES;
-    sine_nco.audio_data = &output_stream_audio_data;
+    sine_nco.audio_data = output_stream_audio_data;
     xil_printf("Audio Data Address Start = 0x%x\n\r", sine_nco.audio_data);
     xil_printf("Done!\n\r");    
 
