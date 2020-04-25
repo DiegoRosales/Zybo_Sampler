@@ -310,17 +310,41 @@ proc integ_utils::export {args} {
     set bus_if_vlnv [get_property VLNV [get_bd_intf_pins $from_interface]]
     set bus_if_mode [get_property MODE [get_bd_intf_pins $from_interface]]
 
+    ## Create port
     create_bd_intf_port -mode $bus_if_mode -vlnv $bus_if_vlnv $parsed_args(port_name)
+
+    ## Configure all properties
+    foreach config_prop [list_property [get_bd_intf_pins $from_interface] CONFIG.*] {
+      puts "Setting property $config_prop to [get_property $config_prop [get_bd_intf_pins $from_interface]]"
+      set_property -quiet $config_prop [get_property $config_prop [get_bd_intf_pins $from_interface]] [get_bd_intf_ports $parsed_args(port_name)]
+    }
+
+    ## Connect the interface to the port
     connect_bd_intf_net [get_bd_intf_ports $parsed_args(port_name)] $from_interface
   } else {
-    set pin_msb [get_property LEFT  [get_bd_pins $from_interface]]
-    set pin_lsb [get_property RIGHT [get_bd_pins $from_interface]]
-    set pin_dir [get_property DIR   [get_bd_pins $from_interface]]
+    set pin_msb  [get_property LEFT  [get_bd_pins $from_interface]]
+    set pin_lsb  [get_property RIGHT [get_bd_pins $from_interface]]
+    set pin_dir  [get_property DIR   [get_bd_pins $from_interface]]
+    set pin_type [get_property TYPE  [get_bd_pins $from_interface]]
 
     if {$pin_msb == ""} {set pin_msb 0}
     if {$pin_lsb == ""} {set pin_lsb 0}
 
-    create_bd_port -dir $pin_dir -from $pin_msb -to $pin_lsb $parsed_args(port_name)
+    if { [get_bd_ports -quiet $parsed_args(port_name)] == "" } {
+      if {$pin_msb == 0 && $pin_lsb == 0} {
+        create_bd_port -type $pin_type -dir $pin_dir $parsed_args(port_name)
+      } else {
+        create_bd_port -type $pin_type -dir $pin_dir -from $pin_msb -to $pin_lsb $parsed_args(port_name)
+      }
+    } else {
+      puts "Port $parsed_args(port_name) already exists. Connecting the net to that port"
+    }
+
+    if {$pin_type == "clk"} {
+      puts "Setting the frequency of the clock to [get_property CONFIG.FREQ_HZ $from_interface]"
+      set_property CONFIG.FREQ_HZ [get_property CONFIG.FREQ_HZ $from_interface] [get_bd_ports $parsed_args(port_name)]
+    }
+
     connect_bd_net [get_bd_ports $parsed_args(port_name)] $from_interface
   }
 
