@@ -36,7 +36,7 @@ module audio_unit_top(
 
   ////////////////////////////////
   //// Input Control Signals  ////
-  ////////////////////////////////  
+  ////////////////////////////////
   input wire test_mode,
 
 
@@ -96,13 +96,24 @@ module audio_unit_top(
   wire [63:0] audio_data_IN_data;
   wire        audio_data_IN_last;
 
-  /////////////////////////
+  //////////////////////////
   // Output FIFO Signals  //
-  /////////////////////////
+  //////////////////////////
   wire        audio_data_OUT_ready;
   wire        audio_data_OUT_valid;
   wire        audio_data_OUT_valid2;
   wire [63:0] audio_data_OUT_data;
+
+  //////////////////////////
+  //       COUNTERS       //
+  //////////////////////////
+  reg [63:0] axi_fifo_rd_counter;        // Read from the DMA
+  reg [63:0] serializer_fifo_wr_counter; // Write from the Serializer
+  reg [63:0] axi_fifo_wr_counter;        // Write from the DMA
+  reg [63:0] serializer_fifo_rd_counter; // Read from the Serializer
+  reg [63:0] DOWNSTREAM_missed_counter;  // Downstream missed packet counter
+  wire DMA_fifo_wr;                      // DMA Write to the FIFO
+  wire DMA_fifo_rd;                      // DMA Read from the FIFO
 
   wire DOWNSTREAM_missed;
 
@@ -110,9 +121,8 @@ module audio_unit_top(
   assign audio_data_IN_last      = serializer_fifo_wr_counter[7:0] == 8'h10;
   assign DOWNSTREAM_almost_empty = DOWNSTREAM_axis_rd_data_count < 30;
   ////////////////////////////////////
-  assign serializer_audio_in = (test_mode) ? {test_signal_reg, test_signal_reg} : audio_data_OUT_data;
-  assign audio_data_out      = /*(locked) ?*/ /*bclk_counter*/ {bclk_counter[27:0], test_counter[31:0], test_counter[18:17], bclk_counter[24:23]};// : 'hdeadbeef_deadcafe;
-  assign ac_muten            = 1'b1;
+  assign serializer_audio_in   = (test_mode) ? {test_signal_reg, test_signal_reg} : audio_data_OUT_data;
+  assign ac_muten              = 1'b1;
   assign audio_data_OUT_valid2 = audio_data_OUT_valid | test_mode;
 
   // Counter for the AXI FIFO Reset
@@ -125,60 +135,45 @@ module audio_unit_top(
     if (locked == 1'b0) reset_counter <= 5'h0;
     else reset_counter <= (axi_fifo_reset_n == 1'b0) ? reset_counter + 1'b1 : reset_counter;
 
-
   // Counter for a heartbeat signal to make sure that the clock from the CODEC is running
-  reg [63:0] bclk_counter;
-  reg [63:0] lrclk_counter;
-  reg [63:0] rec_lrclk_counter;
-
-  assign heartbeat = {DOWNSTREAM_missed_counter[5], DOWNSTREAM_missed_counter[4], axi_fifo_wr_counter[14], serializer_fifo_rd_counter[13]};
-
-  always @ (posedge ac_bclk or negedge locked) begin
-    if (locked == 1'b0) begin
-      bclk_counter      <= 'hffffffff_cafecafe;
-      lrclk_counter     <= 'h0;
-      rec_lrclk_counter <= 'h0;
-    end
-    else begin
-      bclk_counter      <= bclk_counter + 1;
-      lrclk_counter     <= lrclk_counter;
-      rec_lrclk_counter <= rec_lrclk_counter;
-      if (ac_pblrc)  lrclk_counter     <= lrclk_counter + 1;
-      if (ac_reclrc) rec_lrclk_counter <= rec_lrclk_counter + 1;
-    end
-  end
+  assign heartbeat = {
+                      DOWNSTREAM_missed_counter[14], // Bit 3
+                      DOWNSTREAM_missed_counter[4],  // Bit 2
+                      axi_fifo_wr_counter[14],       // Bit 1
+                      serializer_fifo_rd_counter[14] // Bit 0
+                      };
 
 
-/////////////////////////////////////////
-////////////// COUNTERS /////////////////
-  reg [63:0] axi_fifo_rd_counter;        // Read from the DMA
-  reg [63:0] serializer_fifo_wr_counter; // Write from the Serializer
-  reg [63:0] axi_fifo_wr_counter;        // Write from the DMA
-  reg [63:0] serializer_fifo_rd_counter; // Read from the Serializer
-  reg [63:0] DOWNSTREAM_missed_counter;  // Downstream missed packet counter
+  /////////////////////////////////////////
+  ////////////// COUNTERS /////////////////
 
-  always @(posedge axis_aclk or negedge axis_aresetn) 
+  // Read counter (DMA Reading from FIFO)
+  assign DMA_fifo_rd = m_axis_tready && m_axis_tvalid;
+  always @(posedge axis_aclk or negedge axis_aresetn)
     if (axis_aresetn == 1'b0) axi_fifo_rd_counter <= 'h0;
-    else axi_fifo_rd_counter <= (m_axis_tready) ? axi_fifo_rd_counter + 1 : axi_fifo_rd_counter;
+    else axi_fifo_rd_counter <= (DMA_fifo_rd) ? axi_fifo_rd_counter + 1 : axi_fifo_rd_counter;
 
-
-  always @(posedge axis_aclk or negedge axis_aresetn) 
+  // Write counter (DMA Writing to FIFO)
+  assign DMA_fifo_wr = s_axis_tvalid && s_axis_tready;
+  always @(posedge axis_aclk or negedge axis_aresetn)
     if (axis_aresetn == 1'b0) axi_fifo_wr_counter <= 'h0;
-    else axi_fifo_wr_counter <= (s_axis_tvalid) ? axi_fifo_wr_counter + 1 : axi_fifo_wr_counter;    
+    else axi_fifo_wr_counter <= (DMA_fifo_wr) ? axi_fifo_wr_counter + 1 : axi_fifo_wr_counter;
 
 
-  always @(posedge ac_bclk or negedge locked) 
+  // Read counter (Serializer reading from FIFO)
+  always @(posedge ac_bclk or negedge locked)
     if (locked == 1'b0) serializer_fifo_rd_counter <= 'h0;
     else serializer_fifo_rd_counter <= (audio_data_OUT_ready) ? serializer_fifo_rd_counter + 1 : serializer_fifo_rd_counter;
 
-
-  always @(posedge ac_bclk or negedge locked) 
+  // Write counter (Serializer writing to FIFO)
+  always @(posedge ac_bclk or negedge locked)
     if (locked == 1'b0) serializer_fifo_wr_counter <= 'h0;
-    else serializer_fifo_wr_counter <= (audio_data_IN_valid) ? serializer_fifo_wr_counter + 1 : serializer_fifo_wr_counter;     
-  
+    else serializer_fifo_wr_counter <= (audio_data_IN_valid) ? serializer_fifo_wr_counter + 1 : serializer_fifo_wr_counter;
+
+  // Data Missed counter
   always @(posedge ac_bclk or negedge locked)
     if (locked == 1'b0) DOWNSTREAM_missed_counter <= 'h0;
-    else DOWNSTREAM_missed_counter <= (ac_pblrc && DOWNSTREAM_missed) ? DOWNSTREAM_missed_counter + 1 : DOWNSTREAM_missed_counter;
+    else DOWNSTREAM_missed_counter <= (DOWNSTREAM_missed) ? DOWNSTREAM_missed_counter + 1 : DOWNSTREAM_missed_counter;
 
 ////////////////////////////////////////
 
@@ -195,7 +190,7 @@ module audio_unit_top(
         test_counter <= test_counter + 1'b1;
         if (test_counter[7] == 0) begin
           test_signal_reg <= TEST_SIGNAL_1;
-        end 
+        end
         else begin
           test_signal_reg <= TEST_SIGNAL_2;
         end
@@ -297,7 +292,7 @@ module audio_unit_top(
     .m_axis_tready  ( audio_data_OUT_ready ), // input  wire          m_axis_tready
     .m_axis_tvalid  ( audio_data_OUT_valid ), // output wire          m_axis_tvalid
     .m_axis_tdata   ( audio_data_OUT_data  ), // output wire [63 : 0] m_axis_tdata
-    .m_axis_tlast   (                      ),  
+    .m_axis_tlast   (                      ),
 
     /////////////////////////////////////////
     // Master Clock Domain (Zynq Processor)
@@ -313,7 +308,7 @@ module audio_unit_top(
     .axis_wr_data_count ( DOWNSTREAM_axis_wr_data_count ), // output wire [31 : 0] axis_wr_data_count
     .axis_rd_data_count ( DOWNSTREAM_axis_rd_data_count )  // output wire [31 : 0] axis_rd_data_count
   );
-    
+
   //////////////////////////////////////////////
   // AXI Streaming FIFO for the input signal
   //////////////////////////////////////////////

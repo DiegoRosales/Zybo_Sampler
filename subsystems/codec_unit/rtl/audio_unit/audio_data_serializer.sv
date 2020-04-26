@@ -135,7 +135,9 @@ always_ff @(posedge ac_bclk) begin
   end
 end
 
+// Pulse whenever the CODEC is requesting data and there's no valid data
 always_ff @(posedge ac_bclk) begin
+  DOWNSTREAM_missed_reg <= 1'b0;
   if (ac_pblrc && ~m_axis_tvalid) begin
     DOWNSTREAM_missed_reg <= 1'b1;
   end
