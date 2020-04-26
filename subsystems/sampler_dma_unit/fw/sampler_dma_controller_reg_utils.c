@@ -31,3 +31,7 @@ uint32_t SamplerRegRd(uint32_t addr) {
 
     return readback;
 }
+
+uint32_t get_sampler_version( void ) {
+    return SAMPLER_CONTROL_REGISTER_ACCESS->SAMPLER_VER_REG.value;
+}

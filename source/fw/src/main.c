@@ -61,7 +61,7 @@
 
 // Other
 #include "nco.h"
-#include "sampler.h"
+#include "sampler_engine.h"
 
 //////////////////////////////////////////
 #define NUM_OF_SINE_SAMPLES               0x100000

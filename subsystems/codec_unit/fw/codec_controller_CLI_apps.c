@@ -18,7 +18,6 @@
 #include "codec_controller_reg_utils.h"
 #include "codec_controller_utils.h"
 #include "nco.h"
-#include "sampler.h"
 
 // Defines
 #define cliNEW_LINE "\n\r"

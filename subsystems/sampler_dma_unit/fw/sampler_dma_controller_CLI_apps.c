@@ -20,9 +20,6 @@
 // Sampler DMA Controller CLI Apps
 #include "sampler_dma_controller_CLI_apps.h"
 
-// Sampler Utils
-#include "sampler.h"
-
 // Defines
 #define cliNEW_LINE "\n\r"
 #define APPEND_NEWLINE(BUFFER) strcat( BUFFER, cliNEW_LINE )

@@ -234,4 +234,7 @@ typedef struct {
 } SAMPLER_DMA_REGISTERS_t;
 
 
+// Functions
+uint32_t get_sampler_version( void );
+
 #endif

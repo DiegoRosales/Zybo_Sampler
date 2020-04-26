@@ -16,7 +16,7 @@
 #include "sampler_dma_controller_regs.h"
 #include "sampler_dma_controller_reg_utils.h"
 #include "sampler_dma_voice_pb.h"
-#include "sampler.h"
+#include "sampler_engine.h"
 
 // JSON Parser
 #include "jsmn.h"
@@ -56,7 +56,8 @@ static uint32_t str2int( const char *input_string, uint32_t input_string_length 
 
 }
 
-static int jsoneq(const char *json, jsmntok_t *tok, const char *s) {
+// Compare a string with a JSON string
+static int json_equal(const char *json, jsmntok_t *tok, const char *s) {
     int token_end   = tok->end;
     int token_start = tok->start;
     int token_len   = token_end - token_start;
@@ -66,7 +67,7 @@ static int jsoneq(const char *json, jsmntok_t *tok, const char *s) {
     return 0;
 }
 
-static int jsonprint(const char *json, jsmntok_t *tok) {
+static int json_print_string(const char *json, jsmntok_t *tok) {
     uint32_t token_end        = (uint32_t) tok->end;
     uint32_t token_start      = (uint32_t) tok->start;
     size_t   token_len        = (size_t)   (token_end - token_start + 1);
@@ -81,7 +82,8 @@ static int jsonprint(const char *json, jsmntok_t *tok) {
     return 1;
 }
 
-static int json_snprintf(const char *json, jsmntok_t *tok, char *output_buffer) {
+// Copy a JSON String
+static int json_get_string(const char *json, jsmntok_t *tok, char *output_buffer) {
     int token_end        = tok->end;
     int token_start      = tok->start;
     int token_len        = token_end - token_start + 1;
@@ -92,10 +94,6 @@ static int json_snprintf(const char *json, jsmntok_t *tok, char *output_buffer) 
         return 0;
     }
     return 1;
-}
-
-uint32_t get_sampler_version( void ) {
-    return SAMPLER_CONTROL_REGISTER_ACCESS->SAMPLER_VER_REG.value;
 }
 
 // This function stops the playback for everything
@@ -370,15 +368,15 @@ uint32_t extract_sample_paths( uint32_t sample_start_token_index, uint32_t numbe
 
             // Get the rest of the information
             for( int j = key_info_index; j < ( key_info_index + (NUM_OF_SAMPLE_JSON_MEMBERS * 2) ); j += 2 ) {
-                if( jsoneq( (const char *)instrument_info_buffer, &tokens[j], SAMPLE_VEL_MIN_TOKEN_STR ) ) {
+                if( json_equal( (const char *)instrument_info_buffer, &tokens[j], SAMPLE_VEL_MIN_TOKEN_STR ) ) {
                     current_voice->velocity_min = str2int( (char *)(instrument_info_buffer + tokens[j + 1].start), ( tokens[j + 1].end - tokens[j + 1].start ) );
                     //xil_printf("KEY[%d]: velocity_min = %d\n\r", midi_note, instrument_info->key_information[midi_note].key_voice_information[0].velocity_min);
-                } else if( jsoneq( (const char *)instrument_info_buffer, &tokens[j], SAMPLE_VEL_MAX_TOKEN_STR ) ) {
+                } else if( json_equal( (const char *)instrument_info_buffer, &tokens[j], SAMPLE_VEL_MAX_TOKEN_STR ) ) {
                     current_voice->velocity_max = str2int( (char *)(instrument_info_buffer + tokens[j + 1].start), ( tokens[j + 1].end - tokens[j + 1].start ) );
                     //xil_printf("KEY[%d]: velocity_max = %d\n\r", midi_note, instrument_info->key_information[midi_note].key_voice_information[0].velocity_max);
-                } else if( jsoneq( (const char *)instrument_info_buffer, &tokens[j], SAMPLE_PATH_TOKEN_STR ) ) {
+                } else if( json_equal( (const char *)instrument_info_buffer, &tokens[j], SAMPLE_PATH_TOKEN_STR ) ) {
                     current_voice->sample_present = 1;
-                    json_snprintf( (const char *)instrument_info_buffer, &tokens[j + 1], (char *) current_voice->sample_path );
+                    json_get_string( (const char *)instrument_info_buffer, &tokens[j + 1], (char *) current_voice->sample_path );
                     xil_printf("KEY[%d]: sample_path = %s\n\r", midi_note, current_voice->sample_path);
                 }
             }
@@ -421,8 +419,8 @@ uint32_t decode_instrument_information( uint8_t *instrument_info_buffer, INSTRUM
     // Step 4 - Extract the information
     // Step 4.1 - Get the instrument name
     for ( int i = 0; i < parser_result ; i++ ) {
-        if ( jsoneq( (const char *) instrument_info_buffer, &tokens[i], INSTRUMENT_NAME_TOKEN_STR ) ) {
-            json_snprintf((const char *) instrument_info_buffer, &tokens[i + 1], (char *) instrument_info->instrument_name );
+        if ( json_equal( (const char *) instrument_info_buffer, &tokens[i], INSTRUMENT_NAME_TOKEN_STR ) ) {
+            json_get_string((const char *) instrument_info_buffer, &tokens[i + 1], (char *) instrument_info->instrument_name );
             xil_printf("Instrument Name: %s", instrument_info->instrument_name );
             xil_printf("\n\r");
             break;
@@ -431,7 +429,7 @@ uint32_t decode_instrument_information( uint8_t *instrument_info_buffer, INSTRUM
 
     // Step 4.2 - Extract the sample paths
     for ( int i = 0; i < parser_result ; i++ ) {
-        if ( jsoneq( (const char *) instrument_info_buffer, &tokens[i], INSTRUMENT_SAMPLES_TOKEN_STR ) ) {
+        if ( json_equal( (const char *) instrument_info_buffer, &tokens[i], INSTRUMENT_SAMPLES_TOKEN_STR ) ) {
             number_of_samples        = (uint32_t) tokens[i + 1].size;
             sample_start_token_index = i + 2;
             xil_printf("Number of samples: %d\n\r", number_of_samples );

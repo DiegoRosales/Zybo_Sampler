@@ -22,7 +22,7 @@
 #include "sampler_CLI_apps.h"
 #include "sampler_FreeRTOS_tasks.h"
 #include "sampler_dma_voice_pb.h"
-#include "sampler.h"
+#include "sampler_engine.h"
 #include "nco.h"
 
 // Defines

@@ -49,7 +49,7 @@ This is the code that is supposed to load the samples from the SD card and play 
 
 **Location**
 ```bash
-$REPO_ROOT/source/fw/src/sampler             <--- Sampler program
+$REPO_ROOT/source/fw/src/sampler             <--- Sampler engine
 $REPO_ROOT/source/fw/src/fat_CLI_apps.c      <--- Misc commands to navigate the SD card
 $REPO_ROOT/source/fw/src/main.c              <--- Main function
 ```

@@ -133,9 +133,6 @@ typedef struct {
     uint8_t note_number;  // Example: 49
 } NOTE_LUT_STRUCT_t;
 
-uint32_t get_sampler_version();
-
-
 uint8_t get_json_midi_note_number( jsmntok_t *tok, uint8_t *instrument_info_buffer );
 uint8_t get_midi_note_number( const char *note_name );
 
@@ -150,6 +147,5 @@ uint32_t decode_instrument_information( uint8_t *instrument_info_buffer, INSTRUM
 uint32_t load_sample_information( INSTRUMENT_INFORMATION_t *instrument_information );
 uint32_t get_riff_information( uint8_t *sample_buffer, size_t sample_size, SAMPLE_FORMAT_t *riff_information );
 uint32_t realign_audio_data( KEY_VOICE_INFORMATION_t *voice_information );
-uint32_t get_sampler_version( void );
 
 #endif

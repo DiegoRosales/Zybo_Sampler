@@ -26,7 +26,7 @@
 
 // Sampler Includes
 #include "sampler_FreeRTOS_tasks.h"
-#include "sampler.h"
+#include "sampler_engine.h"
 
 static INSTRUMENT_INFORMATION_t *instrument_information = NULL;
 static uint8_t                   instrument_info_buffer[MAX_INST_FILE_SIZE];

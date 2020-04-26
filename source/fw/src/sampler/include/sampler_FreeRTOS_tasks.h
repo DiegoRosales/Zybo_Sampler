@@ -2,7 +2,7 @@
 #define SAMPLER_FREERTOS_TASKS_H
 
 #include "queue.h"
-#include "sampler.h"
+#include "sampler_engine.h"
 
 #define cliNEW_LINE "\n\r"
 
