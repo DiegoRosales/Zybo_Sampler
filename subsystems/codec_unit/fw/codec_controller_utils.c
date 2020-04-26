@@ -275,8 +275,10 @@ void CodecInit(int debug) {
 	CodecRd(SAMPLING_RATE_REG_ADDR, 0, debug);
 
 	// Sampling Rate settings
-	codec_registers.SAMPLING_RATE.value     = 0; // Initialize
-	codec_registers.SAMPLING_RATE.field.USB = 1; // Set the sampling rate in USB Mode (256*fs)
+	codec_registers.SAMPLING_RATE.value      = 0;   // Initialize
+	codec_registers.SAMPLING_RATE.field.USB  = 1;   // Set the sampling rate in USB Mode (256*fs)
+	codec_registers.SAMPLING_RATE.field.SR   = 0x8; // Set the sampling rate to 44.118KHz
+	codec_registers.SAMPLING_RATE.field.BOSR = 1;   // Set the sampling rate to 44.118KHz
 
 	check = CodecWr(SAMPLING_RATE_REG_ADDR, codec_registers.SAMPLING_RATE.value, 1, 0, debug);
 	if (check) {
@@ -335,7 +337,7 @@ void CodecInit(int debug) {
 	///////////////////////////////////
 	xil_printf("Setting the output volume...\n\r");
 
-	check = SetOutputVolume(0);
+	check = SetOutputVolume(-15);
 
 	if (check) {
 		xil_printf("[ERROR] Setting the output volume...\n\n\r");
