@@ -78,7 +78,9 @@ You can find more about the board over at https://reference.digilentinc.com/refe
 
 [**NOT STARTED**] Enable MIDI over USB
 
-[**NOT STARTED**] Enable the full system in the verification environment
+[**NOT STARTED**] Enable a UVM Testbench
+
+[**NOT STARTED**] Automate register generation
 
 ---
 # Setup instructions
@@ -103,7 +105,7 @@ This stage will package the individual cores using the Vivado IP Packaging tool 
 This stage will import all the packaged cores and will perform all the connections necessary to build the final design
 
 ### 3) Xilinx IP Synthesis
-This stage will individually synthesize all Xilinx IPs to save time on the final implementation
+This stage will individually synthesize all Xilinx IPs to save time on the final implementation. Note that this stage is only strictly necessary when you haven't created the Xilinx IPs from the TCL scripts. Xilinx IPs instantiated in the integration stage can also be synthesized in the implementation stage
 
 ### 4) Implementation
 This stage will import the generated sources from the integration stage and will perform Synthesis and Place and Route
@@ -122,6 +124,8 @@ To build the project, you need to run one script using Vivado: `run.tcl`.
 ## Run only specific stages
 # Stages: PACK | INTEG | GEN_XILINX_IP | IMPL | BUILD_WS
 >> vivado -mode batch -source scripts/run.tcl -tclargs -cfg cfg/zybo_sampler.cfg -stages "<STAGE1>+<STAGE2>+..."
+# Example
+>> vivado -mode batch -source scripts/run.tcl -tclargs -cfg cfg/zybo_sampler.cfg -stages "INTEG+IMPL"
 
 ## Run with stage arguments
 >> vivado -mode batch -source scripts/run.tcl -tclargs -cfg cfg/zybo_sampler.cfg -stages "<STAGE1>+<STAGE2>+..." --stage_args "<STAGE1>_ARG1=1" "<STAGE2>_ARG2=MyValue" --
