@@ -46,10 +46,19 @@ static SemaphoreHandle_t xTxMutex = NULL;
 // This task should be called from the scheduler
 static void prvUARTCommandConsoleTask( void *pvParameters )
 {
-    signed char    cRxedChar;                             // Character received 
+    signed char    cRxedChar;                             // Character received
     static char    cInputString[ cmdMAX_INPUT_SIZE ];     // This array will hold the characters received in a string
+    static char    cEscParamBytes[ cmdMAX_INPUT_SIZE ];   // This array will hold the escape command parameter bytes
+    static char    cEscInterBytes[ cmdMAX_INPUT_SIZE ];   // This array will hold the escape command intermeiate bytes
+    static char    cEscInitialByte;                       // This will hold the escape command initial byte
+    static char    cEscFinalByte;                         // This will hold the escape command final byte
     static char    cLastInputString[ cmdMAX_INPUT_SIZE ]; // This will hold the last command in case the user presses ENTER without any input (i.e. repeats the last command)
-    uint8_t        ucInputIndex = 0;                      // Idex pointer for cInputString
+    uint8_t        ucInputIndex        = 0;               // Idex pointer for cInputString
+    uint8_t        ucParamBytesIndex   = 0;               // Idex pointer for cInputString
+    uint8_t        ucInterBytesIndex   = 0;               // Idex pointer for cInputString
+    uint8_t        ucCurrInputStrinLen = 0;               // Idex pointer for cInputString
+    uint8_t        ucEscCount          = 0;               // Escape Character Count
+    uint8_t        ucReceivingEsc      = 0;               // Escape Character Count
     char           *pcOutputString;                       // Pointer to the buffer that will be used to store the CLI application output
     BaseType_t     xReturned;                             // This will hold the exit state of the CLI command (pdFALSE == Command is done generating output strings)
     xComPortHandle xPort;                                 // UART Port
@@ -57,7 +66,12 @@ static void prvUARTCommandConsoleTask( void *pvParameters )
 
 	( void ) pvParameters; // We are not using the pvParameters right now. Using this to avoid warnings.
 
-    sprintf( clear_screen, "%c[2J\n\r",27 );
+  sprintf( clear_screen, "%c[2J\n\r",27 );
+
+	/* Initialize the Input String */
+	memset( cInputString, 0x00, cmdMAX_INPUT_SIZE );
+	memset( cEscParamBytes, 0x00, cmdMAX_INPUT_SIZE );
+	memset( cEscInterBytes, 0x00, cmdMAX_INPUT_SIZE );
 
 	/* Obtain the address of the output buffer.  Note there is no mutual
 	exclusion on this buffer as it is assumed only one command console interface
@@ -81,15 +95,17 @@ static void prvUARTCommandConsoleTask( void *pvParameters )
 		/* Ensure exclusive access to the UART Tx. */
 		if( xSemaphoreTake( xTxMutex, cmdMAX_MUTEX_WAIT ) == pdPASS )
 		{
+			ucCurrInputStrinLen = strlen(cInputString);
+
 			/* Echo the character back unless it's a backspace and there's nothing there. */
-			if ( !( cmdIS_BACKSPACE(cRxedChar)  && ( ucInputIndex <= 0 ) ) ) {
+			if ( ((cmdIS_BACKSPACE(cRxedChar)  && ucInputIndex > 0) || (cRxedChar >= 0x20)) && (ucReceivingEsc == 0) && (ucCurrInputStrinLen == ucInputIndex) )  {
 				xSerialPutChar( xPort, cRxedChar, portMAX_DELAY );
 			}
 
 			/* Was it the end of the line? */
 			if( cRxedChar == '\n' || cRxedChar == '\r' )
 			{
-				
+
 
 				/* See if the command is empty, indicating that the last command
 				is to be executed again. */
@@ -103,7 +119,7 @@ static void prvUARTCommandConsoleTask( void *pvParameters )
 					#else
 						goto printEndOfOutputMessage;
 					#endif
-				} 
+				}
 
         /* Just to space the output from the input. */
 				vSerialPutString( xPort, ( signed char * ) pcNewLine, ( unsigned short ) strlen( pcNewLine ) );
@@ -136,20 +152,113 @@ static void prvUARTCommandConsoleTask( void *pvParameters )
 			}
 			else
 			{
-				if( cRxedChar == '\r' )
-				{
-					/* Ignore the character. */
-				}
-				else if( cmdIS_BACKSPACE(cRxedChar) )
+				if( cmdIS_BACKSPACE(cRxedChar) )
 				{
 					/* Backspace was pressed.  Erase the last character in the
 					string - if any. */
 					if( ucInputIndex > 0 )
 					{
-						ucInputIndex--;
-						cInputString[ ucInputIndex ] = '\0';
+						if ( ucCurrInputStrinLen > ucInputIndex ) {
+							// Go back one index
+							ucInputIndex--;
+							xSerialPutChar( xPort, '\b', portMAX_DELAY );
+
+							// Shift left all chars from the new index to the end
+							for(uint8_t i = ucInputIndex; i < ucCurrInputStrinLen; i++) {
+								cInputString[ i ] = cInputString[i + 1];
+							}
+
+							// Save the current console pointer
+							vSerialPutString( xPort, ( signed char * ) cmdANSI_ESC_SAVE_CURSOR, strlen(cmdANSI_ESC_SAVE_CURSOR) );
+							// Print the new shifted string
+							vSerialPutString( xPort, ( signed char * ) &cInputString[ucInputIndex], ( ucCurrInputStrinLen - ucInputIndex ) );
+							xSerialPutChar( xPort, ' ', portMAX_DELAY );
+							// Restore the console pointer
+							vSerialPutString( xPort, ( signed char * ) cmdANSI_ESC_RESTORE_CURSOR, strlen(cmdANSI_ESC_RESTORE_CURSOR) );
+						} else {
+							ucInputIndex--;
+							cInputString[ ucInputIndex ] = '\0';
+							xSerialPutChar( xPort, ' ', portMAX_DELAY );
+							xSerialPutChar( xPort, '\b', portMAX_DELAY );
+						}
+					}
+				} else if ( cmdIS_DEL(cRxedChar) ) {
+					if ( ucCurrInputStrinLen > ucInputIndex ) {
+						for(uint8_t i = ucInputIndex; i < ucCurrInputStrinLen; i++) {
+							cInputString[ i ] = cInputString[ i + 1];
+						}
+						vSerialPutString( xPort, ( signed char * ) cmdANSI_ESC_SAVE_CURSOR, strlen(cmdANSI_ESC_SAVE_CURSOR) );
+						vSerialPutString( xPort, ( signed char * ) &cInputString[ucInputIndex], ( ucCurrInputStrinLen - ucInputIndex ) );
 						xSerialPutChar( xPort, ' ', portMAX_DELAY );
-						xSerialPutChar( xPort, '\b', portMAX_DELAY );
+						vSerialPutString( xPort, ( signed char * ) cmdANSI_ESC_RESTORE_CURSOR, strlen(cmdANSI_ESC_RESTORE_CURSOR) );
+					}
+				}
+				else if ( cmdIS_ESCAPE(cRxedChar) )
+				{
+					// Initialize the escape sequences
+					ucReceivingEsc = 1;
+					memset( cEscParamBytes, 0x00, cmdMAX_INPUT_SIZE );
+					memset( cEscInterBytes, 0x00, cmdMAX_INPUT_SIZE );
+					cEscInitialByte   = 0x00;
+					cEscFinalByte     = 0x00;
+					ucParamBytesIndex = 0;
+ 					ucInterBytesIndex = 0;
+				}
+				else if (ucReceivingEsc == 1) {
+					// Get the first byte
+					if (cRxedChar >= 0x40 && cRxedChar <= 0x5f) {
+						cEscInitialByte = cRxedChar;
+						ucReceivingEsc = 2;
+					} else {
+						ucReceivingEsc = 0;
+					}
+				}
+				else if (ucReceivingEsc == 2)
+				{
+					if (cEscInitialByte == '[') { // Control Sequence Introducer
+						// Get the subsequent bytes
+						if( cRxedChar >=  0x30 && cRxedChar <= 0x3f) {        // Parameter bytes
+							cEscParamBytes[ ucParamBytesIndex ] = cRxedChar;
+							ucParamBytesIndex++;
+						} else if( cRxedChar >=  0x20 && cRxedChar <= 0x2f) { // Intermediate bytes
+							cEscInterBytes[ ucInterBytesIndex ] = cRxedChar;
+							ucInterBytesIndex++;
+						} else if( cRxedChar >=  0x40 && cRxedChar <= 0x7e) { // Final byte
+							cEscFinalByte  = cRxedChar;
+							ucReceivingEsc = 0;
+						}
+
+						if ( ucReceivingEsc == 0 ) {
+							if ( cEscFinalByte == 'A' ) {
+								xSerialPutChar( xPort, 'U', portMAX_DELAY );
+							} else if ( cEscFinalByte == 'B' ) {
+								xSerialPutChar( xPort, 'D', portMAX_DELAY );
+							} else if ( cEscFinalByte == 'C' ) {
+								if ( ucInputIndex < ucCurrInputStrinLen ) {
+									vSerialPutString( xPort, ( signed char * ) cmdANSI_ESC_RIGHT, ( unsigned short ) strlen( cmdANSI_ESC_RIGHT ) );
+									ucInputIndex++;
+								}
+							} else if ( cEscFinalByte == 'D' ) {
+								if ( ucInputIndex > 0 ) {
+									vSerialPutString( xPort, ( signed char * ) cmdANSI_ESC_LEFT, ( unsigned short ) strlen( cmdANSI_ESC_LEFT ) );
+									ucInputIndex--;
+								}
+							} else if ( cEscFinalByte == '~' ) { // VT Sequence
+								if (ucParamBytesIndex == 0) goto giveMutexSemaphore; // Must have a parameter
+
+								if ( cEscParamBytes[0] == '3' ) { // Delete
+									if ( ucCurrInputStrinLen > ucInputIndex ) {
+										for(uint8_t i = ucInputIndex; i < ucCurrInputStrinLen; i++) {
+											cInputString[ i ] = cInputString[ i + 1];
+										}
+										vSerialPutString( xPort, ( signed char * ) cmdANSI_ESC_SAVE_CURSOR, strlen(cmdANSI_ESC_SAVE_CURSOR) );
+										vSerialPutString( xPort, ( signed char * ) &cInputString[ucInputIndex], ( ucCurrInputStrinLen - ucInputIndex ) );
+										xSerialPutChar( xPort, ' ', portMAX_DELAY );
+										vSerialPutString( xPort, ( signed char * ) cmdANSI_ESC_RESTORE_CURSOR, strlen(cmdANSI_ESC_RESTORE_CURSOR) );
+									}
+								}
+							}
+						}
 					}
 				}
 				else
@@ -167,17 +276,30 @@ static void prvUARTCommandConsoleTask( void *pvParameters )
 							}
 						}
 					#else
-						if( ucInputIndex < cmdMAX_INPUT_SIZE )
+						if( (ucInputIndex < cmdMAX_INPUT_SIZE) && (ucEscCount == 0) )
 						{
-							cInputString[ ucInputIndex ] = cRxedChar;
+
+							// If the cursor is in the middle of the string, move the right side of the string to accomodate the new char
+							if ( ucCurrInputStrinLen > ucInputIndex ) {
+								for (uint8_t i = ucCurrInputStrinLen; i > ucInputIndex; i--) {
+									cInputString[ i ] = cInputString[ i-1 ];
+								}
+								cInputString[ ucInputIndex ] = cRxedChar;
+								xSerialPutChar( xPort, cRxedChar, portMAX_DELAY );
+								vSerialPutString( xPort, ( signed char * ) cmdANSI_ESC_SAVE_CURSOR, strlen(cmdANSI_ESC_SAVE_CURSOR) );
+								vSerialPutString( xPort, ( signed char * ) &cInputString[ucInputIndex+1], ( ucCurrInputStrinLen - ucInputIndex + 1) );
+								vSerialPutString( xPort, ( signed char * ) cmdANSI_ESC_RESTORE_CURSOR, strlen(cmdANSI_ESC_RESTORE_CURSOR) );
+							} else {
+								cInputString[ ucInputIndex ] = cRxedChar;
+							}
 							ucInputIndex++;
-						}								
+						}
 					#endif
 				}
 			}
 
 			/* Must ensure to give the mutex back. */
-			xSemaphoreGive( xTxMutex );
+			giveMutexSemaphore: xSemaphoreGive( xTxMutex );
 		}
 	}
 }

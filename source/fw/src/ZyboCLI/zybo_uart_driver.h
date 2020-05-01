@@ -9,10 +9,20 @@ buffer at all. */
 #define cmdQUEUE_LENGTH			25
 
 /* DEL acts as a backspace. */
-#define cmdASCII_DEL		( 0x7F )
+#define cmdASCII_BACKSPACE          ( 0x08 )
+#define cmdASCII_DEL                ( 0x7F )
+#define cmdASCII_ESC                ( 0x1B )
+#define cmdANSI_ESC_UP              ( (const char *) "\033[A" )
+#define cmdANSI_ESC_DOWN            ( (const char *) "\033[B" )
+#define cmdANSI_ESC_RIGHT           ( (const char *) "\033[C" )
+#define cmdANSI_ESC_LEFT            ( (const char *) "\033[D" )
+#define cmdANSI_ESC_SAVE_CURSOR     ( (const char *) "\033[s" )
+#define cmdANSI_ESC_RESTORE_CURSOR  ( (const char *) "\033[u" )
 
 /* Check if backspace is pressed */
-#define cmdIS_BACKSPACE(myChar) ( (( myChar == '\b' ) || ( myChar == cmdASCII_DEL )) )
+#define cmdIS_BACKSPACE(myChar) ( ( myChar == cmdASCII_BACKSPACE ) )
+#define cmdIS_DEL(myChar)       ( ( myChar == cmdASCII_DEL ) )
+#define cmdIS_ESCAPE(myChar)    ( ( myChar == cmdASCII_ESC ) )
 
 /* The maximum time to wait for the mutex that guards the UART to become
 available. */
