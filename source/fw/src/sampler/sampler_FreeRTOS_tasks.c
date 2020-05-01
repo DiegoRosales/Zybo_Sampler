@@ -103,7 +103,7 @@ uint32_t load_samples_into_memory( INSTRUMENT_INFORMATION_t *instrument_informat
 void create_sampler_tasks ( void ) {
 
     // Initializes the instrument information data structure
-    //instrument_information = init_instrument_information(88, 1);
+    //instrument_information = x_init_instrument_information(88, 1);
 
     /* Create the task, storing the handle. */
     xTaskCreate(
@@ -182,12 +182,12 @@ static void run_midi_cmd_task( void *pvParameters ) {
         {
             // Note OFF
             case 0x80:
-                play_instrument_key( byte1, 0, instrument_information );
+                ul_play_instrument_key( byte1, 0, instrument_information );
                 break;
 
             // Note ON
             case 0x90:
-                play_instrument_key( byte1, byte2, instrument_information );
+                ul_play_instrument_key( byte1, byte2, instrument_information );
                 break;
             
             default:
@@ -245,7 +245,7 @@ static void key_playback_task( void *pvParameters ) {
             }
 
             // Start the playback
-            error = play_instrument_key( key_parameters->key, key_parameters->velocity, instrument_information );
+            error = ul_play_instrument_key( key_parameters->key, key_parameters->velocity, instrument_information );
 
             if( error ) {
                 xil_printf("[ERROR] - Failed playing the key\n\r");
@@ -275,7 +275,7 @@ static void stop_all_task( void *pvParameters ) {
             xil_printf("Stopping everything...\n\n\r");
 
             // Start the playback
-            error = stop_all( instrument_information );
+            error = ul_stop_all( instrument_information );
 
             if( error ) {
                 xil_printf("[ERROR] - Failed stopping everything\n\r");
@@ -332,7 +332,7 @@ static void load_instrument_task( void *pvParameters ) {
                 // Step 2 - Initialize the instrument information
                 xil_printf("Step 2 - Initializing the instrument information\n\r");
                 if ( instrument_information == NULL ){
-                    instrument_information = init_instrument_information();
+                    instrument_information = x_init_instrument_information();
 
                     // Check if the initialization succeeded
                     if ( instrument_information == NULL ){
@@ -351,7 +351,7 @@ static void load_instrument_task( void *pvParameters ) {
 
                 // Step 3 - Decode the JSON file using JSMN
                 xil_printf("Step 3 - Decoding the instrument information...\n\r");
-                decode_instrument_information( instrument_info_buffer, instrument_information );
+                ul_decode_instrument_information( instrument_info_buffer, instrument_information );
                 xil_printf("Step 3 - Done!\n\r");
 
                 // Step 4 - Load all the samples into memory
@@ -373,7 +373,7 @@ static void load_instrument_task( void *pvParameters ) {
 
                 xil_printf("Step 5 - Populating the sampler data structures...\n\r");
 
-                load_sample_information( instrument_information );
+                ul_load_sample_information( instrument_information );
                 instrument_information->instrument_loaded = 1;
 
                 xil_printf("Step 5 - Done!\n\r");
@@ -445,12 +445,12 @@ static void serial_midi_listener_task( void *pvParameters ) {
                 {
                     // Note OFF
                     case 0x80:
-                        play_instrument_key( bytes_rcvd[1], 0, instrument_information );
+                        ul_play_instrument_key( bytes_rcvd[1], 0, instrument_information );
                         break;
 
                     // Note ON
                     case 0x90:
-                        play_instrument_key( bytes_rcvd[1], bytes_rcvd[2], instrument_information );
+                        ul_play_instrument_key( bytes_rcvd[1], bytes_rcvd[2], instrument_information );
                         break;
 
                     case 0xb0:

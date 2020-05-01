@@ -133,19 +133,14 @@ typedef struct {
     uint8_t note_number;  // Example: 49
 } NOTE_LUT_STRUCT_t;
 
-uint8_t get_json_midi_note_number( jsmntok_t *tok, uint8_t *instrument_info_buffer );
-uint8_t get_midi_note_number( const char *note_name );
 
-uint32_t stop_all( INSTRUMENT_INFORMATION_t *instrument_information );
-uint32_t play_instrument_key( uint8_t key, uint8_t velocity, INSTRUMENT_INFORMATION_t *instrument_information );
+uint8_t us_get_midi_note_number( const char *note_name );
 
-KEY_VOICE_INFORMATION_t *init_voice_information();
-KEY_INFORMATION_t * init_key_information();
-INSTRUMENT_INFORMATION_t* init_instrument_information();
+uint32_t ul_stop_all( INSTRUMENT_INFORMATION_t *instrument_information );
+uint32_t ul_play_instrument_key( uint8_t key, uint8_t velocity, INSTRUMENT_INFORMATION_t *instrument_information );
 
-uint32_t decode_instrument_information( uint8_t *instrument_info_buffer, INSTRUMENT_INFORMATION_t *instrument_info );
-uint32_t load_sample_information( INSTRUMENT_INFORMATION_t *instrument_information );
-uint32_t get_riff_information( uint8_t *sample_buffer, size_t sample_size, SAMPLE_FORMAT_t *riff_information );
-uint32_t realign_audio_data( KEY_VOICE_INFORMATION_t *voice_information );
+INSTRUMENT_INFORMATION_t * x_init_instrument_information();
+uint32_t                   ul_decode_instrument_information( uint8_t *instrument_info_buffer, INSTRUMENT_INFORMATION_t *instrument_info );
+uint32_t                   ul_load_sample_information( INSTRUMENT_INFORMATION_t *instrument_information );
 
 #endif

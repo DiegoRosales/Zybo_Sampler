@@ -37,8 +37,18 @@ static const NOTE_LUT_STRUCT_t MIDI_NOTES_LUT[12] = {
     {"Gx_S", 20}	
 };
 
+static uint8_t                    us_get_json_midi_note_number( jsmntok_t *tok, uint8_t *instrument_info_buffer );
+static uint32_t                   ul_str2int( const char *input_string, uint32_t input_string_length );
+static int                        l_json_equal(const char *json, jsmntok_t *tok, const char *s);
+static int                        l_json_print_string(const char *json, jsmntok_t *tok);
+static int                        l_json_get_string(const char *json, jsmntok_t *tok, char *output_buffer);
+static KEY_VOICE_INFORMATION_t  * x_init_voice_information();
+static KEY_INFORMATION_t        * x_init_key_information();
+static uint32_t                   ul_get_riff_information( uint8_t *sample_buffer, size_t sample_size, SAMPLE_FORMAT_t *riff_information );
+static uint32_t                   ul_realign_audio_data( KEY_VOICE_INFORMATION_t *voice_information );
+
 // This function converts an string in int or hex to a uint32_t
-static uint32_t str2int( const char *input_string, uint32_t input_string_length ) {
+static uint32_t ul_str2int( const char *input_string, uint32_t input_string_length ) {
 
     const char *start_char = input_string;
     char *end_char;
@@ -57,7 +67,7 @@ static uint32_t str2int( const char *input_string, uint32_t input_string_length 
 }
 
 // Compare a string with a JSON string
-static int json_equal(const char *json, jsmntok_t *tok, const char *s) {
+static int l_json_equal(const char *json, jsmntok_t *tok, const char *s) {
     int token_end   = tok->end;
     int token_start = tok->start;
     int token_len   = token_end - token_start;
@@ -67,7 +77,7 @@ static int json_equal(const char *json, jsmntok_t *tok, const char *s) {
     return 0;
 }
 
-static int json_print_string(const char *json, jsmntok_t *tok) {
+static int l_json_print_string(const char *json, jsmntok_t *tok) {
     uint32_t token_end        = (uint32_t) tok->end;
     uint32_t token_start      = (uint32_t) tok->start;
     size_t   token_len        = (size_t)   (token_end - token_start + 1);
@@ -83,7 +93,7 @@ static int json_print_string(const char *json, jsmntok_t *tok) {
 }
 
 // Copy a JSON String
-static int json_get_string(const char *json, jsmntok_t *tok, char *output_buffer) {
+static int l_json_get_string(const char *json, jsmntok_t *tok, char *output_buffer) {
     int token_end        = tok->end;
     int token_start      = tok->start;
     int token_len        = token_end - token_start + 1;
@@ -97,7 +107,7 @@ static int json_get_string(const char *json, jsmntok_t *tok, char *output_buffer
 }
 
 // This function stops the playback for everything
-uint32_t stop_all( INSTRUMENT_INFORMATION_t *instrument_information ) {
+uint32_t ul_stop_all( INSTRUMENT_INFORMATION_t *instrument_information ) {
     KEY_INFORMATION_t       *current_key    = NULL;
     KEY_VOICE_INFORMATION_t *current_voice  = NULL;
     uint32_t                 key            = 0;
@@ -137,7 +147,7 @@ uint32_t stop_all( INSTRUMENT_INFORMATION_t *instrument_information ) {
 }
 
 // This function starts the playback of a sample given the key/velocity parameters and the instrument information
-uint32_t play_instrument_key( uint8_t key, uint8_t velocity, INSTRUMENT_INFORMATION_t *instrument_information ) {
+uint32_t ul_play_instrument_key( uint8_t key, uint8_t velocity, INSTRUMENT_INFORMATION_t *instrument_information ) {
 
     int                      velocity_range = 0;
     KEY_INFORMATION_t       *current_key = NULL;
@@ -235,7 +245,7 @@ uint32_t play_instrument_key( uint8_t key, uint8_t velocity, INSTRUMENT_INFORMAT
 }
 
 // Initialize key voice information
-KEY_VOICE_INFORMATION_t *init_voice_information() {
+KEY_VOICE_INFORMATION_t *x_init_voice_information() {
 
     KEY_VOICE_INFORMATION_t *voice_information = sampler_malloc( sizeof( KEY_VOICE_INFORMATION_t ) );
 
@@ -251,7 +261,7 @@ KEY_VOICE_INFORMATION_t *init_voice_information() {
 }
 
 // Initialize key information
-KEY_INFORMATION_t * init_key_information( ) {
+KEY_INFORMATION_t * x_init_key_information( ) {
 
     KEY_INFORMATION_t *key_information = sampler_malloc( sizeof( KEY_INFORMATION_t ) );
 
@@ -267,7 +277,7 @@ KEY_INFORMATION_t * init_key_information( ) {
 }
 
 // This function will initialize the data structure of an instrument
-INSTRUMENT_INFORMATION_t* init_instrument_information() {
+INSTRUMENT_INFORMATION_t* x_init_instrument_information() {
 
     INSTRUMENT_INFORMATION_t* instrument_info = sampler_malloc( sizeof(INSTRUMENT_INFORMATION_t) );
     if ( instrument_info == NULL ) {
@@ -283,7 +293,7 @@ INSTRUMENT_INFORMATION_t* init_instrument_information() {
     return instrument_info;
 }
 
-uint8_t get_json_midi_note_number( jsmntok_t *tok, uint8_t *instrument_info_buffer ) {
+uint8_t us_get_json_midi_note_number( jsmntok_t *tok, uint8_t *instrument_info_buffer ) {
     uint8_t midi_note = 0;
 
     uint8_t *note_letter_addr = instrument_info_buffer + tok->start;
@@ -294,7 +304,7 @@ uint8_t get_json_midi_note_number( jsmntok_t *tok, uint8_t *instrument_info_buff
     char note_number = (char) *note_number_addr;
     char sharp_flag  = (char) *sharp_flag_addr;
 
-    uint32_t note_number_int = str2int( &note_number, 1 );
+    uint32_t note_number_int = ul_str2int( &note_number, 1 );
 
     for( int i = 0; i < 12; i++ ) {
         if( MIDI_NOTES_LUT[i].note_name[0] == note_letter ) {
@@ -311,14 +321,14 @@ uint8_t get_json_midi_note_number( jsmntok_t *tok, uint8_t *instrument_info_buff
     return 0;
 }
 
-uint8_t get_midi_note_number( const char *note_name ) {
+uint8_t us_get_midi_note_number( const char *note_name ) {
     uint8_t midi_note = 0;
 
     const char *note_letter = note_name;
     const char *note_number = note_letter + 1;
     const char *sharp_flag  = note_letter + 3;
 
-    uint32_t note_number_int = str2int( note_number, 1 );
+    uint32_t note_number_int = ul_str2int( note_number, 1 );
 
     for( int i = 0; i < 12; i++ ) {
         if( MIDI_NOTES_LUT[i].note_name[0] == toupper(*note_letter) ) {
@@ -346,13 +356,13 @@ uint32_t extract_sample_paths( uint32_t sample_start_token_index, uint32_t numbe
         note_name_index = sample_start_token_index + (i * (NUM_OF_SAMPLE_JSON_MEMBERS + 1) * 2);
         key_info_index  = note_name_index + 2;
         // Get the MIDI note
-        midi_note = get_json_midi_note_number(&tokens[note_name_index], instrument_info_buffer);
+        midi_note = us_get_json_midi_note_number(&tokens[note_name_index], instrument_info_buffer);
 
         if ( midi_note < MAX_NUM_OF_KEYS ) {
 
             // Allocate the memory if the key information doesn't exist
             if( instrument_info->key_information[midi_note] == NULL ) {
-                instrument_info->key_information[midi_note] = init_key_information();
+                instrument_info->key_information[midi_note] = x_init_key_information();
                 if( instrument_info->key_information[midi_note] == NULL ) return 0;
             }
 
@@ -360,7 +370,7 @@ uint32_t extract_sample_paths( uint32_t sample_start_token_index, uint32_t numbe
 
             // TODO: Add multiple velocity switches
             if( current_key->key_voice_information[0] == NULL ) {
-                current_key->key_voice_information[0] = init_voice_information();
+                current_key->key_voice_information[0] = x_init_voice_information();
                 if( current_key->key_voice_information[0] == NULL ) return 0;
             }
 
@@ -368,15 +378,15 @@ uint32_t extract_sample_paths( uint32_t sample_start_token_index, uint32_t numbe
 
             // Get the rest of the information
             for( int j = key_info_index; j < ( key_info_index + (NUM_OF_SAMPLE_JSON_MEMBERS * 2) ); j += 2 ) {
-                if( json_equal( (const char *)instrument_info_buffer, &tokens[j], SAMPLE_VEL_MIN_TOKEN_STR ) ) {
-                    current_voice->velocity_min = str2int( (char *)(instrument_info_buffer + tokens[j + 1].start), ( tokens[j + 1].end - tokens[j + 1].start ) );
+                if( l_json_equal( (const char *)instrument_info_buffer, &tokens[j], SAMPLE_VEL_MIN_TOKEN_STR ) ) {
+                    current_voice->velocity_min = ul_str2int( (char *)(instrument_info_buffer + tokens[j + 1].start), ( tokens[j + 1].end - tokens[j + 1].start ) );
                     //xil_printf("KEY[%d]: velocity_min = %d\n\r", midi_note, instrument_info->key_information[midi_note].key_voice_information[0].velocity_min);
-                } else if( json_equal( (const char *)instrument_info_buffer, &tokens[j], SAMPLE_VEL_MAX_TOKEN_STR ) ) {
-                    current_voice->velocity_max = str2int( (char *)(instrument_info_buffer + tokens[j + 1].start), ( tokens[j + 1].end - tokens[j + 1].start ) );
+                } else if( l_json_equal( (const char *)instrument_info_buffer, &tokens[j], SAMPLE_VEL_MAX_TOKEN_STR ) ) {
+                    current_voice->velocity_max = ul_str2int( (char *)(instrument_info_buffer + tokens[j + 1].start), ( tokens[j + 1].end - tokens[j + 1].start ) );
                     //xil_printf("KEY[%d]: velocity_max = %d\n\r", midi_note, instrument_info->key_information[midi_note].key_voice_information[0].velocity_max);
-                } else if( json_equal( (const char *)instrument_info_buffer, &tokens[j], SAMPLE_PATH_TOKEN_STR ) ) {
+                } else if( l_json_equal( (const char *)instrument_info_buffer, &tokens[j], SAMPLE_PATH_TOKEN_STR ) ) {
                     current_voice->sample_present = 1;
-                    json_get_string( (const char *)instrument_info_buffer, &tokens[j + 1], (char *) current_voice->sample_path );
+                    l_json_get_string( (const char *)instrument_info_buffer, &tokens[j + 1], (char *) current_voice->sample_path );
                     xil_printf("KEY[%d]: sample_path = %s\n\r", midi_note, current_voice->sample_path);
                 }
             }
@@ -390,7 +400,7 @@ uint32_t extract_sample_paths( uint32_t sample_start_token_index, uint32_t numbe
 
 // This function will decode the JSON file containing the
 // instrument information and will populate the instrument data structures
-uint32_t decode_instrument_information( uint8_t *instrument_info_buffer, INSTRUMENT_INFORMATION_t *instrument_info ) {
+uint32_t ul_decode_instrument_information( uint8_t *instrument_info_buffer, INSTRUMENT_INFORMATION_t *instrument_info ) {
     jsmn_parser parser;
     jsmntok_t tokens[1000];
     int parser_result;
@@ -419,8 +429,8 @@ uint32_t decode_instrument_information( uint8_t *instrument_info_buffer, INSTRUM
     // Step 4 - Extract the information
     // Step 4.1 - Get the instrument name
     for ( int i = 0; i < parser_result ; i++ ) {
-        if ( json_equal( (const char *) instrument_info_buffer, &tokens[i], INSTRUMENT_NAME_TOKEN_STR ) ) {
-            json_get_string((const char *) instrument_info_buffer, &tokens[i + 1], (char *) instrument_info->instrument_name );
+        if ( l_json_equal( (const char *) instrument_info_buffer, &tokens[i], INSTRUMENT_NAME_TOKEN_STR ) ) {
+            l_json_get_string((const char *) instrument_info_buffer, &tokens[i + 1], (char *) instrument_info->instrument_name );
             xil_printf("Instrument Name: %s", instrument_info->instrument_name );
             xil_printf("\n\r");
             break;
@@ -429,7 +439,7 @@ uint32_t decode_instrument_information( uint8_t *instrument_info_buffer, INSTRUM
 
     // Step 4.2 - Extract the sample paths
     for ( int i = 0; i < parser_result ; i++ ) {
-        if ( json_equal( (const char *) instrument_info_buffer, &tokens[i], INSTRUMENT_SAMPLES_TOKEN_STR ) ) {
+        if ( l_json_equal( (const char *) instrument_info_buffer, &tokens[i], INSTRUMENT_SAMPLES_TOKEN_STR ) ) {
             number_of_samples        = (uint32_t) tokens[i + 1].size;
             sample_start_token_index = i + 2;
             xil_printf("Number of samples: %d\n\r", number_of_samples );
@@ -442,7 +452,7 @@ uint32_t decode_instrument_information( uint8_t *instrument_info_buffer, INSTRUM
 }
 
 // This function will extract the information based on the canonical wave format
-uint32_t get_riff_information( uint8_t *sample_buffer, size_t sample_size, SAMPLE_FORMAT_t *riff_information ) {
+uint32_t ul_get_riff_information( uint8_t *sample_buffer, size_t sample_size, SAMPLE_FORMAT_t *riff_information ) {
 
     WAVE_FORMAT_t     wave_format_data;
     WAVE_BASE_CHUNK_t current_chunk;
@@ -532,7 +542,7 @@ uint32_t get_riff_information( uint8_t *sample_buffer, size_t sample_size, SAMPL
 
 // This function realigns the 16-bit audio data so that it can be properly accessed
 // through DMA without complex HW implementations
-uint32_t realign_audio_data( KEY_VOICE_INFORMATION_t *voice_information ) {
+uint32_t ul_realign_audio_data( KEY_VOICE_INFORMATION_t *voice_information ) {
 
     uint8_t *aligned_buffer_ptr = NULL;
     uint8_t *temp_data_buffer   = NULL;
@@ -577,7 +587,7 @@ uint32_t realign_audio_data( KEY_VOICE_INFORMATION_t *voice_information ) {
 
 // This function populates the data structure that is going to be read via DMA
 // by the PL to get the sample information
-uint32_t load_sample_information( INSTRUMENT_INFORMATION_t *instrument_information ) {
+uint32_t ul_load_sample_information( INSTRUMENT_INFORMATION_t *instrument_information ) {
     int key        = 0;
     int vel_range  = 0;
     uint32_t error = 0;
@@ -598,7 +608,7 @@ uint32_t load_sample_information( INSTRUMENT_INFORMATION_t *instrument_informati
             current_voice = current_key->key_voice_information[vel_range];
 
             if ( instrument_information->key_information[key]->key_voice_information[vel_range]->sample_present != 0 ) {
-                error = get_riff_information(
+                error = ul_get_riff_information(
                                                 current_voice->sample_buffer,
                                                 current_voice->sample_size,
                                                 &current_voice->sample_format
@@ -609,7 +619,7 @@ uint32_t load_sample_information( INSTRUMENT_INFORMATION_t *instrument_informati
                     return error;
                 }
 
-                error = realign_audio_data( current_voice );
+                error = ul_realign_audio_data( current_voice );
 
             }
         }
