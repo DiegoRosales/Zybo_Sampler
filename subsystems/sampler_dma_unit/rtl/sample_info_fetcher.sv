@@ -251,7 +251,7 @@ assign next_bram_addr     = sample_registers_pre[3][BRAM_ADDR_WIDTH - 1 : 0]; //
 
 // Get the current control and status bits
 assign curr_sample_valid       = control_and_status[0];
-assign curr_sample_last        = control_and_status[1];
+assign curr_sample_last        = control_and_status[1]; // Last slot
 assign curr_sample_overflow    = control_and_status[7];
 
 

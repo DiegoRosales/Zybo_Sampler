@@ -83,7 +83,7 @@ assign dma_sample_req_valid = fsm_curr_st_FSM_ST_SEND_DMA_REQ;
 
 // To the sample receiver 
 assign last_request_sent = ( fsm_curr_st_FSM_ST_WAIT_FOR_REQ_DONE && dma_sample_req_done && sample_last ) | ( fsm_curr_st_FSM_ST_ANALYZE_INFO && sample_overflow && sample_last );
-assign last_request_id   = sample_id;
+assign last_request_id   = last_request_id_reg;
 
 // Current state assignments //
 
