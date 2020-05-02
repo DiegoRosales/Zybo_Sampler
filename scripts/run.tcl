@@ -228,6 +228,10 @@ if {$stage_error == 1} {
 
             ## Export the HW Platform for the Vitis Workspace
             write_hw_platform -fixed -force  -include_bit -file ${workspace_project_path}/${platform_project_name}.xsa
+            if {[get_cells -quiet -filter {REF_NAME =~ dbg_hub}] != {}} {
+                puts "Writing debug probes"
+                write_debug_probes -force ${workspace_project_path}/${platform_project_name}.ltx
+            }
 
             if {$parsed_args(debug) == 0} {
                 close_project
