@@ -38,7 +38,7 @@
 #define MAX_PATH_LEN                 100
 // WAVE Tokens
 #define RIFF_ASCII_TOKEN   0x46464952 // ASCII String == "RIFF"
-#define FORMAT_ASCII_TOKEN 0x45564157 // ASCII String == "WAVE"
+#define WAVE_ASCII_TOKEN   0x45564157 // ASCII String == "WAVE"
 #define FMT_ASCII_TOKEN    0x20746d66 // ASCII String == "fmt "
 #define DATA_ASCII_TOKEN   0x61746164 // ASCII String == "data"
 
@@ -49,15 +49,15 @@
 typedef struct {
     uint32_t ChunkID;   // Big Endian
     uint32_t ChunkSize; // Little Endian
-} WAVE_BASE_CHUNK_t;
+} RIFF_BASE_CHUNK_t;
 
 typedef struct {
-    WAVE_BASE_CHUNK_t BaseChunk; // ID ("RIFF") and Size
-    uint32_t          Format;    // Contains the letters "WAVE" (0x57415645 big-endian form)
+    RIFF_BASE_CHUNK_t BaseChunk; // ID ("RIFF") and Size
+    uint32_t          FormType;  // Contains the letters "WAVE" (0x57415645 big-endian form)
 } RIFF_DESCRIPTOR_CHUNK_t;
 
 typedef struct {
-    WAVE_BASE_CHUNK_t BaseChunk;     // ID ("fmt ") and Size
+    RIFF_BASE_CHUNK_t BaseChunk;     // ID ("fmt ") and Size
     uint16_t          AudioFormat;   // (little endian) | PCM = 1 (i.e. Linear quantization). Values other than 1 indicate some form of compression
     uint16_t          NumChannels;   // (little endian) | Mono = 1, Stereo = 2, etc.
     uint32_t          SampleRate;    // (little endian) | 8000, 44100, etc.
@@ -75,14 +75,14 @@ typedef struct {
 } WAVE_FORMAT_t;
 
 typedef struct {
-    uint16_t audio_format;       // PCM = 1 (i.e. Linear quantization). Values other than 1 indicate some form of compression
-    uint16_t number_of_channels; // Mono = 1, Stereo = 2, etc.
-    uint32_t sample_rate;        // 8000, 44100, etc.
-    uint32_t byte_rate;          // == SampleRate * NumChannels * BitsPerSample/8
-    uint16_t block_align;        // == NumChannels * BitsPerSample/8. The number of bytes for one sample including all channels. I wonder what happens when this number isn't an integer?
-    uint16_t bits_per_sample;    // 8 bits = 8, 16 bits = 16, etc.
-    uint32_t audio_data_size;    // Size of the actual audio data
-    uint8_t *data_start_ptr;     // Memory location where the audio data starts
+    uint16_t       audio_format;       // PCM = 1 (i.e. Linear quantization). Values other than 1 indicate some form of compression
+    uint16_t       number_of_channels; // Mono = 1, Stereo = 2, etc.
+    uint32_t       sample_rate;        // 8000, 44100, etc.
+    uint32_t       byte_rate;          // == SampleRate * NumChannels * BitsPerSample/8
+    uint16_t       block_align;        // == NumChannels * BitsPerSample/8. The number of bytes for one sample including all channels. I wonder what happens when this number isn't an integer?
+    uint16_t       bits_per_sample;    // 8 bits = 8, 16 bits = 16, etc.
+    uint32_t       audio_data_size;    // Size of the actual audio data
+    uint8_t       *data_start_ptr;     // Memory location where the audio data starts
 } SAMPLE_FORMAT_t; // Note. Raw data is little endian
 
 ////////////////////////////////////////////////////////////
@@ -94,11 +94,8 @@ typedef struct {
     uint8_t          current_slot;                       // Current slot
     uint8_t          velocity_min;                       // Lower end of the velocity curve
     uint8_t          velocity_max;                       // Higher end of the velocity curve
-    uint32_t         sample_addr;                        // Address of the sample that matches the Key+Velocity
-    size_t           sample_size;                        // Size of the sample that matches the Key+Velocity
     uint8_t          sample_present;                     // A sample is present
     uint8_t          sample_path[MAX_CHAR_IN_TOKEN_STR]; // Path of the sample relative to the information file
-    uint8_t         *sample_buffer;                      // Pointer to the sample buffer where the sample will be loaded
     SAMPLE_FORMAT_t  sample_format;                      // The sample format
 } KEY_VOICE_INFORMATION_t;
 

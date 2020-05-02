@@ -171,7 +171,7 @@ size_t load_file_to_memory_malloc( char *file_name, uint8_t ** buffer, size_t ma
     // Step 1 - Open the file
     //xil_printf("[INFO] - Opening the file: \"%s\"\n\r", file_name);
     pxFile = ff_fopen( file_name, "r" );
-    xil_printf("Loading file %s ...\n\r", file_name);
+    //xil_printf("Loading file %s ...\n\r", file_name);
     // Throw an error if the file cannot be opened
     if ( pxFile == NULL ) {
         xil_printf("[ERROR] - File %s could not be opened!\n\r", file_name);
@@ -208,6 +208,11 @@ size_t load_file_to_memory_malloc( char *file_name, uint8_t ** buffer, size_t ma
     *buffer = new_buffer;
 
     return file_size;
+}
+
+// This function will unload a file in memory
+void unload_file_from_memory( uint8_t * buffer ) {
+	vPortFree( buffer );
 }
 
 // This function registers all the CLI applications

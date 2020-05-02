@@ -62,6 +62,72 @@ static uint32_t                  prv_ulDecodeJSON_SamplePaths( uint32_t sample_s
 static uint8_t                   prv_usGetJSON_MIDINoteNumber( jsmntok_t *tok, uint8_t *instrument_info_buffer );
 static uint32_t                  prv_ulRealignAudioData( KEY_VOICE_INFORMATION_t *voice_information );
 static uint32_t                  prv_ulStr2Int( const char *input_string, uint32_t input_string_length );
+static uint32_t                  prv_ulDecodeJSON_PatchInfo( uint8_t *json_patch_information_buffer, PATCH_DESCRIPTOR_t *patch_descriptor );
+static uint32_t                  prv_ulLoadSamplesFromDescriptor( PATCH_DESCRIPTOR_t *patch_descriptor, const char *json_file_root_dir );
+
+// This function will load a patch given a JSON patch information file
+PATCH_DESCRIPTOR_t * ulLoadPatchFromJSON( const char * json_file_dirname, const char * json_file_fullpath) {
+
+    PATCH_DESCRIPTOR_t *patch_descriptor = NULL;
+    uint32_t error = 0;
+
+    // Step 1 - Open the json file containing the instrument information
+    xil_printf("Step 1 - Load the JSON File\n\r");
+    load_file_to_memory( json_file_fullpath, json_patch_information_buffer, (size_t) MAX_INST_FILE_SIZE );
+
+    // Step 2 - Initialize the instrument information
+    xil_printf("Step 2 - Initializing the instrument information\n\r");
+
+    if ( patch_descriptor == NULL ){
+        patch_descriptor = prv_xInitPatchDescriptor();
+        // Check if the initialization succeeded
+        if ( patch_descriptor == NULL ){
+            xil_printf("[ERROR] - Instrument information could not be initialized!!\n\r");
+            return NULL;
+        } else {
+            xil_printf("[INFO] - Patch descriptor initialized on address 0x%x\n\r", patch_descriptor);
+        }
+    } else {
+        xil_printf("[INFO] - Instrument information was already initialized at 0x%x\n\r", patch_descriptor);
+        patch_descriptor->instrument_loaded = 0; // Unset in case it was already loaded
+    }
+
+    xil_printf("Step 2 - Done!\n\r");
+
+    // Step 3 - Decode the JSON file using JSMN
+    xil_printf("Step 3 - Decoding the patch information...\n\r");
+    error = prv_ulDecodeJSON_PatchInfo( json_patch_information_buffer, patch_descriptor );
+    if ( error ) {
+        xil_printf("[ERROR] - There was a problem when decoding the JSON Patch information!!\n\r");
+        return NULL;
+    }
+    xil_printf("Step 3 - Done!\n\r");
+
+    // Step 4 - Load all the samples into memory
+    // Initialize the variables
+    xil_printf("Step 4 - Loading samples into memory...\n\r");
+    error = prv_ulLoadSamplesFromDescriptor( patch_descriptor, json_file_dirname );
+    if ( error ) {
+        xil_printf("[ERROR] - There was a problem when loading the samples into memory!!\n\r");
+        return NULL;
+    }
+    patch_descriptor->instrument_loaded = 1;
+    xil_printf("Step 4 - Done!\n\r");
+
+    if(patch_descriptor == NULL) {
+        xil_printf("[ERROR] - Somehow the patch descriptor lost its information. patch_descriptor == NULL\n\r");
+        return NULL;
+    } else {
+        xil_printf("[INFO] - patch_descriptor == 0x%x\n\r", patch_descriptor);
+    }
+
+    xil_printf("------------\n\r");
+    xil_printf("Instrument Succesfully Loaded!\n\r");
+    xil_printf("------------\n\r\n\r");
+
+    return patch_descriptor;
+}
+
 
 // This function converts an string in int or hex to a uint32_t
 static uint32_t prv_ulStr2Int( const char *input_string, uint32_t input_string_length ) {
@@ -79,12 +145,10 @@ static uint32_t prv_ulStr2Int( const char *input_string, uint32_t input_string_l
     return output_int;
 }
 
-
-
 // This function will initialize the data structure of a patch
-PATCH_DESCRIPTOR_t* prv_xInitPatchDescriptor() {
+PATCH_DESCRIPTOR_t * prv_xInitPatchDescriptor() {
 
-    PATCH_DESCRIPTOR_t* patch_descriptor = sampler_malloc( sizeof(PATCH_DESCRIPTOR_t) );
+    PATCH_DESCRIPTOR_t * patch_descriptor = sampler_malloc( sizeof(PATCH_DESCRIPTOR_t) );
     if ( patch_descriptor == NULL ) {
         xil_printf("[ERROR] - Memory allocation for the instrument info failed. Requested size = %d bytes\n\r", sizeof(PATCH_DESCRIPTOR_t));
         return NULL;
@@ -130,68 +194,9 @@ KEY_INFORMATION_t * prv_xInitKeyInformation( ) {
     return key_information;
 }
 
-
-// This function will load a patch given a JSON patch information file
-uint32_t ulLoadPatchFromJSON( const char * json_file_dirname, const char * json_file_fullpath, PATCH_DESCRIPTOR_t * patch_descriptor ) {
-
-    
-    uint32_t error = 0;
-
-    // Step 1 - Open the json file containing the instrument information
-    xil_printf("Step 1 - Load the JSON File\n\r");
-    load_file_to_memory( json_file_fullpath, json_patch_information_buffer, (size_t) MAX_INST_FILE_SIZE );
-
-    // Step 2 - Initialize the instrument information
-    xil_printf("Step 2 - Initializing the instrument information\n\r");
-
-    if ( patch_descriptor == NULL ){
-        patch_descriptor = prv_xInitPatchDescriptor();
-        // Check if the initialization succeeded
-        if ( patch_descriptor == NULL ){
-            xil_printf("[ERROR] - Instrument information could not be initialized!!\n\r");
-            return 1;
-        }
-    } else {
-        xil_printf("[INFO] - Instrument information was already initialized at 0x%x\n\r", patch_descriptor);
-        patch_descriptor->instrument_loaded = 0; // Unset in case it was already loaded
-    }
-
-    xil_printf("Step 2 - Done!\n\r");
-
-    // Step 3 - Decode the JSON file using JSMN
-    xil_printf("Step 3 - Decoding the instrument information...\n\r");
-    ulDecodeJSON_PatchInfo( json_patch_information_buffer, patch_descriptor );
-    xil_printf("Step 3 - Done!\n\r");
-
-    // Step 4 - Load all the samples into memory
-    // Initialize the variables
-    xil_printf("Step 4 - Loading samples into memory...\n\r");
-    error = ulLoadSamplesFromDescriptor( patch_descriptor, json_file_dirname );
-    if ( error ) {
-        xil_printf("[ERROR] - There was a problem when loading the samples into memory!!\n\r");
-        return 1;
-    }
-    xil_printf("---\n\r");
-    xil_printf("[INFO] - Loaded %d keys\n\r", patch_descriptor->total_keys);
-    xil_printf("[INFO] - Total Memory Used = %d bytes\n\r", patch_descriptor->total_size);
-    xil_printf("Step 4 - Done!\n\r");
-
-    // Step 5 - Load the DMA data structures
-    xil_printf("Step 5 - Populating the sampler DMA data structures...\n\r");
-    ulConfigDMADataStructure( patch_descriptor );
-    patch_descriptor->instrument_loaded = 1;
-    xil_printf("Step 5 - Done!\n\r");
-
-    xil_printf("------------\n\r");
-    xil_printf("Instrument Succesfully Loaded!\n\r");
-    xil_printf("------------\n\r\n\r");
-
-    return 0;
-}
-
 // This function will decode the JSON file containing the
 // instrument information and will populate the instrument data structures
-uint32_t ulDecodeJSON_PatchInfo( uint8_t *json_patch_information_buffer, PATCH_DESCRIPTOR_t *patch_descriptor ) {
+uint32_t prv_ulDecodeJSON_PatchInfo( uint8_t *json_patch_information_buffer, PATCH_DESCRIPTOR_t *patch_descriptor ) {
     // JSMN Variables
     jsmn_parser parser;
     jsmntok_t   tokens[1000];
@@ -200,6 +205,12 @@ uint32_t ulDecodeJSON_PatchInfo( uint8_t *json_patch_information_buffer, PATCH_D
     // Patch Variables
     uint32_t number_of_samples;
     uint32_t sample_start_token_index;
+
+    // Sanity check
+    if( patch_descriptor == NULL ) {
+        xil_printf("[ERROR] - JSON Decoder failed. patch_descriptor == NULL\n\r");
+        return 1;
+    }
 
     // Step 1 - Initialize the parser
     jsmn_init(&parser);
@@ -326,58 +337,22 @@ uint8_t prv_usGetJSON_MIDINoteNumber( jsmntok_t *tok, uint8_t *json_patch_inform
     return 0;
 }
 
-// This function populates the data structure that is going to be read via DMA
-// by the PL to get the sample information
-uint32_t ulConfigDMADataStructure( PATCH_DESCRIPTOR_t *patch_descriptor ) {
-    int key        = 0;
-    int vel_range  = 0;
-    uint32_t error = 0;
-    KEY_INFORMATION_t       *current_key   = NULL;
-    KEY_VOICE_INFORMATION_t *current_voice = NULL;
-
-
-    for (key = 0; key < MAX_NUM_OF_KEYS; key++) {
-
-        if ( patch_descriptor->key_information[key] == NULL ) continue;
-
-        current_key = patch_descriptor->key_information[key];
-
-        for (vel_range = 0; vel_range < 1; vel_range++) {
-
-            if ( current_key->key_voice_information[vel_range] == NULL ) continue;
-
-            current_voice = current_key->key_voice_information[vel_range];
-
-            if ( patch_descriptor->key_information[key]->key_voice_information[vel_range]->sample_present != 0 ) {
-                error = ulDecodeRIFFInformation(
-                                                current_voice->sample_buffer,
-                                                current_voice->sample_size,
-                                                &current_voice->sample_format
-                                            );
-                current_voice->current_status = 0;
-                current_voice->current_slot   = 0;
-                if ( error != 0 ) {
-                    return error;
-                }
-
-                error = prv_ulRealignAudioData( current_voice );
-
-            }
-        }
-    }
-
-    return error;
-}
-
 // This function will load the samples of a descriptor into memory
-uint32_t ulLoadSamplesFromDescriptor( PATCH_DESCRIPTOR_t *patch_descriptor, const char *json_file_root_dir ) {
+uint32_t prv_ulLoadSamplesFromDescriptor( PATCH_DESCRIPTOR_t *patch_descriptor, const char *json_file_root_dir ) {
 
     // Initialize the variables
-    uint32_t key        = 0;
-    uint32_t vel_range  = 0;    
-    uint32_t file_size  = 0;
+    uint32_t  key              = 0;
+    uint32_t  vel_range        = 0;    
+    uint32_t  error            = 0;
+    uint8_t * riff_buffer      = NULL;
+    size_t    riff_buffer_size = 0;
+    char      full_path[MAX_PATH_LEN]; // Path to the sample
 
-    char     full_path[MAX_PATH_LEN]; // Path to the sample
+    // Sanity check
+    if (patch_descriptor == NULL) {
+        xil_printf("[ERROR] - Sample loader failed. patch_descriptor == NULL\n\r");
+        return 1;
+    }
 
     patch_descriptor->total_size = 0;
     patch_descriptor->total_keys = 0;
@@ -385,91 +360,113 @@ uint32_t ulLoadSamplesFromDescriptor( PATCH_DESCRIPTOR_t *patch_descriptor, cons
     KEY_INFORMATION_t       *current_key;
     KEY_VOICE_INFORMATION_t *current_voice;
 
+    // DMA Data Structure
+    SAMPLE_FORMAT_t         *current_sample_format;
+
     for (key = 0; key < MAX_NUM_OF_KEYS; key++) {
 
         current_key = patch_descriptor->key_information[key];
+        if ( current_key == NULL ) continue;
 
-        if ( current_key != NULL ) {
+        for (vel_range = 0; vel_range < 1; vel_range++) {
 
-            for (vel_range = 0; vel_range < 1; vel_range++) {
+            current_voice                 = current_key->key_voice_information[vel_range];
+            if ( (current_voice == NULL) || (current_voice->sample_present == 0) ) continue;
 
-                current_voice = current_key->key_voice_information[vel_range];
+            // Initialize status
+            current_voice->current_status = 0;
+            current_voice->current_slot   = 0;
+            current_sample_format         = &current_voice->sample_format;
 
-                if ( current_voice != NULL ) {
-                    if ( current_voice->sample_present != 0 ) {
+            // Copy the full path
+            memset( full_path, 0x00, MAX_PATH_LEN );
+            strcat( full_path, json_file_root_dir);
+            strcat( full_path, "/");
+            strcat( full_path, (const char *) current_voice->sample_path);
+            //xil_printf("[INFO] - [%d][%d] Loading Sample \"%s\"\n\r", key, vel_range, current_voice->sample_path );
+            xil_printf(".");
 
-                        // Copy the full path
-                        memset( full_path, 0x00, MAX_PATH_LEN );
-                        strcat( full_path, json_file_root_dir);
-                        strcat( full_path, "/");
-                        strcat( full_path, (const char *) current_voice->sample_path);
-
-                        current_voice->sample_buffer = NULL;
-                        //xil_printf("[INFO] - [%d][%d] Loading Sample \"%s\"\n\r", key, vel_range, current_voice->sample_path );
-                        xil_printf(".");
-                        file_size = load_file_to_memory_malloc( 
-                                                                full_path,
-                                                                &current_voice->sample_buffer,
-                                                                (size_t) MAX_SAMPLE_SIZE,
-                                                                sizeof(uint32_t) // Overhead to allow realignment
-                                                                );
-                        
-                        current_voice->sample_size = file_size;
-                        patch_descriptor->total_size += file_size;
-                        patch_descriptor->total_keys++;
-                        if ( current_voice->sample_buffer == NULL || file_size == 0 ) {
-                            xil_printf("\n\r");
-                            return 1;                          
-                        }
-                    }
-                }
+            // Load the RIFF File into memory
+            riff_buffer      = NULL;
+            riff_buffer_size = load_file_to_memory_malloc( 
+                                                            full_path,
+                                                            &riff_buffer,
+                                                            (size_t) MAX_SAMPLE_SIZE,
+                                                            sizeof(uint32_t) // Overhead to allow realignment
+                                                        );
+            if ( riff_buffer == NULL || riff_buffer_size == 0 ) {
+                xil_printf("[ERROR] - Failed loading the RIFF file into memory\n\r");
+                return 1;                          
             }
+            
+            patch_descriptor->total_size += riff_buffer_size;
+            patch_descriptor->total_keys++;
+
+            // Extract the RIFF information and configure the DMA data structures for the PL DMA functionality
+            vDecodeRIFFInformation( riff_buffer, riff_buffer_size, current_sample_format );
+            if ( (current_sample_format->audio_data_size == 0) || (current_sample_format->data_start_ptr == NULL)) {
+                xil_printf("[ERROR] - Failed decoding the RIFF audio data\n\r");
+                return error;
+            }
+            error = prv_ulRealignAudioData( current_voice );
+
+            if ( error != 0 ) {
+                xil_printf("[ERROR] - Failed realigning the RIFF audio data\n\r");
+                return error;
+            }
+            
+            // Release the memory for the next file
+            unload_file_from_memory( riff_buffer );
+            riff_buffer = NULL;
         }
     }
 
-    xil_printf("\n\r");
+    xil_printf("\n\r---\n\r");
+    xil_printf("[INFO] - Loaded %d keys\n\r", patch_descriptor->total_keys);
+    xil_printf("[INFO] - Total Memory Used = %d bytes\n\r", patch_descriptor->total_size);
 
     return 0;
 }
 
 
-// This function realigns the 16-bit audio data so that it can be properly accessed
-// through DMA without complex HW implementations
+// This function realigns the 16-bit audio data so that it can be properly accessed through DMA without complex HW implementations
+// To do this, the data needs to start in an address that is multiple of 4 (ej. 0xffff0000, 0xffff0004, 0xffff0008, 0xffff000c, etc.)
 uint32_t prv_ulRealignAudioData( KEY_VOICE_INFORMATION_t *voice_information ) {
 
     uint8_t *aligned_buffer_ptr = NULL;
-    uint8_t *temp_data_buffer   = NULL;
+    //uint8_t *temp_data_buffer   = NULL;
     
     // Sanity check
     if ( voice_information == NULL ) return 1;
-    if ( voice_information->sample_buffer == NULL ) return 1;
     if ( voice_information->sample_format.data_start_ptr == NULL ) return 1;
     if ( voice_information->sample_format.audio_data_size == 0 ) return 1;
 
     // Check if by chance the data is already aligned
-    if ( ( (int) voice_information->sample_format.data_start_ptr % (int) 4) == 0 ) return 0;
+    //if ( ( (int) voice_information->sample_format.data_start_ptr % (int) 4) == 0 ) return 0;
 
     // If data needs realignment, copy the unaligned data to a temp memory location
     // and then copy back the data on the appropriate offset. Finally, release the memory
 
     // Step 1 - Malloc the required temoporary space
-    aligned_buffer_ptr = voice_information->sample_format.data_start_ptr + ( (int) 4 - ( (int) voice_information->sample_format.data_start_ptr % (int) 4 ) );
+    //aligned_buffer_ptr = voice_information->sample_format.data_start_ptr + ( (int) 4 - ( (int) voice_information->sample_format.data_start_ptr % (int) 4 ) );
+    aligned_buffer_ptr = sampler_malloc( (size_t) voice_information->sample_format.audio_data_size );
 
-    temp_data_buffer = sampler_malloc( (size_t) voice_information->sample_format.audio_data_size );
+    //temp_data_buffer = sampler_malloc( (size_t) voice_information->sample_format.audio_data_size );
     // Fail if there's not enugh space for malloc
-    if ( temp_data_buffer == NULL ) {
+    if ( aligned_buffer_ptr == NULL ) {
         xil_printf( "[ERROR] - Malloc for the temporary realignment buffer failed! Requested size = %d bytes", voice_information->sample_format.audio_data_size );
         return 1;
     }
 
     // Step 2 - Copy the contents
-    memcpy( temp_data_buffer, voice_information->sample_format.data_start_ptr, (size_t) voice_information->sample_format.audio_data_size );
+    //memcpy( temp_data_buffer, voice_information->sample_format.data_start_ptr, (size_t) voice_information->sample_format.audio_data_size );
+    memcpy( aligned_buffer_ptr, voice_information->sample_format.data_start_ptr, (size_t) voice_information->sample_format.audio_data_size );
 
     // Step 3 - Copy back the contents
-    memcpy( aligned_buffer_ptr, temp_data_buffer, (size_t) voice_information->sample_format.audio_data_size );
+    //memcpy( aligned_buffer_ptr, temp_data_buffer, (size_t) voice_information->sample_format.audio_data_size );
 
     // Step 4 - Free the temporary memory
-    sampler_free( temp_data_buffer );
+    //sampler_free( temp_data_buffer );
 
     // Step 5 - Assign the new pointer
     voice_information->sample_format.data_start_ptr = aligned_buffer_ptr;

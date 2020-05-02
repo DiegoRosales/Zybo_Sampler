@@ -3,6 +3,6 @@
 
 #include "sampler_cfg.h"
 
-uint32_t ulDecodeRIFFInformation( uint8_t *sample_buffer, size_t sample_size, SAMPLE_FORMAT_t *riff_information );
+void vDecodeRIFFInformation( uint8_t *riff_buffer, size_t riff_buffer_size, SAMPLE_FORMAT_t *sample_information );
 
 #endif

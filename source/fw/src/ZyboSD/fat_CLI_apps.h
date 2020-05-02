@@ -8,7 +8,7 @@
 
 size_t load_file_to_memory( const char * file_name, uint8_t *buffer, size_t buffer_len );
 size_t load_file_to_memory_malloc( char *file_name, uint8_t ** buffer, size_t max_buffer_len, size_t overhead );
-
-void register_fat_cli_commands( void );
+void   unload_file_from_memory( uint8_t * buffer );
+void   register_fat_cli_commands( void );
 
 #endif

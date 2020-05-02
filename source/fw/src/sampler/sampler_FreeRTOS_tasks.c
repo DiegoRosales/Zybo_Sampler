@@ -40,9 +40,6 @@ static void serial_midi_listener_task( void *pvParameters );
 
 void create_sampler_tasks ( void ) {
 
-    // Initializes the instrument information data structure
-    //patch_descriptor = x_init_instrument_information(88, 1);
-
     /* Create the task, storing the handle. */
     xTaskCreate(
                     load_instrument_task,                   /* Function that implements the task. */
@@ -254,10 +251,11 @@ static void load_instrument_task( void *pvParameters ) {
                 xil_printf("Loading instrument \"%s\"\n\r", path_handler->file_path);
 
                 // Load the samples
-                return_value = ulLoadPatchFromJSON( path_handler->file_dir, path_handler->file_path, patch_descriptor );
+                patch_descriptor = ulLoadPatchFromJSON( path_handler->file_dir, path_handler->file_path );
 
-                if (return_value != 0) {
-                    xil_printf( "[ERROR] - Patch Loader exited with Status 0x%x", return_value );
+                if (patch_descriptor == NULL) {
+                    xil_printf( "[ERROR] - Patch Loader returned patch_descriptor == NULL (0x%x)\n\r", patch_descriptor );
+                    return_value = 1;
                 }
 
                 xQueueSend(path_handler->return_handle, &return_value, 1000);
