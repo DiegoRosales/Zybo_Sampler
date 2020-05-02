@@ -307,7 +307,7 @@ FAT type. */
 Note that the value of this define is directly related to the maximum stack
 use of the +FAT library. In some API's, a character buffer of size
 'ffconfigMAX_FILENAME' will be declared on stack. */
-#define	ffconfigMAX_FILENAME 250
+#define	ffconfigMAX_FILENAME 256
 
 /* Ensure the Zynq SDIO driver uses and interrupt, rather than polled mode. */
 #define ffconfigSDIO_DRIVER_USES_INTERRUPT 1

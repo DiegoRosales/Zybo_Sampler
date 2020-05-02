@@ -19,6 +19,7 @@
 #include "ff_stdio.h"
 #include "ff_ramdisk.h"
 #include "ff_sddisk.h"
+#include "ff_file.h"
 
 // Other
 #include "fat_CLI_apps.h"
@@ -29,7 +30,7 @@ extern FF_Disk_t *pxSDDisk;
 //////////////////////////////////////////////////////////
 static BaseType_t sd_initialization_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
 static void       prvCreateFileInfoString( char *pcBuffer, FF_FindData_t *pxFindStruct );
-
+static void       file_to_buffer( FF_FILE *pxFile, uint8_t *buffer, size_t buffer_len );
 /////////////
 // Commands
 /////////////
@@ -121,7 +122,7 @@ void file_to_buffer( FF_FILE *pxFile, uint8_t *buffer, size_t buffer_len ) {
 }
 
 // This functions loads a file into memory. You need to provide the full file path
-size_t load_file_to_memory( char *file_name, uint8_t *buffer, size_t buffer_len ) {
+size_t load_file_to_memory( const char *file_name, uint8_t *buffer, size_t buffer_len ) {
     FF_FILE *pxFile = NULL;
     size_t file_size;
 

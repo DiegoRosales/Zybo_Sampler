@@ -158,7 +158,7 @@ static const CLI_Command_Definition_t load_sine_command_definition =
 // This function registers all the CLI applications
 void register_sampler_cli_commands( void ) {
 
-    my_filename_queue_handler       = xQueueCreate(1, sizeof(file_path_t));
+    my_filename_queue_handler       = xQueueCreate(1, sizeof(file_path_handler_t));
     my_return_queue_handler         = xQueueCreate(1, sizeof(uint32_t));
     my_key_parameters_queue_handler = xQueueCreate(1, sizeof(uint32_t));
     FreeRTOS_CLIRegisterCommand( &play_key_command_definition );
@@ -375,10 +375,10 @@ static BaseType_t load_instrument_command( char *pcWriteBuffer, size_t xWriteBuf
     BaseType_t   xParameterStringLength;
 
     // Variables for the instrument loader task
-    TaskHandle_t task_handle = xTaskGetHandle( LOAD_INSTRUMENT_TASK_NAME );
-    file_path_t  my_file_path;
-    uint32_t     return_value = 1;
-    uint32_t     cwd_path_len = 0;
+    TaskHandle_t         task_handle = xTaskGetHandle( LOAD_INSTRUMENT_TASK_NAME );
+    file_path_handler_t  my_file_path_handler;
+    uint32_t             return_value = 1;
+    uint32_t             cwd_path_len = 0;
 
     /* The file has not been opened yet.  Find the file name. */
     pcParameter = FreeRTOS_CLIGetParameter
@@ -394,45 +394,45 @@ static BaseType_t load_instrument_command( char *pcWriteBuffer, size_t xWriteBuf
     configASSERT( ! (xParameterStringLength > MAX_PATH_LEN) );
 
     // Initialize the path
-    memset( my_file_path.file_path, 0x00, MAX_PATH_LEN );
-    memset( my_file_path.file_dir, 0x00, MAX_PATH_LEN );
+    memset( my_file_path_handler.file_path, 0x00, MAX_PATH_LEN );
+    memset( my_file_path_handler.file_dir, 0x00, MAX_PATH_LEN );
     // Copy the Path
     // 1 - Get the current directory
-    ff_getcwd( my_file_path.file_dir, MAX_PATH_LEN );
-    xil_printf( "CWD: %s\n\r", my_file_path.file_dir);
+    ff_getcwd( my_file_path_handler.file_dir, MAX_PATH_LEN );
+    xil_printf( "CWD: %s\n\r", my_file_path_handler.file_dir);
     // Sanity check - Check if the path is less than the maximum allowable
-    cwd_path_len = strlen( my_file_path.file_dir );
+    cwd_path_len = strlen( my_file_path_handler.file_dir );
     configASSERT( ! ( (cwd_path_len + xParameterStringLength + 1) > MAX_PATH_LEN) );
 
     // 2 - Assemble the full path
     // If you're in the root, append the path as is
-    if ( strcmp( my_file_path.file_dir, (const char *)"/" ) == 0 ) {
+    if ( strcmp( my_file_path_handler.file_dir, (const char *)"/" ) == 0 ) {
        // If the path is a full path (i.e. referenced from the root), copy as is
         if ( pcParameter[0] == '/' ) {
-            sprintf(my_file_path.file_path, "%s", pcParameter);
+            sprintf(my_file_path_handler.file_path, "%s", pcParameter);
         } else { // If it's a relative directory, prepend the root slash
-            strcat( my_file_path.file_path, "/");
+            strcat( my_file_path_handler.file_path, "/");
         }
-        ff_get_file_dir( pcParameter, my_file_path.file_dir );
-        //strncat( my_file_path.file_path, my_file_path.file_dir, STRLEN( my_file_path.file_dir ) );
-        strncat( my_file_path.file_path, pcParameter, xParameterStringLength ); 
+        ff_get_file_dir( pcParameter, my_file_path_handler.file_dir );
+        //strncat( my_file_path_handler.file_path, my_file_path_handler.file_dir, STRLEN( my_file_path_handler.file_dir ) );
+        strncat( my_file_path_handler.file_path, pcParameter, xParameterStringLength ); 
     } else {
         // If the path is a full path (i.e. referenced from the root), copy as is
         if ( pcParameter[0] == '/' ) {
-            sprintf(my_file_path.file_path, "%s", pcParameter);
+            sprintf(my_file_path_handler.file_path, "%s", pcParameter);
         } else { // If it's a relative path, prepend the current directory
-            strncat( my_file_path.file_path, my_file_path.file_dir, cwd_path_len);
-            strcat( my_file_path.file_path, "/");
-            strncat( my_file_path.file_path, pcParameter, xParameterStringLength );
+            strncat( my_file_path_handler.file_path, my_file_path_handler.file_dir, cwd_path_len);
+            strcat( my_file_path_handler.file_path, "/");
+            strncat( my_file_path_handler.file_path, pcParameter, xParameterStringLength );
         }
     }
 
-    xil_printf( "File Path: %s\n\r", my_file_path.file_path);
+    xil_printf( "File Path: %s\n\r", my_file_path_handler.file_path);
 
-    my_file_path.return_handle = my_return_queue_handler;
+    my_file_path_handler.return_handle = my_return_queue_handler;
 
     // Send the filename to the task
-    xQueueSend(my_filename_queue_handler, &my_file_path , 1000);
+    xQueueSend(my_filename_queue_handler, &my_file_path_handler , 1000);
 
     xTaskNotify(    task_handle,
                     (uint32_t) my_filename_queue_handler,
