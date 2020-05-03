@@ -71,6 +71,7 @@ uint16_t get_available_voice_slot( void ) {
     if( current_slot == 0xffff ) return current_slot;
 
     next_slot = sampler_voices[ previous_slot ].next_voice_slot;
+    
     // Step 4 - Insert the voice slot into the link
     sampler_voices[ current_slot ].previous_voice_slot = previous_slot;
     sampler_voices[ current_slot ].next_voice_slot     = next_slot;
@@ -78,7 +79,7 @@ uint16_t get_available_voice_slot( void ) {
     sampler_voices[ previous_slot ].slot_is_last       = 0;
     sampler_voices[ next_slot ].previous_voice_slot    = current_slot; // The previous slot of the first item is the last item
 
-    // Step 4 - Enable the slot
+    // Step 5 - Enable the slot
     sampler_voices[ current_slot ].slot_is_last    = 1;
     sampler_voices[ current_slot ].voice_is_active = 1;
     last_voice_slot                                = current_slot;

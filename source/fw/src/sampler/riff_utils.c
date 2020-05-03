@@ -16,35 +16,34 @@
 #include "sampler_cfg.h"
 #include "riff_utils.h"
 
-// Read the first RIFF chunk
-static void prv_vReadRIFFChunck( uint8_t * buffer, RIFF_DESCRIPTOR_CHUNK_t * chunk ) {
-    memcpy( chunk, buffer, sizeof( RIFF_DESCRIPTOR_CHUNK_t ) );
-}
-
-
 // Find the audio data of a WAVE chunk
 static void prv_vFindWAVEData( uint8_t * buffer, uint8_t * buffer_end, SAMPLE_FORMAT_t *sample_information ) {
 
-    RIFF_BASE_CHUNK_t  current_chunk;
-    uint8_t          * current_buffer_idx = buffer;
+    RIFF_BASE_CHUNK_t * current_chunk;
+    uint8_t           * current_buffer_idx = buffer;
+
+    // Initialize
+    sample_information->data_start_ptr  = NULL; // Initialize to 0
+    sample_information->audio_data_size = 0;    // Initialize to 0
 
     // Step 1 - Get the Chunk size
-    memcpy( &current_chunk, current_buffer_idx, sizeof( RIFF_BASE_CHUNK_t ) );
+    current_chunk = cmdGET_RIFF_BASE_CHUNK(buffer);
 
     // Check the entire file for the "DATA" ID token
     while( current_buffer_idx <= buffer_end ){
 
         // If the token is found, copy the pointers and information
-        if( current_chunk.ChunkID == DATA_ASCII_TOKEN ) {
-            sample_information->audio_data_size = current_chunk.ChunkSize;
+        if( current_chunk->ChunkID == DATA_ASCII_TOKEN ) {
+            sample_information->audio_data_size = current_chunk->ChunkSize;
             sample_information->data_start_ptr  = current_buffer_idx + sizeof( RIFF_BASE_CHUNK_t );
             break;
         }
         // If the token is not found, go to the next chunk
         else {
-            current_buffer_idx += current_chunk.ChunkSize + sizeof( RIFF_BASE_CHUNK_t );
+            current_buffer_idx += current_chunk->ChunkSize + sizeof( RIFF_BASE_CHUNK_t );
             if( current_buffer_idx <= buffer_end ){
-                memcpy( &current_chunk, current_buffer_idx, sizeof( RIFF_BASE_CHUNK_t ) );
+                current_chunk = cmdGET_RIFF_BASE_CHUNK(current_buffer_idx);
+                //memcpy( &current_chunk, current_buffer_idx, sizeof( RIFF_BASE_CHUNK_t ) );
             }
         }
     }
@@ -54,7 +53,7 @@ static void prv_vFindWAVEData( uint8_t * buffer, uint8_t * buffer_end, SAMPLE_FO
 void vDecodeRIFFInformation( uint8_t *riff_buffer, size_t riff_buffer_size, SAMPLE_FORMAT_t *sample_information ) {
 
     WAVE_FORMAT_t             wave_format_data;
-    RIFF_DESCRIPTOR_CHUNK_t   main_riff_chunk;
+    RIFF_DESCRIPTOR_CHUNK_t * main_riff_chunk;
     uint8_t                 * riff_buffer_idx = NULL;
 
     // Step 1 - Check that the inputs are valid
@@ -77,16 +76,16 @@ void vDecodeRIFFInformation( uint8_t *riff_buffer, size_t riff_buffer_size, SAMP
     sample_information->audio_data_size = 0;    // Initialize to 0
 
     // Step 1 - Read the first chunk. Must contain "RIFF"
-    prv_vReadRIFFChunck( riff_buffer, &main_riff_chunk );
+    main_riff_chunk = cmdGET_RIFF_DESCRIPTOR_CHUNK(riff_buffer);
 
     // Step 2 - Check that this is a RIFF file with proper format
-    if( main_riff_chunk.BaseChunk.ChunkID != RIFF_ASCII_TOKEN ) {
+    if( main_riff_chunk->BaseChunk.ChunkID != RIFF_ASCII_TOKEN ) {
         xil_printf("[ERROR] - Error while parsing the RIFF information. Buffer is not RIFF.\n\r");
         return;
     }
 
     //Step 3 - Copy the base information
-    if( main_riff_chunk.FormType == WAVE_ASCII_TOKEN ) { // If it is a WAVE file
+    if( main_riff_chunk->FormType == WAVE_ASCII_TOKEN ) { // If it is a WAVE file
         memcpy( &wave_format_data, riff_buffer, sizeof( WAVE_FORMAT_t ) );
 
         if( wave_format_data.FormatDescriptor.BaseChunk.ChunkID != FMT_ASCII_TOKEN ) {
