@@ -54,7 +54,6 @@ test*
 audio_sampler_*
 packaged_ip*
 *.Xil
-*.vscode
 fsm_encoding.os
 *ip_user_files*
 *managed_ip_project*

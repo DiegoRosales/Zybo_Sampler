@@ -1,0 +1,52 @@
+{
+    "env": {
+        "vitisInstallPath": "D:/Xilinx/Vitis/2019.2/",
+        "vitisGCCPath": "${vitisInstallPath}/gnu/aarch32/nt/gcc-arm-none-eabi",
+        "vitisSTDIncludes": [
+            "${vitisGCCPath}/arm-none-eabi/include/**",
+            "${vitisGCCPath}/arm-none-eabi/libc/usr/include/**",
+            "${vitisGCCPath}/lib/gcc/arm-none-eabi/8.2.0/include/**",
+            "${vitisGCCPath}/lib/gcc/arm-none-eabi/8.2.0/include-fixed/**"
+        ]
+    },
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}/**"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "clang-x64"
+        },
+        {
+            "name": "ARM32",
+            "forcedInclude": [
+                "${vitisGCCPath}/arm-none-eabi/libc/usr/include/sys/types.h"
+            ],
+            "includePath": [
+                "${vitisSTDIncludes}",
+                "${workspaceFolder}/results/zybo_sampler_vitis_ws/zybo_sampler_platform/export/zybo_sampler_platform/sw/**",
+                "${workspaceFolder}/subsystems/sampler_dma_unit/fw/**",
+                "${workspaceFolder}/subsystems/codec_unit/fw/**",
+                "${workspaceFolder}/source/fw/src/**"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "compilerPath": "${vitisGCCPath}/bin/arm-none-eabi-gcc.exe",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "gcc-arm"
+        }
+    ],
+    "version": 4
+}
