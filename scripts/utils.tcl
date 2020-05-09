@@ -20,7 +20,7 @@ proc arg_parser { arg_list parsed_args args } {
 
     set   required_list {}
     set   exit_status   0
-    puts $args_int
+    #puts $args_int
     
     ## Fill defaults
     foreach arg_name [array names arg_list_int] {
@@ -42,7 +42,7 @@ proc arg_parser { arg_list parsed_args args } {
         set arg           [lshift args_int]
         set found_new_arg 0
 
-        puts "arg = $arg"
+        #puts "arg = $arg"
 
         if {$arg != ""} {
             switch -regexp $arg {
@@ -58,7 +58,7 @@ proc arg_parser { arg_list parsed_args args } {
                             switch -exact -- $action {
                                 store {
                                     set parsed_args_int($arg_name) [lshift args_int]
-                                    puts "$arg_name = $parsed_args_int($arg_name)"
+                                    #puts "$arg_name = $parsed_args_int($arg_name)"
                                 }
                                 store_true {
                                     set parsed_args_int($arg_name) 1
