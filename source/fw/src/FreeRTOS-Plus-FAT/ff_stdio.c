@@ -1,55 +1,26 @@
 /*
- * FreeRTOS+FAT Labs Build 160919 (C) 2016 Real Time Engineers ltd.
+ * FreeRTOS+FAT build 191128 - Note:  FreeRTOS+FAT is still in the lab!
+ * Copyright (C) 2018 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
  * Authors include James Walmsley, Hein Tibosch and Richard Barry
  *
- *******************************************************************************
- ***** NOTE ******* NOTE ******* NOTE ******* NOTE ******* NOTE ******* NOTE ***
- ***                                                                         ***
- ***                                                                         ***
- ***   FREERTOS+FAT IS STILL IN THE LAB:                                     ***
- ***                                                                         ***
- ***   This product is functional and is already being used in commercial    ***
- ***   products.  Be aware however that we are still refining its design,    ***
- ***   the source code does not yet fully conform to the strict coding and   ***
- ***   style standards mandated by Real Time Engineers ltd., and the         ***
- ***   documentation and testing is not necessarily complete.                ***
- ***                                                                         ***
- ***   PLEASE REPORT EXPERIENCES USING THE SUPPORT RESOURCES FOUND ON THE    ***
- ***   URL: http://www.FreeRTOS.org/contact  Active early adopters may, at   ***
- ***   the sole discretion of Real Time Engineers Ltd., be offered versions  ***
- ***   under a license other than that described below.                      ***
- ***                                                                         ***
- ***                                                                         ***
- ***** NOTE ******* NOTE ******* NOTE ******* NOTE ******* NOTE ******* NOTE ***
- *******************************************************************************
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of
+ * this software and associated documentation files (the "Software"), to deal in
+ * the Software without restriction, including without limitation the rights to
+ * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+ * the Software, and to permit persons to whom the Software is furnished to do so,
+ * subject to the following conditions:
  *
- * FreeRTOS+FAT can be used under two different free open source licenses.  The
- * license that applies is dependent on the processor on which FreeRTOS+FAT is
- * executed, as follows:
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
- * If FreeRTOS+FAT is executed on one of the processors listed under the Special
- * License Arrangements heading of the FreeRTOS+FAT license information web
- * page, then it can be used under the terms of the FreeRTOS Open Source
- * License.  If FreeRTOS+FAT is used on any other processor, then it can be used
- * under the terms of the GNU General Public License V2.  Links to the relevant
- * licenses follow:
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * The FreeRTOS+FAT License Information Page: http://www.FreeRTOS.org/fat_license
- * The FreeRTOS Open Source License: http://www.FreeRTOS.org/license
- * The GNU General Public License Version 2: http://www.FreeRTOS.org/gpl-2.0.txt
- *
- * FreeRTOS+FAT is distributed in the hope that it will be useful.  You cannot
- * use FreeRTOS+FAT unless you agree that you use the software 'as is'.
- * FreeRTOS+FAT is provided WITHOUT ANY WARRANTY; without even the implied
- * warranties of NON-INFRINGEMENT, MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE. Real Time Engineers Ltd. disclaims all conditions and terms, be they
- * implied, expressed, or statutory.
- *
- * 1 tab == 4 spaces!
- *
- * http://www.FreeRTOS.org
- * http://www.FreeRTOS.org/plus
- * http://www.FreeRTOS.org/labs
+ * https://www.FreeRTOS.org
  *
  */
 
@@ -104,7 +75,7 @@ in a call to ff_truncate(). */
 	 * Add the CWD to the beginning of a relative path, and copy the resultant
 	 * absolute path into a thread local non const buffer.
 	 */
-	static const char *prvABSPath( const char *pcPath );
+	/*static*/ const char *prvABSPath( const char *pcPath );
 
 	/*
 	 * Lookup the CWD of the current task.
@@ -126,7 +97,7 @@ in a call to ff_truncate(). */
 
 	/* Only absolute paths are supported so define away the prvABSPath()
 	function. */
-	static const char *prvABSPath( const char *pcPath )
+	/*static*/ const char *prvABSPath( const char *pcPath )
 	{
 		return pcPath;
 	}
@@ -148,7 +119,7 @@ in a call to ff_truncate(). */
  * If the value represents an error, it is negative
  * The return value of this function will always be positive
  */
-static int prvFFErrorToErrno( FF_Error_t xError );
+int prvFFErrorToErrno( FF_Error_t xError );
 
 /*
  * Generate a time stamp for the file.
@@ -1347,7 +1318,7 @@ FF_Error_t xError;
 	if( pxFindData->xDirectoryHandler.u.bits.bIsValid == pdFALSE )
 	{
 		xError = ( FF_Error_t ) ( FF_ERR_DIR_INVALID_PARAMETER | FF_FINDNEXT );
-		FF_PRINTF( "ff_findnext: xDirectoryHandler not valid\n\r" );
+		FF_PRINTF("ff_findnext: xDirectoryHandler not valid\n" );
 	}
 	else
 	{
@@ -1596,24 +1567,23 @@ FF_Error_t errCode;
 
 size_t ff_filelength( FF_FILE *pxStream )
 {
-size_t xReturn;
 FF_Error_t xReturned;
+uint32_t ulLength;
 
-	xReturned = FF_FileSize( pxStream );
+	xReturned = FF_GetFileSize( pxStream, &( ulLength ) );
 
 	if( FF_isERR( xReturned ) != pdFALSE )
 	{
 		/* An error. */
-		xReturn = 0;
+		ulLength = ( uint32_t ) 0u;
 		stdioSET_ERRNO( prvFFErrorToErrno( xReturned ) );
 	}
 	else
 	{
-		/* No errors. */
-		xReturn = ( size_t ) xReturned;
+		stdioSET_ERRNO( pdFREERTOS_ERRNO_NONE );
 	}
 
-	return xReturn;
+	return ( size_t ) ulLength;
 }
 /*-----------------------------------------------------------*/
 
@@ -1639,7 +1609,7 @@ FF_Error_t xReturned;
 				iResult = ff_rmdir( pcPath );
 				if( iResult )
 				{
-					FF_PRINTF( "ff_deltree(%s): %s\n\r", pcPath, strerror( stdioGET_ERRNO( ) ) );
+					FF_PRINTF("ff_deltree(%s): %s\n", pcPath, strerror( stdioGET_ERRNO( ) ) );
 				}
 			}
 			ffconfigFREE( pcPath );
@@ -1716,7 +1686,7 @@ FF_Error_t xReturned;
 							xError = ff_rmdir( pcPath );
 							if( xError != 0 )
 							{
-								FF_PRINTF( "ff_rmdir( %s ): errno %d\n\r", pcPath, stdioGET_ERRNO() );
+								FF_PRINTF( "ff_rmdir( %s ): errno %d\n", pcPath, stdioGET_ERRNO() );
 							}
 							else
 							{
@@ -1741,7 +1711,7 @@ FF_Error_t xReturned;
 						xError = ff_remove( pcPath );
 						if( xError != 0 )
 						{
-							FF_PRINTF( "ff_remove( %s ): errno %d\n\r", pcPath, stdioGET_ERRNO() );
+							FF_PRINTF( "ff_remove( %s ): errno %d\n", pcPath, stdioGET_ERRNO() );
 						}
 						else
 						{
@@ -1761,7 +1731,7 @@ FF_Error_t xReturned;
 				}
 				if( ( FF_GETERROR( iResult ) != FF_ERR_DIR_END_OF_DIR ) && ( FF_GETERROR( iResult ) != FF_ERR_FILE_INVALID_PATH ) )
 				{
-					FF_PRINTF( "ff_deltree_recurse[%s]: %s\n\r", pcPath, ( const char * ) FF_GetErrMessage( iResult ) );
+					FF_PRINTF( "ff_deltree_recurse[%s]: %s\n", pcPath, ( const char * ) FF_GetErrMessage( iResult ) );
 				}
 			}
 			ffconfigFREE( pxFindData );
@@ -1777,7 +1747,7 @@ FF_Error_t xReturned;
 #endif /* ffconfigUSE_DELTREE */
 /*-----------------------------------------------------------*/
 
-static int prvFFErrorToErrno( FF_Error_t xError )
+int prvFFErrorToErrno( FF_Error_t xError )
 {
 	if( FF_isERR( xError ) == pdFALSE )
 	{
@@ -1857,6 +1827,24 @@ static int prvFFErrorToErrno( FF_Error_t xError )
 
 	return pdFREERTOS_ERRNO_EFAULT;
 }
+/*-----------------------------------------------------------*/
+
+#if( ffconfigHAS_CWD == 1 )
+
+	void ff_free_CWD_space( void )
+	{
+	WorkingDirectory_t *pxSpace;
+
+		/* Obtain the CWD used by the current task. */
+		pxSpace = ( WorkingDirectory_t * ) pvTaskGetThreadLocalStoragePointer( NULL, stdioCWD_THREAD_LOCAL_OFFSET );
+		if( pxSpace != NULL )
+		{
+			vTaskSetThreadLocalStoragePointer( NULL, stdioCWD_THREAD_LOCAL_OFFSET, ( void * ) NULL );
+			ffconfigFREE( pxSpace );
+		}
+	}
+
+#endif /* ffconfigHAS_CWD */
 /*-----------------------------------------------------------*/
 
 #if( ffconfigHAS_CWD == 1 )
@@ -1974,7 +1962,7 @@ static int prvFFErrorToErrno( FF_Error_t xError )
 
 #if( ffconfigHAS_CWD == 1 )
 
-	static const char *prvABSPath( const char *pcPath )
+	/*static*/ const char *prvABSPath( const char *pcPath )
 	{
 	char *pcReturn;
 	WorkingDirectory_t *pxWorkingDirectory = pxFindCWD();

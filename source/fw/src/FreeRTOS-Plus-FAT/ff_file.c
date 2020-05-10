@@ -1,55 +1,26 @@
 /*
- * FreeRTOS+FAT Labs Build 160919 (C) 2016 Real Time Engineers ltd.
+ * FreeRTOS+FAT build 191128 - Note:  FreeRTOS+FAT is still in the lab!
+ * Copyright (C) 2018 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
  * Authors include James Walmsley, Hein Tibosch and Richard Barry
  *
- *******************************************************************************
- ***** NOTE ******* NOTE ******* NOTE ******* NOTE ******* NOTE ******* NOTE ***
- ***                                                                         ***
- ***                                                                         ***
- ***   FREERTOS+FAT IS STILL IN THE LAB:                                     ***
- ***                                                                         ***
- ***   This product is functional and is already being used in commercial    ***
- ***   products.  Be aware however that we are still refining its design,    ***
- ***   the source code does not yet fully conform to the strict coding and   ***
- ***   style standards mandated by Real Time Engineers ltd., and the         ***
- ***   documentation and testing is not necessarily complete.                ***
- ***                                                                         ***
- ***   PLEASE REPORT EXPERIENCES USING THE SUPPORT RESOURCES FOUND ON THE    ***
- ***   URL: http://www.FreeRTOS.org/contact  Active early adopters may, at   ***
- ***   the sole discretion of Real Time Engineers Ltd., be offered versions  ***
- ***   under a license other than that described below.                      ***
- ***                                                                         ***
- ***                                                                         ***
- ***** NOTE ******* NOTE ******* NOTE ******* NOTE ******* NOTE ******* NOTE ***
- *******************************************************************************
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of
+ * this software and associated documentation files (the "Software"), to deal in
+ * the Software without restriction, including without limitation the rights to
+ * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+ * the Software, and to permit persons to whom the Software is furnished to do so,
+ * subject to the following conditions:
  *
- * FreeRTOS+FAT can be used under two different free open source licenses.  The
- * license that applies is dependent on the processor on which FreeRTOS+FAT is
- * executed, as follows:
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
- * If FreeRTOS+FAT is executed on one of the processors listed under the Special
- * License Arrangements heading of the FreeRTOS+FAT license information web
- * page, then it can be used under the terms of the FreeRTOS Open Source
- * License.  If FreeRTOS+FAT is used on any other processor, then it can be used
- * under the terms of the GNU General Public License V2.  Links to the relevant
- * licenses follow:
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * The FreeRTOS+FAT License Information Page: http://www.FreeRTOS.org/fat_license
- * The FreeRTOS Open Source License: http://www.FreeRTOS.org/license
- * The GNU General Public License Version 2: http://www.FreeRTOS.org/gpl-2.0.txt
- *
- * FreeRTOS+FAT is distributed in the hope that it will be useful.  You cannot
- * use FreeRTOS+FAT unless you agree that you use the software 'as is'.
- * FreeRTOS+FAT is provided WITHOUT ANY WARRANTY; without even the implied
- * warranties of NON-INFRINGEMENT, MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE. Real Time Engineers Ltd. disclaims all conditions and terms, be they
- * implied, expressed, or statutory.
- *
- * 1 tab == 4 spaces!
- *
- * http://www.FreeRTOS.org
- * http://www.FreeRTOS.org/plus
- * http://www.FreeRTOS.org/labs
+ * https://www.FreeRTOS.org
  *
  */
 
@@ -79,6 +50,8 @@ static int32_t FF_WritePartial( FF_FILE *pxFile, uint32_t ulItemLBA, uint32_t ul
 
 static uint32_t FF_SetCluster( FF_FILE *pxFile, FF_Error_t *pxError );
 static uint32_t FF_FileLBA( FF_FILE *pxFile );
+
+/*-----------------------------------------------------------*/
 
 /**
  *	@public
@@ -305,7 +278,7 @@ FF_FindParams_t xFindParams;
 		{
 			if( ( ucMode & FF_MODE_WRITE ) != 0 )
 			{
-				FF_PRINTF( "FF_Open[%s]: Path not found\n\r", pcPath );
+				FF_PRINTF( "FF_Open[%s]: Path not found\n", pcPath );
 			}
 			/* The user tries to open a file but the path leading to the file does not exist. */
 		}
@@ -1092,24 +1065,43 @@ BaseType_t xReturn;
  *	@return	Less than zero: an error code
  *	@return	Number of bytes left to read from handle
  **/
-int32_t FF_FileSize( FF_FILE *pxFile )
+FF_Error_t FF_GetFileSize( FF_FILE *pxFile, uint32_t *pulSize ) /* Writes # of bytes in a file to the parameter. */
 {
 BaseType_t xReturn;
 
 	if( pxFile == NULL )
 	{
-		xReturn = FF_ERR_NULL_POINTER | FF_BYTESLEFT;
+		xReturn = ( FF_Error_t ) ( FF_ERR_NULL_POINTER | FF_BYTESLEFT );
+		*( pulSize ) = ( uint32_t ) 0u;
 	}
-	else if( ( pxFile->ucMode & FF_MODE_READ ) == 0 )
+	else if( FF_isERR( FF_CheckValid( pxFile ) ) )
 	{
-		xReturn = FF_ERR_FILE_NOT_OPENED_IN_READ_MODE | FF_BYTESLEFT;
+		xReturn = ( FF_Error_t ) ( FF_ERR_FILE_BAD_HANDLE | FF_BYTESLEFT );
+		*( pulSize ) = ( uint32_t ) 0u;
 	}
 	else
 	{
-		xReturn = ( int32_t ) pxFile->ulFileSize;
+		xReturn = 0;
+		*( pulSize ) = pxFile->ulFileSize;
 	}
 
 	return xReturn;
+}	/* FF_GetFileSize */
+
+int32_t FF_FileSize( FF_FILE *pxFile )
+{
+uint32_t ulLength;
+FF_Error_t xResult;
+
+	/* Function is deprecated. Please use FF_GetFileSize(). */
+	xResult = FF_GetFileSize( pxFile, &( ulLength ) );
+
+	if( FF_isERR( xResult ) == 0 )
+	{
+		xResult = ( int32_t ) ulLength;
+	}
+
+	return ( int32_t ) xResult;
 }	/* FF_FileSize() */
 /*-----------------------------------------------------------*/
 
@@ -1339,6 +1331,12 @@ FF_FATBuffers_t xFATBuffers;
 			pxFile->ulAddrCurrentCluster = pxFile->ulEndOfChain;
 		}
 
+		/* By default, 'ffconfigFILE_EXTEND_FLUSHES_BUFFERS' is
+		defined as 1.
+		Users may set it to zero in order to increase the
+		speed of writing to disk. */
+
+		#if( ffconfigFILE_EXTEND_FLUSHES_BUFFERS != 0 )
 		{
 		FF_Error_t xTempError;
 
@@ -1348,6 +1346,7 @@ FF_FATBuffers_t xFATBuffers;
 				xError = xTempError;
 			}
 		}
+		#endif	/* ffconfigFILE_EXTEND_FLUSHES_BUFFERS */
 	} /* if( ulTotalClustersNeeded > pxFile->ulChainLength ) */
 
 	return xError;
@@ -2339,7 +2338,7 @@ FF_Error_t xResult;
 FF_Error_t FF_Seek( FF_FILE *pxFile, int32_t lOffset, BaseType_t xOrigin )
 {
 FF_Error_t xError;
-int32_t lPosition;
+uint32_t ulPosition = 0ul;
 
 	xError = FF_CheckValid( pxFile );
 
@@ -2366,30 +2365,41 @@ int32_t lPosition;
 		{
 			if( xOrigin == FF_SEEK_SET )
 			{
-				lPosition = lOffset;
+				ulPosition = ( uint32_t )lOffset;
 			}
 			else if( xOrigin == FF_SEEK_CUR )
 			{
-				lPosition = ( ( int32_t ) pxFile->ulFilePointer ) + lOffset;
+				if( lOffset >= ( int32_t ) 0 )
+				{
+					ulPosition = pxFile->ulFilePointer + ( ( uint32_t ) lOffset );
+				}
+				else
+				{
+					ulPosition = pxFile->ulFilePointer - ( ( uint32_t ) ( -lOffset ) );
+				}
 			}
 			else if( xOrigin == FF_SEEK_END )
 			{
-				lPosition = ( ( int32_t ) pxFile->ulFileSize ) + lOffset;
+				/* 'FF_SEEK_END' only allows zero or negative values. */
+				if( lOffset <= ( int32_t ) 0 )
+				{
+					ulPosition = pxFile->ulFileSize - ( ( uint32_t ) ( -lOffset ) );
+				}
 			}
 			else
 			{
 				xError = ( FF_Error_t ) ( FF_SEEK | FF_ERR_FILE_SEEK_INVALID_ORIGIN );
 				/* To supress a compiler warning. */
-				lPosition = 0L;
+				ulPosition = ( uint32_t ) 0u;
 			}
 
 			if( FF_isERR( xError ) == pdFALSE )
 			{
-				if( ( lPosition >= 0L ) && ( lPosition <= ( long ) pxFile->ulFileSize ) )
+				if( ulPosition <= ( uint32_t ) pxFile->ulFileSize )
 				{
-					if( lPosition != ( long ) pxFile->ulFilePointer )
+					if( ulPosition != ( uint32_t ) pxFile->ulFilePointer )
 					{
-						pxFile->ulFilePointer = lPosition;
+						pxFile->ulFilePointer = ulPosition;
 						FF_SetCluster( pxFile, &xError );
 					}
 				}
@@ -2880,11 +2890,6 @@ FF_Error_t xError;
 					xError = FF_PutEntry( pxFile->pxIOManager, pxFile->usDirEntry, pxFile->ulDirCluster, &xOriginalEntry, NULL );
 				}
 			}
-
-			if( FF_isERR( xError ) == pdFALSE )
-			{
-				xError = FF_FlushCache( pxFile->pxIOManager ); /* Ensure all modified blocks are flushed to disk! */
-			}
 		}
 
 		/* Handle Linked list! */
@@ -2931,6 +2936,10 @@ FF_Error_t xError;
 			}
 		}
 		#endif
+		if( FF_isERR( xError ) == pdFALSE )
+		{
+			xError = FF_FlushCache( pxFile->pxIOManager ); /* Ensure all modified blocks are flushed to disk! */
+		}
 		ffconfigFREE( pxFile );
 	}
 	while( pdFALSE );

@@ -5,10 +5,10 @@
 set script_dir [file normalize [file dirname [info script]]]
 
 ## Initialize
-source -notrace ${script_dir}/utils.tcl
-source -notrace ${script_dir}/pack/pack_utils.tcl
-source -notrace ${script_dir}/pack/pack_utils_if_templates.tcl
-source -notrace ${script_dir}/integ/integ_utils.tcl
+source ${script_dir}/utils.tcl
+source ${script_dir}/pack/pack_utils.tcl
+source ${script_dir}/pack/pack_utils_if_templates.tcl
+source ${script_dir}/integ/integ_utils.tcl
 
 array set my_arglist {
     "cfg"         {"store"      "" "required"   1}
@@ -104,12 +104,12 @@ if {$stage_error == 1} {
             app config -name ${app_project_name} -add include-path {${workspace_loc:/${ProjName}/src/codec_controller/include}}
             app config -name ${app_project_name} -add include-path {${workspace_loc:/${ProjName}/src/sampler_dma/include}}
             app config -name ${app_project_name} -add include-path {${workspace_loc:/${ProjName}/src/common/FreeRTOS-Plus-CLI}}
-            app config -name ${app_project_name} -add include-path {${workspace_loc:/${ProjName}/src/common/FreeRTOS-Plus-FAT}}
+            app config -name ${app_project_name} -add include-path {${workspace_loc:/${ProjName}/src/common/FreeRTOS-Plus-FAT/include}}
             app config -name ${app_project_name} -add include-path {${workspace_loc:/${ProjName}/src/common/ZyboCLI}}
             app config -name ${app_project_name} -add include-path {${workspace_loc:/${ProjName}/src/common/ZyboSD}}
             app config -name ${app_project_name} -add include-path {${workspace_loc:/${ProjName}/src/common/nco}}
             app config -name ${app_project_name} -add include-path {${workspace_loc:/${ProjName}/src/common/jsmn}}
-            app config -name ${app_project_name} -add include-path {${workspace_loc:/${ProjName}/src/common/sampler}}
+            app config -name ${app_project_name} -add include-path {${workspace_loc:/${ProjName}/src/common/sampler/include}}
 
             platform generate
         }

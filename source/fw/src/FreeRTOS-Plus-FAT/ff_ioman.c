@@ -1,55 +1,26 @@
 /*
- * FreeRTOS+FAT Labs Build 160919 (C) 2016 Real Time Engineers ltd.
+ * FreeRTOS+FAT build 191128 - Note:  FreeRTOS+FAT is still in the lab!
+ * Copyright (C) 2018 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
  * Authors include James Walmsley, Hein Tibosch and Richard Barry
  *
- *******************************************************************************
- ***** NOTE ******* NOTE ******* NOTE ******* NOTE ******* NOTE ******* NOTE ***
- ***                                                                         ***
- ***                                                                         ***
- ***   FREERTOS+FAT IS STILL IN THE LAB:                                     ***
- ***                                                                         ***
- ***   This product is functional and is already being used in commercial    ***
- ***   products.  Be aware however that we are still refining its design,    ***
- ***   the source code does not yet fully conform to the strict coding and   ***
- ***   style standards mandated by Real Time Engineers ltd., and the         ***
- ***   documentation and testing is not necessarily complete.                ***
- ***                                                                         ***
- ***   PLEASE REPORT EXPERIENCES USING THE SUPPORT RESOURCES FOUND ON THE    ***
- ***   URL: http://www.FreeRTOS.org/contact  Active early adopters may, at   ***
- ***   the sole discretion of Real Time Engineers Ltd., be offered versions  ***
- ***   under a license other than that described below.                      ***
- ***                                                                         ***
- ***                                                                         ***
- ***** NOTE ******* NOTE ******* NOTE ******* NOTE ******* NOTE ******* NOTE ***
- *******************************************************************************
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of
+ * this software and associated documentation files (the "Software"), to deal in
+ * the Software without restriction, including without limitation the rights to
+ * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+ * the Software, and to permit persons to whom the Software is furnished to do so,
+ * subject to the following conditions:
  *
- * FreeRTOS+FAT can be used under two different free open source licenses.  The
- * license that applies is dependent on the processor on which FreeRTOS+FAT is
- * executed, as follows:
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
- * If FreeRTOS+FAT is executed on one of the processors listed under the Special
- * License Arrangements heading of the FreeRTOS+FAT license information web
- * page, then it can be used under the terms of the FreeRTOS Open Source
- * License.  If FreeRTOS+FAT is used on any other processor, then it can be used
- * under the terms of the GNU General Public License V2.  Links to the relevant
- * licenses follow:
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * The FreeRTOS+FAT License Information Page: http://www.FreeRTOS.org/fat_license
- * The FreeRTOS Open Source License: http://www.FreeRTOS.org/license
- * The GNU General Public License Version 2: http://www.FreeRTOS.org/gpl-2.0.txt
- *
- * FreeRTOS+FAT is distributed in the hope that it will be useful.  You cannot
- * use FreeRTOS+FAT unless you agree that you use the software 'as is'.
- * FreeRTOS+FAT is provided WITHOUT ANY WARRANTY; without even the implied
- * warranties of NON-INFRINGEMENT, MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE. Real Time Engineers Ltd. disclaims all conditions and terms, be they
- * implied, expressed, or statutory.
- *
- * 1 tab == 4 spaces!
- *
- * http://www.FreeRTOS.org
- * http://www.FreeRTOS.org/plus
- * http://www.FreeRTOS.org/labs
+ * https://www.FreeRTOS.org
  *
  */
 
@@ -129,14 +100,12 @@ uint32_t usSectorSize = pxParameters->ulSectorSize;
 	{
 		/* ulSectorSize Size not a multiple of 512 or it is zero*/
 		xError = FF_ERR_IOMAN_BAD_BLKSIZE | FF_CREATEIOMAN;
-		FF_PRINTF("Error = FF_ERR_IOMAN_BAD_BLKSIZE | FF_CREATEIOMAN: %x\n\r", xError);
 	}
 	else if( ( ( ulCacheSize % ( uint32_t ) usSectorSize ) != 0 ) || ( ulCacheSize == 0 ) ||
 			 ( ulCacheSize == ( uint32_t ) usSectorSize ) )
 	{
 		/* The size of the caching memory (ulCacheSize) must now be atleast 2 * ulSectorSize (or a deadlock will occur). */
 		xError = FF_ERR_IOMAN_BAD_MEMSIZE | FF_CREATEIOMAN;
-		FF_PRINTF("Error = FF_ERR_IOMAN_BAD_MEMSIZE | FF_CREATEIOMAN: %x\n\r", xError);
 	}
 	else
 	{
@@ -147,22 +116,26 @@ uint32_t usSectorSize = pxParameters->ulSectorSize;
 		{
 			/* Use memset() to clear every single bit. */
 			memset( pxIOManager, '\0', sizeof( FF_IOManager_t ) );
-			xError = FF_ERR_NONE;
+			if( FF_CreateEvents( pxIOManager ) != pdFALSE )
+			{
+				xError = FF_ERR_NONE;
+			}
+			else
+			{
+				/* xEventGroupCreate() probably failed. */
+				xError = FF_ERR_NOT_ENOUGH_MEMORY | FF_CREATEIOMAN;
+			}
 		}
 		else
 		{
+			/* ffconfigMALLOC() failed. */
 			xError = FF_ERR_NOT_ENOUGH_MEMORY | FF_CREATEIOMAN;
-			FF_PRINTF("Error = FF_ERR_NOT_ENOUGH_MEMORY | FF_CREATEIOMAN: %x (pxIOManager != NULL)\n\r", xError);
 		}
 	}
 
-	if( FF_CreateEvents( pxIOManager ) != pdTRUE )
+	if( FF_isERR( xError ) == pdFALSE )
 	{
-		xError = FF_ERR_NOT_ENOUGH_MEMORY | FF_CREATEIOMAN;
-		FF_PRINTF("Error = FF_ERR_NOT_ENOUGH_MEMORY | FF_CREATEIOMAN: %x (FF_CreateEvents( pxIOManager ) != pdTRUE)\n\r", xError);
-	}
-	else if( FF_isERR( xError ) == pdFALSE )
-	{
+		/* pxIOManager is created, FF_CreateEvents() succeeded. */
 		if( pxParameters->pucCacheMemory != NULL )
 		{
 			/* The caller has provided a piece of memory, use it. */
@@ -180,7 +153,6 @@ uint32_t usSectorSize = pxParameters->ulSectorSize;
 			else
 			{
 				xError = FF_ERR_NOT_ENOUGH_MEMORY | FF_CREATEIOMAN;
-				FF_PRINTF("Error = FF_ERR_NOT_ENOUGH_MEMORY | FF_CREATEIOMAN: %x (pxIOManager->pucCacheMem == NULL)\n\r", xError);
 			}
 		}
 
@@ -223,7 +195,6 @@ uint32_t usSectorSize = pxParameters->ulSectorSize;
 		else
 		{
 			xError = FF_ERR_NOT_ENOUGH_MEMORY | FF_CREATEIOMAN;
-			FF_PRINTF("Error = FF_ERR_NOT_ENOUGH_MEMORY | FF_CREATEIOMAN: %x (pxIOManager->pxBuffers == NULL)\n\r", xError);
 		}
 	}
 
@@ -278,6 +249,10 @@ FF_Error_t xError;
 		{
 			ffconfigFREE( pxIOManager->pucCacheMem );
 		}
+
+		/* Delete the event group object within the IO manager before deleting
+		the manager. */
+		FF_DeleteEvents( pxIOManager );
 
 		/* Finally free the FF_IOManager_t object. */
 		ffconfigFREE( pxIOManager );
@@ -361,6 +336,14 @@ FF_Error_t xError;
 				}
 			}
 		}
+		if( ( pxIOManager->xBlkDevice.pxDisk != NULL ) &&
+			( pxIOManager->xBlkDevice.pxDisk->fnFlushApplicationHook != NULL ) )
+		{
+			/* Let the low-level driver also flush data.
+			See comments in ff_ioman.h. */
+			pxIOManager->xBlkDevice.pxDisk->fnFlushApplicationHook( pxIOManager->xBlkDevice.pxDisk );
+		}
+
 		FF_ReleaseSemaphore( pxIOManager->pvSemaphore );
 	}
 
@@ -511,7 +494,7 @@ const FF_Buffer_t *pxLastBuffer = &( pxIOManager->pxBuffers[ pxIOManager->usCach
 	}
 	if( pxMatchingBuffer == NULL )
 	{
-		FF_PRINTF( "FF_GetBuffer[0x%X]: failed mode 0x%X\n\r", ( unsigned )ulSector, ( unsigned )ucMode );
+		FF_PRINTF( "FF_GetBuffer[0x%X]: failed mode 0x%X\n", ( unsigned )ulSector, ( unsigned )ucMode );
 	}
 	return pxMatchingBuffer;	/* Return the Matched Buffer! */
 }	/* FF_GetBuffer() */
@@ -760,11 +743,11 @@ FF_Error_t xError = FF_ERR_NONE;
 				else {
 					if( ( ulFirstWord & 0x3FF ) != 0x3F8 )
 					{
-						FF_PRINTF( "Part at %lu is probably a FAT12\n\r", pxIOManager->xPartition.ulFATBeginLBA );
+						FF_PRINTF( "Part at %lu is probably a FAT12\n", pxIOManager->xPartition.ulFATBeginLBA );
 					}
 					else
 					{
-						FF_PRINTF( "Partition at %lu has strange FAT data %08lX\n\r",
+						FF_PRINTF( "Partition at %lu has strange FAT data %08lX\n",
 							pxIOManager->xPartition.ulFATBeginLBA, ulFirstWord );
 					}
 					xError = FF_ERR_IOMAN_INVALID_FORMAT | FF_DETERMINEFATTYPE;
@@ -785,7 +768,7 @@ FF_Error_t xError = FF_ERR_NONE;
 				but FreeRTOS+FAT returned me this error
 				So for me I left out this check (just issue a warning for now)
 				*/
-				FF_PRINTF( "prvDetermineFatType: firstWord %08lX\n\r", ulFirstWord );
+				FF_PRINTF( "prvDetermineFatType: firstWord %08lX\n", ulFirstWord );
 				xError = FF_ERR_NONE; /* FF_ERR_IOMAN_NOT_FAT_FORMATTED; */
 			}
 
@@ -823,7 +806,7 @@ static BaseType_t prvIsValidMedia( uint8_t media )
 {
 BaseType_t xResult;
 	/*
-	 * 0xF8 is the standard value for ï¿½fixedï¿½ (non-removable) media. For
+	 * 0xF8 is the standard value for “fixed” (non-removable) media. For
 	 * removable media, 0xF0 is frequently used. The legal values for this
 	 * field are 0xF0, 0xF8, 0xF9, 0xFA, 0xFB, 0xFC, 0xFD, 0xFE, and
 	 * 0xFF. The only other important point is that whatever value is put
@@ -902,7 +885,7 @@ FF_Part_t pxPartitions[ 4 ];
 					break;
 				}
 			}
-			FF_PRINTF( "FF_ParseExtended: Read sector %u\n\r", ( unsigned) ulThisSector );
+			FF_PRINTF( "FF_ParseExtended: Read sector %u\n", ( unsigned) ulThisSector );
 			pxBuffer = FF_GetBuffer( pxIOManager, ulThisSector, FF_MODE_READ );
 			if( pxBuffer == NULL )
 			{
@@ -917,7 +900,7 @@ FF_Part_t pxPartitions[ 4 ];
 
 			if( ( a != 0x55 ) || ( b != 0xAA ) )
 			{
-				FF_PRINTF( "FF_ParseExtended: No signature %02X,%02X\n\r", a, b );
+				FF_PRINTF( "FF_ParseExtended: No signature %02X,%02X\n", a, b );
 				break;
 			}
 		}
@@ -962,7 +945,7 @@ FF_Part_t pxPartitions[ 4 ];
 				( ulNext > ulFirstSector + ulFirstSize )
 				)
 			{
-				FF_PRINTF( "Part %d looks insane: ulThisSector %u ulOffset %u ulNext %u\n\r",
+				FF_PRINTF( "Part %d looks insane: ulThisSector %u ulOffset %u ulNext %u\n",
 					( int ) xPartNr, ( unsigned )ulThisSector, ( unsigned )ulOffset, ( unsigned )ulNext );
 				continue;
 			}
@@ -989,7 +972,7 @@ FF_Part_t pxPartitions[ 4 ];
 
 		if( xExtendedPartNr < 0 )
 		{
-			FF_PRINTF( "No more extended partitions\n\r" );
+			FF_PRINTF( "No more extended partitions\n" );
 			break;		/* nothing left to do */
 		}
 
@@ -1067,7 +1050,7 @@ FF_Part_t pxPartitions[ 4 ];
 			}
 			else
 			{
-				FF_PRINTF( "FF_PartitionSearch: [%02X,%02X] No signature (%02X %02X), no PBR neither\n\r",
+				FF_PRINTF( "FF_PartitionSearch: [%02X,%02X] No signature (%02X %02X), no PBR neither\n",
 					FF_getChar( ucDataBuffer, 0 ),
 					FF_getChar( ucDataBuffer, 2 ),
 					FF_getChar( ucDataBuffer, FF_FAT_MBR_SIGNATURE ),
@@ -1083,7 +1066,7 @@ FF_Part_t pxPartitions[ 4 ];
 
 		for( xPartNr = 0; ( xPartNr < 4 ) && ( isPBR == pdFALSE ); xPartNr++ )
 		{
-			/*		FF_PRINTF ("FF_Part[%d]: id %02X act %02X Start %6lu Len %6lu (sectors)\n\r", */
+			/*		FF_PRINTF ("FF_Part[%d]: id %02X act %02X Start %6lu Len %6lu (sectors)\n", */
 			/*			xPartNr, pxPartitions[ xPartNr ].ucPartitionID, */
 			/*			pxPartitions[ xPartNr ].ucActive, */
 			/*			pxPartitions[ xPartNr ].ulStartLBA, */
@@ -1131,7 +1114,7 @@ FF_Part_t pxPartitions[ 4 ];
 				xError = FF_ParseExtended( pxIOManager, pxPartitions[ xPartNr ].ulStartLBA,
 					pxPartitions[ xPartNr ].ulSectorCount, pPartsFound );
 
-				if( FF_isERR( xError ) || ( pPartsFound->iCount >= ffconfigMAX_PARTITIONS ) )
+				if( ( FF_isERR( xError ) != pdFALSE ) || ( pPartsFound->iCount >= ffconfigMAX_PARTITIONS ) )
 				{
 					goto done;
 				}
@@ -1140,7 +1123,7 @@ FF_Part_t pxPartitions[ 4 ];
 
 		if( pPartsFound->iCount == 0 )
 		{
-			FF_PRINTF( "FF_Part: no partitions, try as PBR\n\r" );
+			FF_PRINTF( "FF_Part: no partitions, try as PBR\n" );
 			isPBR = pdTRUE;
 		}
 
@@ -1150,7 +1133,7 @@ FF_Part_t pxPartitions[ 4 ];
 			FF_Part_t	*p;
 			if( !prvIsValidMedia( media ) )
 			{
-				FF_PRINTF( "FF_Part: Looks like PBR but media %02X\n\r", media );
+				FF_PRINTF( "FF_Part: Looks like PBR but media %02X\n", media );
 				xError = FF_ERR_IOMAN_NO_MOUNTABLE_PARTITION | FF_PARTITIONSEARCH;
 				goto done;
 			}
@@ -1445,16 +1428,15 @@ partsFound.iCount = 0;
 		{	/* FAT32 */
 			pxPartition->ulSectorsPerFAT = FF_getLong( pxBuffer->pucBuffer, FF_FAT_32_SECTORS_PER_FAT );
 			pxPartition->ulRootDirCluster = FF_getLong( pxBuffer->pucBuffer, FF_FAT_ROOT_DIR_CLUSTER );
-//			memcpy( pxPartition->pcVolumeLabel, pxBuffer->pucBuffer + FF_FAT_32_VOL_LABEL + 1, sizeof( pxPartition->pcVolumeLabel ) - 1 );
-			memcpy( pxPartition->pcVolumeLabel, pxBuffer->pucBuffer + FF_FAT_32_VOL_LABEL, sizeof( pxPartition->pcVolumeLabel ) );
+			memcpy( pxPartition->pcVolumeLabel, pxBuffer->pucBuffer + FF_FAT_32_VOL_LABEL, sizeof( pxPartition->pcVolumeLabel ) - 1 );
 		}
 		else
 		{	/* FAT16 */
 			pxPartition->ulRootDirCluster = 1;			/* 1st Cluster is RootDir! */
-			memcpy( pxPartition->pcVolumeLabel, pxBuffer->pucBuffer + FF_FAT_16_VOL_LABEL, sizeof( pxPartition->pcVolumeLabel ) );
+			memcpy( pxPartition->pcVolumeLabel, pxBuffer->pucBuffer + FF_FAT_16_VOL_LABEL, sizeof( pxPartition->pcVolumeLabel ) - 1);
 		}
 
-		pxPartition->ulClusterBeginLBA = pxPartition->ulBeginLBA + pxPartition->usReservedSectors + ( pxPartition->ucNumFATS * pxPartition->ulSectorsPerFAT );
+		pxPartition->ulClusterBeginLBA = pxPartition->ulFATBeginLBA + ( pxPartition->ucNumFATS * pxPartition->ulSectorsPerFAT );
 		#if( ffconfigWRITE_FREE_COUNT != 0 )
 		{
 			pxPartition->ulFSInfoLBA = pxPartition->ulBeginLBA + FF_getShort( pxBuffer->pucBuffer, 48 );
@@ -1500,7 +1482,7 @@ partsFound.iCount = 0;
 
 		if( !rootEntryCount && pxPartition->ucType != FF_T_FAT32 )
 		{
-			FF_PRINTF( "No root dir, must be a FAT32\n\r" );
+			FF_PRINTF( "No root dir, must be a FAT32\n" );
 			pxPartition->ucType = FF_T_FAT32;
 		}
 
@@ -1703,12 +1685,18 @@ FF_Error_t xError;
 
 		if( pxIOManager->xPartition.ulLastFreeCluster == 0 )
 		{
-			/* Find the an available cluster. */
-			FF_LockFAT( pxIOManager );
+		BaseType_t xTakeLock = FF_Has_Lock( pxIOManager, FF_FAT_LOCK ) == pdFALSE;
+
+			if( xTakeLock )
 			{
-				pxIOManager->xPartition.ulLastFreeCluster = FF_FindFreeCluster( pxIOManager, &xError, pdFALSE );
+				FF_LockFAT( pxIOManager );
 			}
-			FF_UnlockFAT( pxIOManager );
+			/* Find the an available cluster. */
+			pxIOManager->xPartition.ulLastFreeCluster = FF_FindFreeCluster( pxIOManager, &xError, pdFALSE );
+			if( xTakeLock )
+			{
+				FF_UnlockFAT( pxIOManager );
+			}
 			if( FF_isERR( xError ) )
 			{
 				break;

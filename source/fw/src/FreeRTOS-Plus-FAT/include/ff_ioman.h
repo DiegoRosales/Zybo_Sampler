@@ -1,55 +1,26 @@
 /*
- * FreeRTOS+FAT Labs Build 160919 (C) 2016 Real Time Engineers ltd.
+ * FreeRTOS+FAT build 191128 - Note:  FreeRTOS+FAT is still in the lab!
+ * Copyright (C) 2018 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
  * Authors include James Walmsley, Hein Tibosch and Richard Barry
  *
- *******************************************************************************
- ***** NOTE ******* NOTE ******* NOTE ******* NOTE ******* NOTE ******* NOTE ***
- ***                                                                         ***
- ***                                                                         ***
- ***   FREERTOS+FAT IS STILL IN THE LAB:                                     ***
- ***                                                                         ***
- ***   This product is functional and is already being used in commercial    ***
- ***   products.  Be aware however that we are still refining its design,    ***
- ***   the source code does not yet fully conform to the strict coding and   ***
- ***   style standards mandated by Real Time Engineers ltd., and the         ***
- ***   documentation and testing is not necessarily complete.                ***
- ***                                                                         ***
- ***   PLEASE REPORT EXPERIENCES USING THE SUPPORT RESOURCES FOUND ON THE    ***
- ***   URL: http://www.FreeRTOS.org/contact  Active early adopters may, at   ***
- ***   the sole discretion of Real Time Engineers Ltd., be offered versions  ***
- ***   under a license other than that described below.                      ***
- ***                                                                         ***
- ***                                                                         ***
- ***** NOTE ******* NOTE ******* NOTE ******* NOTE ******* NOTE ******* NOTE ***
- *******************************************************************************
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of
+ * this software and associated documentation files (the "Software"), to deal in
+ * the Software without restriction, including without limitation the rights to
+ * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+ * the Software, and to permit persons to whom the Software is furnished to do so,
+ * subject to the following conditions:
  *
- * FreeRTOS+FAT can be used under two different free open source licenses.  The
- * license that applies is dependent on the processor on which FreeRTOS+FAT is
- * executed, as follows:
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
- * If FreeRTOS+FAT is executed on one of the processors listed under the Special
- * License Arrangements heading of the FreeRTOS+FAT license information web
- * page, then it can be used under the terms of the FreeRTOS Open Source
- * License.  If FreeRTOS+FAT is used on any other processor, then it can be used
- * under the terms of the GNU General Public License V2.  Links to the relevant
- * licenses follow:
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * The FreeRTOS+FAT License Information Page: http://www.FreeRTOS.org/fat_license
- * The FreeRTOS Open Source License: http://www.FreeRTOS.org/license
- * The GNU General Public License Version 2: http://www.FreeRTOS.org/gpl-2.0.txt
- *
- * FreeRTOS+FAT is distributed in the hope that it will be useful.  You cannot
- * use FreeRTOS+FAT unless you agree that you use the software 'as is'.
- * FreeRTOS+FAT is provided WITHOUT ANY WARRANTY; without even the implied
- * warranties of NON-INFRINGEMENT, MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE. Real Time Engineers Ltd. disclaims all conditions and terms, be they
- * implied, expressed, or statutory.
- *
- * 1 tab == 4 spaces!
- *
- * http://www.FreeRTOS.org
- * http://www.FreeRTOS.org/plus
- * http://www.FreeRTOS.org/labs
+ * https://www.FreeRTOS.org
  *
  */
 
@@ -61,10 +32,14 @@
 #ifndef _FF_IOMAN_H_
 #define _FF_IOMAN_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdlib.h>							/* Use of malloc() */
 
 #ifndef PLUS_FAT_H
-	#error this header will be included from "plusfat.h"
+	#error this header will be included from "ff_headers.h"
 #endif
 
 #define FF_T_FAT12				0x0A
@@ -92,6 +67,14 @@ for clearing sectors. */
 #define FF_SIZEOF_SECTOR				512
 #define FF_SIZEOF_DIRECTORY_ENTRY		32
 
+#ifndef pdTRUE_SIGNED
+	/* Temporary solution: eventually the defines below will appear
+	in 'Source\include\projdefs.h' */
+	#define pdTRUE_SIGNED		pdTRUE
+	#define pdFALSE_SIGNED		pdFALSE
+	#define pdTRUE_UNSIGNED		( ( UBaseType_t ) 1u )
+	#define pdFALSE_UNSIGNED	( ( UBaseType_t ) 0u )
+#endif
 /**
  *	I/O Driver Definitions
  *	Provide access to any Block Device via the following interfaces.
@@ -128,6 +111,27 @@ typedef struct
 
 /* A forward declaration for the I/O manager, to be used in 'struct xFFDisk'. */
 struct _FF_IOMAN;
+struct xFFDisk;
+
+typedef void ( *FF_FlushApplicationHook )( struct xFFDisk *pxDisk );
+
+/*
+ * Some low-level drivers also need to flush data to a device.
+ * Use an Application hook that will be called every time when
+ * FF_FlushCache() is called. The semaphore will still be taken
+ * to avoid unwanted reentrancy.
+ * For example:
+ *
+ *     void FTL_FlushData( struct xFFDisk *pxDisk )
+ *     {
+ *         // You may or may not inspect 'pxDisk'
+ *         FTL_FlushTableCache();
+ *     }
+ *
+ * Make sure you bind the function to the disc object, right after creation:
+ *
+ *    pxDisk->fnFlushApplicationHook = FTL_FlushData;
+ */
 
 /* Structure that contains fields common to all media drivers, and can be
 extended to contain additional fields to tailor it for use with a specific media
@@ -157,6 +161,9 @@ struct xFFDisk
 
 	/* The number of sectors on the disk. */
 	uint32_t ulNumberOfSectors;
+
+	/* See comments here above. */
+	FF_FlushApplicationHook fnFlushApplicationHook;
 
 	/* Field that can optionally be set to a signature that is unique to the
 	media.  Read and write functions can check the ulSignature field to validate
@@ -360,7 +367,17 @@ void FF_ReadParts( uint8_t *pucBuffer, FF_Part_t *pxParts );
  */
 FF_Error_t FF_PartitionSearch( FF_IOManager_t *pxIOManager, FF_SPartFound_t *pPartsFound );
 
+/* HT : for debugging only. */
+BaseType_t xIsFatSector( FF_IOManager_t *pxIOManager, uint32_t ulSectorNr );
+BaseType_t xNeedLogging( FF_IOManager_t *pxIOManager );
+BaseType_t xIsRootDirSector( FF_IOManager_t *pxIOManager, uint32_t ulSectorNr );
+const char *pcSectorType( FF_IOManager_t *pxIOManager, uint32_t ulSectorNr );
+
 /* Needed to make this public/private to be used in FF_Partition/FF_Format. */
 void FF_IOMAN_InitBufferDescriptors( FF_IOManager_t *pxIOManager );
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
 
 #endif

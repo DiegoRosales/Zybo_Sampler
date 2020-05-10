@@ -1,55 +1,26 @@
 /*
- * FreeRTOS+FAT Labs Build 160919 (C) 2016 Real Time Engineers ltd.
+ * FreeRTOS+FAT build 191128 - Note:  FreeRTOS+FAT is still in the lab!
+ * Copyright (C) 2018 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
  * Authors include James Walmsley, Hein Tibosch and Richard Barry
  *
- *******************************************************************************
- ***** NOTE ******* NOTE ******* NOTE ******* NOTE ******* NOTE ******* NOTE ***
- ***                                                                         ***
- ***                                                                         ***
- ***   FREERTOS+FAT IS STILL IN THE LAB:                                     ***
- ***                                                                         ***
- ***   This product is functional and is already being used in commercial    ***
- ***   products.  Be aware however that we are still refining its design,    ***
- ***   the source code does not yet fully conform to the strict coding and   ***
- ***   style standards mandated by Real Time Engineers ltd., and the         ***
- ***   documentation and testing is not necessarily complete.                ***
- ***                                                                         ***
- ***   PLEASE REPORT EXPERIENCES USING THE SUPPORT RESOURCES FOUND ON THE    ***
- ***   URL: http://www.FreeRTOS.org/contact  Active early adopters may, at   ***
- ***   the sole discretion of Real Time Engineers Ltd., be offered versions  ***
- ***   under a license other than that described below.                      ***
- ***                                                                         ***
- ***                                                                         ***
- ***** NOTE ******* NOTE ******* NOTE ******* NOTE ******* NOTE ******* NOTE ***
- *******************************************************************************
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of
+ * this software and associated documentation files (the "Software"), to deal in
+ * the Software without restriction, including without limitation the rights to
+ * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+ * the Software, and to permit persons to whom the Software is furnished to do so,
+ * subject to the following conditions:
  *
- * FreeRTOS+FAT can be used under two different free open source licenses.  The
- * license that applies is dependent on the processor on which FreeRTOS+FAT is
- * executed, as follows:
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
- * If FreeRTOS+FAT is executed on one of the processors listed under the Special
- * License Arrangements heading of the FreeRTOS+FAT license information web
- * page, then it can be used under the terms of the FreeRTOS Open Source
- * License.  If FreeRTOS+FAT is used on any other processor, then it can be used
- * under the terms of the GNU General Public License V2.  Links to the relevant
- * licenses follow:
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * The FreeRTOS+FAT License Information Page: http://www.FreeRTOS.org/fat_license
- * The FreeRTOS Open Source License: http://www.FreeRTOS.org/license
- * The GNU General Public License Version 2: http://www.FreeRTOS.org/gpl-2.0.txt
- *
- * FreeRTOS+FAT is distributed in the hope that it will be useful.  You cannot
- * use FreeRTOS+FAT unless you agree that you use the software 'as is'.
- * FreeRTOS+FAT is provided WITHOUT ANY WARRANTY; without even the implied
- * warranties of NON-INFRINGEMENT, MERCHANTABILITY or FITNESS FOR A PARTICULAR
- * PURPOSE. Real Time Engineers Ltd. disclaims all conditions and terms, be they
- * implied, expressed, or statutory.
- *
- * 1 tab == 4 spaces!
- *
- * http://www.FreeRTOS.org
- * http://www.FreeRTOS.org/plus
- * http://www.FreeRTOS.org/labs
+ * https://www.FreeRTOS.org
  *
  */
 
@@ -156,6 +127,10 @@
 	#define MIN_CLUSTERS_FAT16			( 4085 + 1 )
 #endif
 
+#ifndef ffconfigFAT16_ROOT_SECTORS
+	#define ffconfigFAT16_ROOT_SECTORS    32
+#endif
+
 static portINLINE uint32_t ulMin32( uint32_t a, uint32_t b )
 {
 uint32_t ulReturn;
@@ -221,7 +196,7 @@ FF_IOManager_t *pxIOManager = pxDisk->pxIOManager;
 		ucFATType = FF_T_FAT16;
 		iFAT32RootClusters = 0;
 		ulFATReservedSectors = 1u;
-		iFAT16RootSectors = 32; /* to get 512 dir entries */
+		iFAT16RootSectors = ffconfigFAT16_ROOT_SECTORS; /* 32 sectors to get 512 dir entries */
 	}
 
 	/* Set start sector and length to allow FF_BlockRead/Write */
@@ -248,7 +223,7 @@ FF_IOManager_t *pxIOManager = pxDisk->pxIOManager;
 		ulClustersPerFATSector = 256u;
 	}
 
-	FF_PRINTF( "FF_Format: Secs %lu Rsvd %lu Hidden %lu Root %lu Data %lu\n\r",
+	FF_PRINTF( "FF_Format: Secs %lu Rsvd %lu Hidden %lu Root %lu Data %lu\n",
 		ulSectorCount, ulFATReservedSectors, ulHiddenSectors, iFAT16RootSectors, ulSectorCount - ulNonDataSectors );
 
 	/* Either search from small to large or v.v. */
@@ -299,7 +274,7 @@ FF_IOManager_t *pxIOManager = pxDisk->pxIOManager;
 		if( ( ( xSmallClusters != pdFALSE ) && ( ulSectorsPerCluster == 32 ) ) ||
 			( ( xSmallClusters == pdFALSE ) && ( ulSectorsPerCluster == 1) ) )
 		{
-			FF_PRINTF( "FF_Format: Can not make a FAT%d (tried %d) with %lu sectors\n\r",
+			FF_PRINTF( "FF_Format: Can not make a FAT%d (tried %d) with %lu sectors\n",
 				ucFATType == FF_T_FAT32 ? 32 : 16, xPreferFAT16 ? 16 : 32, ulSectorCount );
 			return FF_ERR_IOMAN_BAD_MEMSIZE | FF_MODULE_FORMAT;
 		}
@@ -316,15 +291,25 @@ FF_IOManager_t *pxIOManager = pxDisk->pxIOManager;
 
 	if( ( ucFATType == FF_T_FAT32 ) && ( ulSectorCount >= 0x100000UL ) )	/* Larger than 0.5 GB */
 	{
-		int32_t lRemaining = (ulNonDataSectors + 2 * ulSectorsPerFAT) % 128;
-		if( lRemaining != 0 )
+	uint32_t ulRemaining;
+		/*
+		 * Putting the FAT-table into the second 4MB erase block gives
+		 * a higher performance and a longer life-time.
+		 * See e.g. here:
+		 * http://3gfp.com/wp/2014/07/formatting-sd-cards-for-speed-and-lifetime/
+		 */
+		ulFATReservedSectors = 8192 - ulHiddenSectors;
+		ulNonDataSectors = ulFATReservedSectors + iFAT16RootSectors;
+
+		ulRemaining = (ulNonDataSectors + 2 * ulSectorsPerFAT) % 128;
+		if( ulRemaining != 0 )
 		{
 			/* In order to get ClusterBeginLBA well aligned (on a 128 sector boundary) */
-			ulFATReservedSectors += ( 128 - lRemaining );
+			ulFATReservedSectors += ( 128 - ulRemaining );
 			ulNonDataSectors = ulFATReservedSectors + iFAT16RootSectors;
-			ulUsableDataSectors = ulSectorCount - ulNonDataSectors - 2 * ulSectorsPerFAT;
-			ulUsableDataClusters = ulUsableDataSectors / ulSectorsPerCluster;
 		}
+		ulUsableDataSectors = ulSectorCount - ulNonDataSectors - 2 * ulSectorsPerFAT;
+		ulUsableDataClusters = ulUsableDataSectors / ulSectorsPerCluster;
 	}
 	ulClusterBeginLBA	= ulHiddenSectors + ulFATReservedSectors + 2 * ulSectorsPerFAT;
 
@@ -359,7 +344,7 @@ FF_IOManager_t *pxIOManager = pxDisk->pxIOManager;
 		int32_t dirBegin;
 
 		FF_putChar( pucSectorBuffer, OFS_BPB_SecPerClus_8, ( uint32_t ) ulSectorsPerCluster ); /*  0x00D / Only 1, 2, 4, 8, 16, 32, 64, 128 */
-		FF_PRINTF( "FF_Format: SecCluster %lu DatSec %lu DataClus %lu ulClusterBeginLBA %lu\n\r",
+		FF_PRINTF("FF_Format: SecCluster %lu DatSec %lu DataClus %lu ulClusterBeginLBA %lu\n",
 			ulSectorsPerCluster, ulUsableDataSectors, ulUsableDataClusters, ulClusterBeginLBA );
 
 		/* This field is the new 32-bit total count of sectors on the volume. */
@@ -441,7 +426,7 @@ FF_IOManager_t *pxIOManager = pxDisk->pxIOManager;
 		FF_BlockWrite( pxIOManager, ( uint32_t ) fatBeginLBA, 1, pucSectorBuffer, pdFALSE );
 		FF_BlockWrite( pxIOManager, ( uint32_t ) fatBeginLBA + ulSectorsPerFAT, 1, pucSectorBuffer, pdFALSE );
 
-		FF_PRINTF( "FF_Format: Clearing entire FAT (2 x %lu sectors):\n\r", ulSectorsPerFAT );
+		FF_PRINTF( "FF_Format: Clearing entire FAT (2 x %lu sectors):\n", ulSectorsPerFAT );
 		{
 		int32_t addr;
 
@@ -454,7 +439,7 @@ FF_IOManager_t *pxIOManager = pxDisk->pxIOManager;
 				FF_BlockWrite( pxIOManager, ( uint32_t ) addr + ulSectorsPerFAT, 1, pucSectorBuffer, pdFALSE );
 			}
 		}
-		FF_PRINTF( "FF_Format: Clearing done\n\r" );
+		FF_PRINTF( "FF_Format: Clearing done\n" );
 		dirBegin = fatBeginLBA + ( 2 * ulSectorsPerFAT );
 #if( ffconfigTIME_SUPPORT != 0 )
 		{
@@ -491,7 +476,7 @@ FF_IOManager_t *pxIOManager = pxDisk->pxIOManager;
 				lLastAddress = dirBegin + ulSectorsPerCluster;
 			}
 
-			FF_PRINTF( "FF_Format: Clearing root directory at %08lX: %lu sectors\n\r", dirBegin, lLastAddress - dirBegin );
+			FF_PRINTF("FF_Format: Clearing root directory at %08lX: %lu sectors\n", dirBegin, lLastAddress - dirBegin );
 			for( lAddress = dirBegin; lAddress < lLastAddress; lAddress++ )
 			{
 				FF_BlockWrite( pxIOManager, ( uint32_t ) lAddress, 1, pucSectorBuffer, 0u );
@@ -575,6 +560,11 @@ FF_Error_t FF_Partition( FF_Disk_t *pxDisk, FF_PartitionParameters_t *pParams )
 	}
 	else
 	{
+		/* There must be at least 1 hidden sector. */
+		if( pParams->ulHiddenSectors < 1 )
+		{
+			pParams->ulHiddenSectors = 1;
+		}
 		ulReservedSpace = 0;
 	}
 
