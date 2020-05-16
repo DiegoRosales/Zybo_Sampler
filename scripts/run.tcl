@@ -95,7 +95,7 @@ if {$stage_error == 1} {
             setws ${workspace_project_path}
             repo -set ${fw_source_path}/repo
             app create -name ${app_project_name} -hw ${workspace_project_path}/${platform_project_name}.xsa -proc {ps7_cortexa9_0} -os freertos10_xilinx_sampler -lang C -template {Empty Application}
-            driver -peripheral ps7_sd_0 -name sdps -ver 3.5
+            driver -peripheral ps7_sd_0 -name sdps -ver 3.8
 
             file link -symbolic ${workspace_project_path}/${app_project_name}/src/common ${project_root}/source/fw/src/
             file link -symbolic ${workspace_project_path}/${app_project_name}/src/codec_controller ${project_root}/subsystems/codec_unit/fw/
