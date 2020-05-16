@@ -162,7 +162,7 @@ size_t load_file_to_memory( const char *file_name, uint8_t *buffer, size_t buffe
 
 // This functions loads a file into memory. You need to provide the full file path
 // This function performs memory allocation based on the file size
-size_t load_file_to_memory_malloc( char *file_name, uint8_t ** buffer, size_t max_buffer_len, size_t overhead ) {
+size_t load_file_to_memory_malloc( const char *file_name, uint8_t ** buffer, size_t max_buffer_len, size_t overhead ) {
     FF_FILE *pxFile = NULL;
     size_t file_size;
     uint8_t *new_buffer = NULL;
