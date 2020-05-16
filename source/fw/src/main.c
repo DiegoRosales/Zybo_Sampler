@@ -92,7 +92,7 @@ void main_rtos_program() {
 
     register_codec_cli_commands();
     register_fat_cli_commands();
-    register_sampler_cli_commands();
+    vRegisterSamplerCLICommands();
     register_sampler_dma_ctrl_cli_commands();
 
     pxSDDisk = FF_SDDiskInit( mainSD_CARD_DISK_NAME );

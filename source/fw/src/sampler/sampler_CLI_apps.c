@@ -30,27 +30,25 @@
 #define APPEND_NEWLINE(BUFFER) strcat( BUFFER, cliNEW_LINE )
 
 
-static BaseType_t play_key_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
-static BaseType_t stop_all_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
-static BaseType_t load_instrument_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
-static BaseType_t load_sf3_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
-static BaseType_t midi_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
-static BaseType_t midi_ascii_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
-static BaseType_t start_midi_listener_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
-static BaseType_t playback_sine_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
-static BaseType_t load_sine_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
+static BaseType_t prv_xPlayKeyCMD( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
+static BaseType_t prv_xStopAllPlaybackCMD( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
+static BaseType_t prv_xLoadInstrumentCMD( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
+static BaseType_t prv_xLoadSF3CMD( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
+static BaseType_t prv_xMIDIKeyPlayCMD( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
+static BaseType_t prv_xMIDIKeyPlayASCIICMD( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
+static BaseType_t prv_xStartMIDIListenerCMD( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
+static BaseType_t prv_xPlaybackSineWaveCMD( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
+static BaseType_t prv_xLoadSineWaveCMD( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
 
 ////////////////////////////////////////////////////
 // External variables
 ////////////////////////////////////////////////////
 extern nco_t sine_nco;
 
-//extern instrument_information;
-
-static xQueueHandle my_filename_queue_handler;
-static xQueueHandle my_return_queue_handler;
-
-static xQueueHandle my_key_parameters_queue_handler;
+// Queue handler to send data between the Commands and the Tasks
+static xQueueHandle xFilenameQueueHandler;
+static xQueueHandle xReturnQueueHandler;
+static xQueueHandle xKeyParamsQueueHandler;
 
 // This function converts an string in int or hex to a uint32_t
 static uint32_t str2int( const char *input_string, BaseType_t input_string_length ) {
@@ -84,106 +82,113 @@ static void ff_get_file_dir ( const char *file_path, char* dest ) {
     strncat( dest, file_path, last_slash );
 }
 
-// Structure defining the key playback command
-static const CLI_Command_Definition_t midi_command_definition =
+/////////////////////////////////////////////////
+// Structures defining CLI Commands
+/////////////////////////////////////////////////
+
+// >> midi <COMMAND> <DATA_BYTE_1> [<DATA_BYTE_2>]
+static const CLI_Command_Definition_t prv_xMIDIKeyPlayCMD_definition =
 {
     "midi", /* The command string to type. */
-    "\r\nmidi <COMMAND> <DATA_BYTE_1> <DATA_BYTE_2>:\r\n Executes a MIDI command. This is intended to use with a bridge since all the arguments are sent in raw binary, not ASCII\n\r",
-    midi_command, /* The function to run. */
+    "\r\nmidi <COMMAND> <DATA_BYTE_1> [<DATA_BYTE_2>]:\r\n Executes a MIDI command. This is intended to use with a bridge since all the arguments are sent in raw binary, not ASCII\n\r",
+    prv_xMIDIKeyPlayCMD, /* The function to run. */
     -1 /* 2 - 3 parameters. */
 };
 
-// Structure defining the key playback command
-static const CLI_Command_Definition_t midi_ascii_command_definition =
+// >> midi_ascii <COMMAND> <DATA_BYTE_1> [<DATA_BYTE_2>]
+static const CLI_Command_Definition_t prv_xMIDIKeyPlayASCIICMD_definition =
 {
     "midi_ascii", /* The command string to type. */
-    "\r\nmidi_ascii <COMMAND> <DATA_BYTE_1> <DATA_BYTE_2>:\r\n Executes a MIDI command\n\r",
-    midi_ascii_command, /* The function to run. */
+    "\r\nmidi_ascii <COMMAND> <DATA_BYTE_1> [<DATA_BYTE_2>]:\r\n Executes a MIDI command\n\r",
+    prv_xMIDIKeyPlayASCIICMD, /* The function to run. */
     -1 /* 2 - 3 parameters. */
 };
 
-// Structure defining the key playback command
-static const CLI_Command_Definition_t play_key_command_definition =
+// >> play_key <KEY> <VELOCITY>
+static const CLI_Command_Definition_t prv_xPlayKeyCMD_definition =
 {
     "play_key", /* The command string to type. */
-    "\r\nplay_key <key> <velocity>:\r\n Starts the key playback\n\r",
-    play_key_command, /* The function to run. */
-    2 /* One parameter is expected. */
+    "\r\nplay_key <KEY> <VELOCITY>:\r\n Starts the key playback\n\r",
+    prv_xPlayKeyCMD, /* The function to run. */
+    2 /* 2 parameters are expected. */
 };
 
-// Structure defining the playback stop command
-static const CLI_Command_Definition_t stop_all_command_definition =
+// >> stop_all <KEY> <VELOCITY>
+static const CLI_Command_Definition_t prv_xStopAllPlaybackCMD_definition =
 {
     "stop_all", /* The command string to type. */
-    "\r\nstop_all <key> <velocity>:\r\n Stops all playback\n\r",
-    stop_all_command, /* The function to run. */
-    0 /* One parameter is expected. */
+    "\r\nstop_all <KEY> <VELOCITY>:\r\n Stops all playback\n\r",
+    prv_xStopAllPlaybackCMD, /* The function to run. */
+    0 /* 0 parameters are expected. */
 };
 
-// Structure defining the instrument loader command
-static const CLI_Command_Definition_t load_instrument_command_definition =
+// >> load_instrument <FILENAME>
+static const CLI_Command_Definition_t prv_xLoadInstrumentCMD_definition =
 {
     "load_instrument", /* The command string to type. */
-    "\r\nload_instrument <filename>:\r\n Loads the specified instrument\r\n",
-    load_instrument_command, /* The function to run. */
-    1 /* One parameter is expected. */
+    "\r\nload_instrument <FILENAME>:\r\n Loads the specified instrument\r\n",
+    prv_xLoadInstrumentCMD, /* The function to run. */
+    1 /* 1 parameter is expected. */
 };
 
-// Structure defining the sf3 loader command
-static const CLI_Command_Definition_t load_sf3_command_definition =
+// >> load_sf3 <FILENAME>
+static const CLI_Command_Definition_t prv_xLoadSF3CMD_definition =
 {
     "load_sf3", /* The command string to type. */
-    "\r\nload_sf3 <filename>:\r\n Loads the specified *.sf3 file\r\n",
-    load_sf3_command, /* The function to run. */
-    1 /* One parameter is expected. */
+    "\r\nload_sf3 <FILENAME>:\r\n Loads the specified *.sf3 file\r\n",
+    prv_xLoadSF3CMD, /* The function to run. */
+    1 /* 1 parameter is expected. */
 };
 
-// Structure defining the instrument loader command
-static const CLI_Command_Definition_t start_midi_listener_command_definition =
+// >> start_serial_midi_listener
+static const CLI_Command_Definition_t prv_xStartMIDIListenerCMD_definition =
 {
     "start_serial_midi_listener", /* The command string to type. */
     "\r\nstart_serial_midi_listener\n\r Starts the MIDI Serial listener\r\n",
-    start_midi_listener_command, /* The function to run. */
-    0 /* One parameter is expected. */
+    prv_xStartMIDIListenerCMD, /* The function to run. */
+    0 /* 0 parameters are expected. */
 };
 
-// Command to load a sine wave into memory
-static const CLI_Command_Definition_t playback_sine_command_definition =
+// >> playback_sine <FREQUENCY>
+static const CLI_Command_Definition_t prv_xPlaybackSineWaveCMD_definition =
 {
     "play_sine",
     "\r\nplayback_sine <FREQUENCY>\r\n Starts the playback of a sine wave of a given frequency\r\n",
-    playback_sine_command, /* The function to run. */
-    1 /* The user can enter any number of commands. */
+    prv_xPlaybackSineWaveCMD, /* The function to run. */
+    1 /* 1 parameter is expected. */
 };
 
-// Command to load a sine wave into memory
-static const CLI_Command_Definition_t load_sine_command_definition =
+// >> load_sine <FREQUENCY>
+static const CLI_Command_Definition_t prv_xLoadSineWaveCMD_definition =
 {
     "load_sine",
-    "\r\nload_sine <Frequency>:\r\n Load a sine wave of a given frequency into memory\r\n",
-    load_sine_command, /* The function to run. */
-    1 /* The user can enter any number of commands. */
+    "\r\nload_sine <FREQUENCY>:\r\n Load a sine wave of a given frequency into memory\r\n",
+    prv_xLoadSineWaveCMD, /* The function to run. */
+    1 /* 1 parameter is expected. */
 };
 
 // This function registers all the CLI applications
-void register_sampler_cli_commands( void ) {
+void vRegisterSamplerCLICommands( void ) {
 
-    my_filename_queue_handler       = xQueueCreate(1, sizeof(file_path_handler_t));
-    my_return_queue_handler         = xQueueCreate(1, sizeof(uint32_t));
-    my_key_parameters_queue_handler = xQueueCreate(1, sizeof(uint32_t));
-    FreeRTOS_CLIRegisterCommand( &play_key_command_definition );
-    FreeRTOS_CLIRegisterCommand( &stop_all_command_definition );
-    FreeRTOS_CLIRegisterCommand( &load_instrument_command_definition );
-    FreeRTOS_CLIRegisterCommand( &load_sf3_command_definition );
-    FreeRTOS_CLIRegisterCommand( &midi_command_definition );
-    FreeRTOS_CLIRegisterCommand( &midi_ascii_command_definition );
-    FreeRTOS_CLIRegisterCommand( &start_midi_listener_command_definition );
-   	FreeRTOS_CLIRegisterCommand( &playback_sine_command_definition ); // Load sine command
-	FreeRTOS_CLIRegisterCommand( &load_sine_command_definition ); // Load sine command
+    // Queue handlers to send data between the Commands and the Tasks
+    xFilenameQueueHandler  = xQueueCreate(1, sizeof(file_path_handler_t));
+    xReturnQueueHandler    = xQueueCreate(1, sizeof(uint32_t));
+    xKeyParamsQueueHandler = xQueueCreate(1, sizeof(uint32_t));
+
+    // Register commands
+    FreeRTOS_CLIRegisterCommand( &prv_xPlayKeyCMD_definition );
+    FreeRTOS_CLIRegisterCommand( &prv_xStopAllPlaybackCMD_definition );
+    FreeRTOS_CLIRegisterCommand( &prv_xLoadInstrumentCMD_definition );
+    FreeRTOS_CLIRegisterCommand( &prv_xLoadSF3CMD_definition );
+    FreeRTOS_CLIRegisterCommand( &prv_xMIDIKeyPlayCMD_definition );
+    FreeRTOS_CLIRegisterCommand( &prv_xMIDIKeyPlayASCIICMD_definition );
+    FreeRTOS_CLIRegisterCommand( &prv_xStartMIDIListenerCMD_definition );
+   	FreeRTOS_CLIRegisterCommand( &prv_xPlaybackSineWaveCMD_definition ); // Load sine command
+	FreeRTOS_CLIRegisterCommand( &prv_xLoadSineWaveCMD_definition ); // Load sine command
 
 }
 
-static BaseType_t midi_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString ) {
+static BaseType_t prv_xMIDIKeyPlayCMD( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString ) {
 
     const char *command = NULL;
     const char *byte1   = NULL;
@@ -238,7 +243,7 @@ static BaseType_t midi_command( char *pcWriteBuffer, size_t xWriteBufferLen, con
 
 }
 
-static BaseType_t midi_ascii_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString ) {
+static BaseType_t prv_xMIDIKeyPlayASCIICMD( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString ) {
 
     const char *command = NULL;
     const char *byte1   = NULL;
@@ -307,7 +312,7 @@ static BaseType_t midi_ascii_command( char *pcWriteBuffer, size_t xWriteBufferLe
 
 }
 
-static BaseType_t play_key_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString ) {
+static BaseType_t prv_xPlayKeyCMD( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString ) {
 
     const char *key;
     const char *velocity;
@@ -348,11 +353,11 @@ static BaseType_t play_key_command( char *pcWriteBuffer, size_t xWriteBufferLen,
     SAMPLER_PRINTF_INFO("Playing back Key %d, Velocity: %d", key_parameters.key, key_parameters.velocity);
 
 
-    xQueueSend(my_key_parameters_queue_handler, &key_parameters , 1000);
+    xQueueSend(xKeyParamsQueueHandler, &key_parameters , 1000);
 
     // Wake up the task and send the queue handler of the parameters
     xTaskNotify( key_playback_task_handle,
-                 (uint32_t) my_key_parameters_queue_handler,
+                 (uint32_t) xKeyParamsQueueHandler,
                  eSetValueWithOverwrite );
 
     // Don't wait for any feedback
@@ -360,7 +365,7 @@ static BaseType_t play_key_command( char *pcWriteBuffer, size_t xWriteBufferLen,
 
 }
 
-static BaseType_t stop_all_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString ) {
+static BaseType_t prv_xStopAllPlaybackCMD( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString ) {
 
     // Variables for the key playback task
     TaskHandle_t     stop_all_task_handle = xTaskGetHandle( STOP_ALL_TASK_NAME );
@@ -378,7 +383,7 @@ static BaseType_t stop_all_command( char *pcWriteBuffer, size_t xWriteBufferLen,
 
 }
 
-static BaseType_t load_instrument_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString ) {
+static BaseType_t prv_xLoadInstrumentCMD( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString ) {
     
     const char *pcParameter;
 
@@ -440,16 +445,16 @@ static BaseType_t load_instrument_command( char *pcWriteBuffer, size_t xWriteBuf
 
     SAMPLER_PRINTF_DEBUG("File Path: %s", my_file_path_handler.file_path);
 
-    my_file_path_handler.return_handle = my_return_queue_handler;
+    my_file_path_handler.return_handle = xReturnQueueHandler;
 
     // Send the filename to the task
-    xQueueSend(my_filename_queue_handler, &my_file_path_handler , 1000);
+    xQueueSend(xFilenameQueueHandler, &my_file_path_handler , 1000);
 
     xTaskNotify(    task_handle,
-                    (uint32_t) my_filename_queue_handler,
+                    (uint32_t) xFilenameQueueHandler,
                     eSetValueWithOverwrite );
 
-    if( ! xQueueReceive(my_return_queue_handler, &return_value, 10000) ) {
+    if( ! xQueueReceive(xReturnQueueHandler, &return_value, 10000) ) {
         SAMPLER_PRINTF_ERROR("Error receiving the Queue!");
     }
     else {
@@ -460,7 +465,7 @@ static BaseType_t load_instrument_command( char *pcWriteBuffer, size_t xWriteBuf
 
 }
 
-static BaseType_t load_sf3_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString ) {
+static BaseType_t prv_xLoadSF3CMD( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString ) {
     
     const char *pcParameter;
 
@@ -522,16 +527,16 @@ static BaseType_t load_sf3_command( char *pcWriteBuffer, size_t xWriteBufferLen,
 
     SAMPLER_PRINTF_DEBUG("File Path: %s", my_file_path_handler.file_path);
 
-    my_file_path_handler.return_handle = my_return_queue_handler;
+    my_file_path_handler.return_handle = xReturnQueueHandler;
 
     // Send the filename to the task
-    xQueueSend(my_filename_queue_handler, &my_file_path_handler , 1000);
+    xQueueSend(xFilenameQueueHandler, &my_file_path_handler , 1000);
 
     xTaskNotify(    task_handle,
-                    (uint32_t) my_filename_queue_handler,
+                    (uint32_t) xFilenameQueueHandler,
                     eSetValueWithOverwrite );
 
-    if( ! xQueueReceive(my_return_queue_handler, &return_value, 20000) ) {
+    if( ! xQueueReceive(xReturnQueueHandler, &return_value, 20000) ) {
         SAMPLER_PRINTF_ERROR("Error receiving the Queue!");
     }
     else {
@@ -542,7 +547,7 @@ static BaseType_t load_sf3_command( char *pcWriteBuffer, size_t xWriteBufferLen,
 
 }
 
-static BaseType_t start_midi_listener_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString ) {
+static BaseType_t prv_xStartMIDIListenerCMD( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString ) {
 
 	uint32_t return_value = 1;
 
@@ -551,11 +556,11 @@ static BaseType_t start_midi_listener_command( char *pcWriteBuffer, size_t xWrit
 
     // Wake up the task and send the full MIDI command the parameters
     xTaskNotify( serial_midi_listener_task_handler,
-                 (uint32_t) my_return_queue_handler,
+                 (uint32_t) xReturnQueueHandler,
                  eSetValueWithOverwrite );
 
 
-    if( ! xQueueReceive(my_return_queue_handler, &return_value, 10000) ) {
+    if( ! xQueueReceive(xReturnQueueHandler, &return_value, 10000) ) {
         SAMPLER_PRINTF_ERROR("Timeout!");
     }
     else {
@@ -569,7 +574,7 @@ static BaseType_t start_midi_listener_command( char *pcWriteBuffer, size_t xWrit
 
 
 // This starts the playback of a sine wave
-static BaseType_t playback_sine_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString ) {
+static BaseType_t prv_xPlaybackSineWaveCMD( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString ) {
     const char         *pcParameter;
     BaseType_t         xParameterStringLength;
     BaseType_t         xReturn;
@@ -657,7 +662,7 @@ static BaseType_t playback_sine_command( char *pcWriteBuffer, size_t xWriteBuffe
 
 
 // This loads a section of memory with a sine wave of a give frequency
-static BaseType_t load_sine_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString ) {
+static BaseType_t prv_xLoadSineWaveCMD( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString ) {
     const char         *pcParameter;
     BaseType_t         xParameterStringLength;
     BaseType_t         xReturn;
