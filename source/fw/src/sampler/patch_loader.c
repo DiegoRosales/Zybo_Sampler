@@ -78,7 +78,7 @@ PATCH_DESCRIPTOR_t * ulLoadPatchFromJSON( const char * json_file_dirname, const 
 
     // Step 1 - Open the json file containing the instrument information
     SAMPLER_PRINTF_INFO("Step 1 - Load the JSON File");
-    load_file_to_memory( json_file_fullpath, json_patch_information_buffer, (size_t) MAX_INST_FILE_SIZE );
+    xLoadFileToMemory( json_file_fullpath, json_patch_information_buffer, (size_t) MAX_INST_FILE_SIZE );
 
     // Step 2 - Initialize the instrument information
     SAMPLER_PRINTF_INFO("Step 2 - Initializing the instrument information");
@@ -140,7 +140,7 @@ PATCH_DESCRIPTOR_t * ulLoadPatchFromSF3( const char * sf3_file_fullpath ) {
 
     // Step 1 - Open the json file containing the instrument information
     SAMPLER_PRINTF_INFO("Step 1 - Load the SF3 File");
-    load_file_to_memory_malloc( sf3_file_fullpath, &sf3_patch_buffer, MAX_SF3_FILE_SIZE, 0 );
+    xLoadFileToMemory_malloc( sf3_file_fullpath, &sf3_patch_buffer, MAX_SF3_FILE_SIZE, 0 );
 
     
 
@@ -409,7 +409,7 @@ uint32_t prv_ulLoadSamplesFromDescriptor( PATCH_DESCRIPTOR_t *patch_descriptor, 
 
             // Load the RIFF File into memory
             riff_buffer      = NULL;
-            riff_buffer_size = load_file_to_memory_malloc( 
+            riff_buffer_size = xLoadFileToMemory_malloc( 
                                                             full_path,
                                                             &riff_buffer,
                                                             (size_t) MAX_SAMPLE_SIZE,
@@ -442,7 +442,7 @@ uint32_t prv_ulLoadSamplesFromDescriptor( PATCH_DESCRIPTOR_t *patch_descriptor, 
                 }
 
                 // Release the memory for the next file
-                unload_file_from_memory( riff_buffer );
+                vClearMemoryBuffer( riff_buffer );
                 riff_buffer = NULL;
             #endif
         }

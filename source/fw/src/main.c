@@ -91,7 +91,7 @@ void main_rtos_program() {
     vUARTCommandConsoleStart( mainUART_COMMAND_CONSOLE_STACK_SIZE, mainUART_COMMAND_CONSOLE_TASK_PRIORITY );
 
     register_codec_cli_commands();
-    register_fat_cli_commands();
+    vRegisterFATCLICommands();
     vRegisterSamplerCLICommands();
     register_sampler_dma_ctrl_cli_commands();
 

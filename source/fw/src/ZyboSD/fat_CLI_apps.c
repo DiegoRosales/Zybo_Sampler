@@ -30,7 +30,7 @@ extern FF_Disk_t *pxSDDisk;
 //////////////////////////////////////////////////////////
 static BaseType_t sd_initialization_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
 static void       prvCreateFileInfoString( char *pcBuffer, FF_FindData_t *pxFindStruct );
-static void       file_to_buffer( FF_FILE *pxFile, uint8_t *buffer, size_t buffer_len );
+static void       prv_vFileToBuffer( FF_FILE *pxFile, uint8_t *buffer, size_t buffer_len );
 /////////////
 // Commands
 /////////////
@@ -112,7 +112,7 @@ static const CLI_Command_Definition_t xPWD =
 
 
 // This function loads a file in the form of a FF_FILE into memory
-void file_to_buffer( FF_FILE *pxFile, uint8_t *buffer, size_t buffer_len ) {
+void prv_vFileToBuffer( FF_FILE *pxFile, uint8_t *buffer, size_t buffer_len ) {
     //SD_PRINTF_INFO("Loading the file into memory");
     memset( buffer, 0x00, buffer_len );
     SD_PRINTF_DEBUG("Memory initialized");
@@ -123,7 +123,7 @@ void file_to_buffer( FF_FILE *pxFile, uint8_t *buffer, size_t buffer_len ) {
 }
 
 // This functions loads a file into memory. You need to provide the full file path
-size_t load_file_to_memory( const char *file_name, uint8_t *buffer, size_t buffer_len ) {
+size_t xLoadFileToMemory( const char *file_name, uint8_t *buffer, size_t buffer_len ) {
     FF_FILE *pxFile = NULL;
     size_t file_size;
 
@@ -156,14 +156,14 @@ size_t load_file_to_memory( const char *file_name, uint8_t *buffer, size_t buffe
     SD_PRINTF_DEBUG("File opened succesfully. File Size = %d bytes", file_size);
 
     // Step 2 - Load the file into memory
-    file_to_buffer( pxFile, buffer, buffer_len );
+    prv_vFileToBuffer( pxFile, buffer, buffer_len );
 
     return file_size;
 }
 
 // This functions loads a file into memory. You need to provide the full file path
 // This function performs memory allocation based on the file size
-size_t load_file_to_memory_malloc( const char *file_name, uint8_t ** buffer, size_t max_buffer_len, size_t overhead ) {
+size_t xLoadFileToMemory_malloc( const char *file_name, uint8_t ** buffer, size_t max_buffer_len, size_t overhead ) {
     FF_FILE *pxFile = NULL;
     size_t file_size;
     uint8_t *new_buffer = NULL;
@@ -204,7 +204,7 @@ size_t load_file_to_memory_malloc( const char *file_name, uint8_t ** buffer, siz
     }
 
     // Step 2 - Load the file into memory
-    file_to_buffer( pxFile, new_buffer, file_size );
+    prv_vFileToBuffer( pxFile, new_buffer, file_size );
 
 		SD_PRINTF_DEBUG("File loaded successfully. Buffer address =  0x%x", new_buffer );
 
@@ -214,12 +214,12 @@ size_t load_file_to_memory_malloc( const char *file_name, uint8_t ** buffer, siz
 }
 
 // This function will unload a file in memory
-void unload_file_from_memory( uint8_t * buffer ) {
+void vClearMemoryBuffer( uint8_t * buffer ) {
 	vPortFree( buffer );
 }
 
 // This function registers all the CLI applications
-void register_fat_cli_commands( void ) {
+void vRegisterFATCLICommands( void ) {
     FreeRTOS_CLIRegisterCommand( &sd_initialization_command_definition );
     FreeRTOS_CLIRegisterCommand( &xDIR );
     FreeRTOS_CLIRegisterCommand( &xCD );
