@@ -60,9 +60,11 @@
 	#define	ARRAY_SIZE(x)	(int) (sizeof(x)/sizeof(x)[0])
 #endif
 
-#define STA_NOINIT		0x01	/* Drive not initialized */
-#define STA_NODISK		0x02	/* No medium in the drive */
-#define STA_PROTECT		0x04	/* Write protected */
+#define STA_NOINIT        0x01 /* Drive not initialized */
+#define STA_NODISK        0x02 /* No medium in the drive */
+#define STA_PROTECT       0x04 /* Write protected */
+#define STA_INHIBIT_CMD   0x08 /* Command inhibit */
+#define STA_INHIBIT_DAT   0x10 /* Data inhibit */
 
 #define SD_DEVICE_ID					XPAR_XSDPS_0_DEVICE_ID
 #define HIGH_SPEED_SUPPORT				0x01
@@ -83,6 +85,9 @@
 #define XSDPS_INTR_NORMAL_ENABLE ( XSDPS_INTR_CC_MASK | XSDPS_INTR_TC_MASK | \
 	XSDPS_INTR_DMA_MASK | XSDPS_INTR_CARD_INSRT_MASK | XSDPS_INTR_CARD_REM_MASK | \
 	XSDPS_INTR_ERR_MASK )
+
+/* Based on the descriptor sizes inside  xsdps.c */
+#define XSDPS_MAX_NUM_OF_DESCRIPTORS 32
 
 /* Two defines used to set or clear the interrupt */
 #define INTC_BASE_ADDR		XPAR_SCUGIC_CPU_BASEADDR
@@ -149,7 +154,15 @@ static int32_t prvFFRead( uint8_t *pucBuffer, uint32_t ulSectorNumber, uint32_t 
 {
 int32_t lReturnCode;
 int iResult;
+uint32_t ulPresentStatusReg;
 uint8_t *pucReadBuffer;
+uint32_t ulNumOfTransfers;
+uint32_t ulTransferNumber;
+uint32_t ulCurrSectorCount;
+uint32_t ulCurrSectorCount_bytes;
+uint32_t ulSectorsRead;
+uint32_t ulCurrSectorNumber;
+uint8_t *pucCurrBuffer;
 
 	if( ( pxDisk != NULL ) &&		/*_RB_ Could this be changed to an assert? */
 		( pxDisk->ulSignature == sdSIGNATURE ) &&
@@ -158,6 +171,7 @@ uint8_t *pucReadBuffer;
 		( pxDisk->ulNumberOfSectors - ulSectorNumber ) >= ulSectorCount )
 	{
 		iResult = vSDMMC_Status( drive_nr );
+		ulPresentStatusReg = XSdPs_GetPresentStatusReg( XPAR_XSDPS_0_BASEADDR );
 		if( ( iResult & STA_NODISK ) != 0 )
 		{
 			lReturnCode = FF_ERR_DRIVER_NOMEDIUM | FF_ERRFLAG;
@@ -167,6 +181,14 @@ uint8_t *pucReadBuffer;
 		{
 			lReturnCode = FF_ERR_IOMAN_OUT_OF_BOUNDS_READ | FF_ERRFLAG;
 			FF_PRINTF( "prvFFRead: NOINIT\n\r" );
+		} 
+		else if ( ulPresentStatusReg & XSDPS_PSR_INHIBIT_CMD_MASK ) {
+			lReturnCode = FF_ERRFLAG;
+			FF_PRINTF( "prvFFRead: XSDPS_PSR_INHIBIT_CMD_MASK\n\r" );
+		} 
+		else if ( ulPresentStatusReg & XSDPS_PSR_INHIBIT_DAT_MASK ) {
+			lReturnCode = FF_ERRFLAG;
+			FF_PRINTF( "prvFFRead: XSDPS_PSR_INHIBIT_DAT_MASK\n\r" );
 		}
 		else if( ulSectorCount == 0ul )
 		{
@@ -174,36 +196,80 @@ uint8_t *pucReadBuffer;
 		}
 		else
 		{
-			/* Convert LBA to byte address if needed */
-			if( pxSDCardInstance->HCS == 0 )
-			{
-				ulSectorNumber *= XSDPS_BLK_SIZE_512_MASK;
+			/* Calculate the maximum number of sectors that can be read given the maximum amount of descriptors    */
+			/* and the size of the transfer.                                                                       */
+			/* The maximum amount of descriptors was obtained by looking at the XSdPs_Setup32ADMA2DescTbl function */
+			/* inside the xsdps.c driver source code from Xilinx                                                   */
+			if ( (ulSectorCount*XSDPS_BLK_SIZE_512_MASK) < (XSDPS_DESC_MAX_LENGTH * XSDPS_MAX_NUM_OF_DESCRIPTORS) ) {
+				ulNumOfTransfers  = 1;
+				ulCurrSectorCount = ulSectorCount;
+			} else {
+				ulNumOfTransfers = (ulSectorCount*XSDPS_BLK_SIZE_512_MASK)/(XSDPS_DESC_MAX_LENGTH * XSDPS_MAX_NUM_OF_DESCRIPTORS); /* 32 == Max number of descriptors */
+				if ( (ulSectorCount*XSDPS_BLK_SIZE_512_MASK)%(XSDPS_DESC_MAX_LENGTH * XSDPS_MAX_NUM_OF_DESCRIPTORS) != 0 ) {
+					ulNumOfTransfers += 1;
+				}
+				ulCurrSectorCount = (XSDPS_DESC_MAX_LENGTH * XSDPS_MAX_NUM_OF_DESCRIPTORS)/XSDPS_BLK_SIZE_512_MASK;
 			}
 
-			pucReadBuffer = prvReadSDCardData( pucBuffer, 512UL * ulSectorCount );
+			ulCurrSectorNumber = ulSectorNumber;
+			pucCurrBuffer      = pucBuffer;
+			ulSectorsRead      = 0;
+			lReturnCode        = 0l;
 
-			if( ucIsCachedMemory( pucReadBuffer ) != pdFALSE )
-			{
-				xCacheStats.xFailReadCount++;
-			}
+			for ( ulTransferNumber = 0; ulTransferNumber < ulNumOfTransfers; ulTransferNumber++ ) {
+  			/* Update for the next sector read */
+				ulCurrSectorNumber = ulSectorNumber + (ulTransferNumber * ulCurrSectorCount);
 
-			iResult  = XSdPs_ReadPolled( pxSDCardInstance, ulSectorNumber, ulSectorCount, pucReadBuffer );
-			if( pucBuffer != pucReadBuffer )
-			{
-				xCacheStats.xMemcpyReadCount++;
-				memcpy( pucBuffer, pucReadBuffer, 512 * ulSectorCount );
-			}
-			else
-			{
-				xCacheStats.xPassReadCount++;
-			}
-			if( iResult == XST_SUCCESS )
-			{
-				lReturnCode = 0l;
-			}
-			else
-			{
-				lReturnCode = FF_ERR_IOMAN_OUT_OF_BOUNDS_READ | FF_ERRFLAG;
+				/* Convert LBA to byte address if needed */
+				if( pxSDCardInstance->HCS == 0 )
+				{
+					ulCurrSectorNumber *= XSDPS_BLK_SIZE_512_MASK;
+				}
+
+				/* Calculate the number of bytes */
+				ulCurrSectorCount_bytes = 512UL * ulCurrSectorCount;
+
+				/* Get the address of the current buffer */
+				pucReadBuffer = prvReadSDCardData( pucCurrBuffer, ulCurrSectorCount_bytes );
+
+				/* Update statistics */
+				if( ucIsCachedMemory( pucReadBuffer ) != pdFALSE )
+				{
+					xCacheStats.xFailReadCount++;
+				}
+
+				/* Read the sectors and store them in the pucReadBuffer */
+				iResult       = XSdPs_ReadPolled( pxSDCardInstance, ulCurrSectorNumber, ulCurrSectorCount, pucReadBuffer );
+				ulSectorsRead += ulCurrSectorCount;
+
+				/* Update statistics */
+				if( pucCurrBuffer != pucReadBuffer )
+				{
+					xCacheStats.xMemcpyReadCount++;
+					memcpy( pucCurrBuffer, pucReadBuffer, ulCurrSectorCount_bytes );
+				}
+				else
+				{
+					xCacheStats.xPassReadCount++;
+				}
+
+				/* Check if there was a read error */
+				if( iResult != XST_SUCCESS )
+				{
+					lReturnCode = FF_ERRFLAG;
+					FF_PRINTF( "prvFFRead: XSdPs_ReadPolled Failed\n\r" );
+					goto returnPath;
+				}
+
+				/* Update the buffer address */
+				pucCurrBuffer += ulCurrSectorCount_bytes;
+
+				/* Last sector. Check if the number of sectors left is lower than the default */
+				if ( ulTransferNumber == ulNumOfTransfers - 1 ) {
+					if (( ulSectorsRead + ulCurrSectorCount ) > ulSectorCount) {
+						ulCurrSectorCount = ulSectorCount - ulSectorsRead;
+					}
+				}
 			}
 		}
 	}
@@ -219,6 +285,8 @@ uint8_t *pucReadBuffer;
 		lReturnCode = FF_ERR_IOMAN_OUT_OF_BOUNDS_READ | FF_ERRFLAG;
 	}
 
+
+returnPath:
 	return lReturnCode;
 }
 /*-----------------------------------------------------------*/
