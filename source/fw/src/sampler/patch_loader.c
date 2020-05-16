@@ -61,10 +61,12 @@ static KEY_VOICE_INFORMATION_t * prv_xInitVoiceInformation();
 static KEY_INFORMATION_t       * prv_xInitKeyInformation();
 static uint32_t                  prv_ulDecodeJSON_SamplePaths( uint32_t sample_start_token_index, uint32_t number_of_samples, jsmntok_t *tokens, uint8_t *json_patch_information_buffer, PATCH_DESCRIPTOR_t *patch_descriptor );
 static uint8_t                   prv_usGetJSON_MIDINoteNumber( jsmntok_t *tok, uint8_t *instrument_info_buffer );
-static uint32_t                  prv_ulRealignAudioData( KEY_VOICE_INFORMATION_t *voice_information );
 static uint32_t                  prv_ulStr2Int( const char *input_string, uint32_t input_string_length );
 static uint32_t                  prv_ulDecodeJSON_PatchInfo( uint8_t *json_patch_information_buffer, PATCH_DESCRIPTOR_t *patch_descriptor );
 static uint32_t                  prv_ulLoadSamplesFromDescriptor( PATCH_DESCRIPTOR_t *patch_descriptor, const char *json_file_root_dir );
+#if ENABLE_SAMPLE_REALIGN == 1
+static uint32_t                  prv_ulRealignAudioData( KEY_VOICE_INFORMATION_t *voice_information );
+#endif
 
 // This function will load a patch given a JSON patch information file
 PATCH_DESCRIPTOR_t * ulLoadPatchFromJSON( const char * json_file_dirname, const char * json_file_fullpath) {
@@ -419,20 +421,26 @@ uint32_t prv_ulLoadSamplesFromDescriptor( PATCH_DESCRIPTOR_t *patch_descriptor, 
 
             // Extract the RIFF information and configure the DMA data structures for the PL DMA functionality
             vDecodeWAVEInformation( riff_buffer, riff_buffer_size, current_sample_format );
+
+            // Check for errors
             if ( (current_sample_format->audio_data_size == 0) || (current_sample_format->data_start_ptr == NULL)) {
                 xil_printf("[ERROR] - Failed decoding the RIFF audio data\n\r");
                 return error;
             }
-            error = prv_ulRealignAudioData( current_voice );
 
-            if ( error != 0 ) {
-                xil_printf("[ERROR] - Failed realigning the RIFF audio data\n\r");
-                return error;
-            }
-            
-            // Release the memory for the next file
-            unload_file_from_memory( riff_buffer );
-            riff_buffer = NULL;
+            // Data realignment mechanism
+            #if ENABLE_SAMPLE_REALIGN == 1
+                error = prv_ulRealignAudioData( current_voice );
+
+                if ( error != 0 ) {
+                    xil_printf("[ERROR] - Failed realigning the RIFF audio data\n\r");
+                    return error;
+                }
+
+                // Release the memory for the next file
+                unload_file_from_memory( riff_buffer );
+                riff_buffer = NULL;
+            #endif
         }
     }
 
@@ -443,30 +451,24 @@ uint32_t prv_ulLoadSamplesFromDescriptor( PATCH_DESCRIPTOR_t *patch_descriptor, 
     return 0;
 }
 
-
+#if ENABLE_SAMPLE_REALIGN == 1
 // This function realigns the 16-bit audio data so that it can be properly accessed through DMA without complex HW implementations
 // To do this, the data needs to start in an address that is multiple of 4 (ej. 0xffff0000, 0xffff0004, 0xffff0008, 0xffff000c, etc.)
 uint32_t prv_ulRealignAudioData( KEY_VOICE_INFORMATION_t *voice_information ) {
 
     uint8_t *aligned_buffer_ptr = NULL;
-    //uint8_t *temp_data_buffer   = NULL;
     
     // Sanity check
     if ( voice_information == NULL ) return 1;
     if ( voice_information->sample_format.data_start_ptr == NULL ) return 1;
     if ( voice_information->sample_format.audio_data_size == 0 ) return 1;
 
-    // Check if by chance the data is already aligned
-    //if ( ( (int) voice_information->sample_format.data_start_ptr % (int) 4) == 0 ) return 0;
-
     // If data needs realignment, copy the unaligned data to a temp memory location
-    // and then copy back the data on the appropriate offset. Finally, release the memory
+    // and then copy back the data on the appropriate offset.
 
     // Step 1 - Malloc the required temoporary space
-    //aligned_buffer_ptr = voice_information->sample_format.data_start_ptr + ( (int) 4 - ( (int) voice_information->sample_format.data_start_ptr % (int) 4 ) );
     aligned_buffer_ptr = sampler_malloc( (size_t) voice_information->sample_format.audio_data_size );
 
-    //temp_data_buffer = sampler_malloc( (size_t) voice_information->sample_format.audio_data_size );
     // Fail if there's not enugh space for malloc
     if ( aligned_buffer_ptr == NULL ) {
         xil_printf( "[ERROR] - Malloc for the temporary realignment buffer failed! Requested size = %d bytes", voice_information->sample_format.audio_data_size );
@@ -477,14 +479,9 @@ uint32_t prv_ulRealignAudioData( KEY_VOICE_INFORMATION_t *voice_information ) {
     //memcpy( temp_data_buffer, voice_information->sample_format.data_start_ptr, (size_t) voice_information->sample_format.audio_data_size );
     memcpy( aligned_buffer_ptr, voice_information->sample_format.data_start_ptr, (size_t) voice_information->sample_format.audio_data_size );
 
-    // Step 3 - Copy back the contents
-    //memcpy( aligned_buffer_ptr, temp_data_buffer, (size_t) voice_information->sample_format.audio_data_size );
-
-    // Step 4 - Free the temporary memory
-    //sampler_free( temp_data_buffer );
-
-    // Step 5 - Assign the new pointer
+    // Step 3 - Assign the new pointer
     voice_information->sample_format.data_start_ptr = aligned_buffer_ptr;
 
     return 0;
 }
+#endif

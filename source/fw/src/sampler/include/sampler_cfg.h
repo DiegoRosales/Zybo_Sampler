@@ -16,6 +16,9 @@
 
 #include "jsmn_utils.h"
 
+// Enable/disable data realignment
+#define ENABLE_SAMPLE_REALIGN 0
+
 // Endinaness conversion
 // 12_34 -> 34_12
 #define TOGGLE_ENDIAN_16(__DATA__)( ( (__DATA__ & 0xff00) >> 8 ) | ( (__DATA__ & 0xff  ) << 8 ) )
