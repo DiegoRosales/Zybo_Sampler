@@ -52,6 +52,8 @@ You can find more about the board over at https://reference.digilentinc.com/refe
 
 ## Phase 3 [**IN PROGRESS**]: Sound Playback
 
+[**IN PROGRESS**] Enable playback from SF3 files
+
 [**IN PROGRESS**] Playback samples from an open source library
 
 [**NOT STARTED**] Enable true velocity switches
