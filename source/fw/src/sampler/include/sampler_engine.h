@@ -16,9 +16,8 @@
     #endif
 #endif
 
-uint8_t us_get_midi_note_number( const char *note_name );
-
-uint32_t ul_stop_all( PATCH_DESCRIPTOR_t *instrument_information );
-uint32_t ul_play_instrument_key( uint8_t key, uint8_t velocity, PATCH_DESCRIPTOR_t *instrument_information );
+uint32_t ulStopAllPlayback( PATCH_DESCRIPTOR_t *instrument_information );
+uint32_t ulPlayInstrumentKey( uint8_t key, uint8_t velocity, PATCH_DESCRIPTOR_t *instrument_information );
+uint8_t  usGetMIDINoteNumber( const char *note_name );
 
 #endif

@@ -20,7 +20,7 @@
 #include "patch_loader.h"
 #include "sampler_engine.h"
 
-static uint32_t                   ul_str2int( const char *input_string, uint32_t input_string_length );
+static uint32_t prv_ulStrToInt( const char *input_string, uint32_t input_string_length );
 
 // Lookup table to correlate note names with MIDI notes
 static const NOTE_LUT_STRUCT_t MIDI_NOTES_LUT[12] = {
@@ -39,7 +39,7 @@ static const NOTE_LUT_STRUCT_t MIDI_NOTES_LUT[12] = {
 };
 
 // This function converts an string in int or hex to a uint32_t
-static uint32_t ul_str2int( const char *input_string, uint32_t input_string_length ) {
+static uint32_t prv_ulStrToInt( const char *input_string, uint32_t input_string_length ) {
 
     const char *start_char = input_string;
     char *end_char;
@@ -58,7 +58,7 @@ static uint32_t ul_str2int( const char *input_string, uint32_t input_string_leng
 }
 
 // This function stops the playback for everything
-uint32_t ul_stop_all( PATCH_DESCRIPTOR_t *instrument_information ) {
+uint32_t ulStopAllPlayback( PATCH_DESCRIPTOR_t *instrument_information ) {
     KEY_INFORMATION_t       *current_key    = NULL;
     KEY_VOICE_INFORMATION_t *current_voice  = NULL;
     uint32_t                 key            = 0;
@@ -98,7 +98,7 @@ uint32_t ul_stop_all( PATCH_DESCRIPTOR_t *instrument_information ) {
 }
 
 // This function starts the playback of a sample given the key/velocity parameters and the instrument information
-uint32_t ul_play_instrument_key( uint8_t key, uint8_t velocity, PATCH_DESCRIPTOR_t *instrument_information ) {
+uint32_t ulPlayInstrumentKey( uint8_t key, uint8_t velocity, PATCH_DESCRIPTOR_t *instrument_information ) {
 
     int                      velocity_range = 0;
     KEY_INFORMATION_t       *current_key = NULL;
@@ -196,14 +196,14 @@ uint32_t ul_play_instrument_key( uint8_t key, uint8_t velocity, PATCH_DESCRIPTOR
 }
 
 // This function will return the hex value of a MIDI note
-uint8_t us_get_midi_note_number( const char *note_name ) {
+uint8_t usGetMIDINoteNumber( const char *note_name ) {
     uint8_t midi_note = 0;
 
     const char *note_letter = note_name;
     const char *note_number = note_letter + 1;
     const char *sharp_flag  = note_letter + 3;
 
-    uint32_t note_number_int = ul_str2int( note_number, 1 );
+    uint32_t note_number_int = prv_ulStrToInt( note_number, 1 );
 
     for( int i = 0; i < 12; i++ ) {
         if( MIDI_NOTES_LUT[i].note_name[0] == toupper(*note_letter) ) {

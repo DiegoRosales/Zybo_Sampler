@@ -126,12 +126,12 @@ static void run_midi_cmd_task( void *pvParameters ) {
         {
             // Note OFF
             case 0x80:
-                ul_play_instrument_key( byte1, 0, patch_descriptor );
+                ulPlayInstrumentKey( byte1, 0, patch_descriptor );
                 break;
 
             // Note ON
             case 0x90:
-                ul_play_instrument_key( byte1, byte2, patch_descriptor );
+                ulPlayInstrumentKey( byte1, byte2, patch_descriptor );
                 break;
             
             default:
@@ -189,7 +189,7 @@ static void key_playback_task( void *pvParameters ) {
             }
 
             // Start the playback
-            error = ul_play_instrument_key( key_parameters->key, key_parameters->velocity, patch_descriptor );
+            error = ulPlayInstrumentKey( key_parameters->key, key_parameters->velocity, patch_descriptor );
 
             if( error ) {
                 SAMPLER_PRINTF_ERROR("Failed playing the key");
@@ -219,7 +219,7 @@ static void stop_all_task( void *pvParameters ) {
             SAMPLER_PRINTF("Stopping everything...\n\n\r");
 
             // Start the playback
-            error = ul_stop_all( patch_descriptor );
+            error = ulStopAllPlayback( patch_descriptor );
 
             if( error ) {
                 SAMPLER_PRINTF_ERROR("Failed stopping everything");
@@ -384,12 +384,12 @@ static void serial_midi_listener_task( void *pvParameters ) {
                 {
                     // Note OFF
                     case 0x80:
-                        ul_play_instrument_key( bytes_rcvd[1], 0, patch_descriptor );
+                        ulPlayInstrumentKey( bytes_rcvd[1], 0, patch_descriptor );
                         break;
 
                     // Note ON
                     case 0x90:
-                        ul_play_instrument_key( bytes_rcvd[1], bytes_rcvd[2], patch_descriptor );
+                        ulPlayInstrumentKey( bytes_rcvd[1], bytes_rcvd[2], patch_descriptor );
                         break;
 
                     case 0xb0:

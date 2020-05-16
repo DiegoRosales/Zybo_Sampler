@@ -342,7 +342,7 @@ static BaseType_t play_key_command( char *pcWriteBuffer, size_t xWriteBufferLen,
     }
 
     // Get the Key number and the velocity in uint8_t form
-    key_parameters.key      = us_get_midi_note_number( key );
+    key_parameters.key      = usGetMIDINoteNumber( key );
     key_parameters.velocity = str2int( velocity, xParameter2StringLength );
 
     SAMPLER_PRINTF_INFO("Playing back Key %d, Velocity: %d", key_parameters.key, key_parameters.velocity);
