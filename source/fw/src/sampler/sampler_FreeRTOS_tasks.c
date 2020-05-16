@@ -35,6 +35,7 @@ static PATCH_DESCRIPTOR_t *patch_descriptor = NULL;
 static void key_playback_task( void *pvParameters );
 static void stop_all_task( void *pvParameters );
 static void load_instrument_task( void *pvParameters );
+static void load_sf3_task( void *pvParameters );
 static void run_midi_cmd_task( void *pvParameters );
 static void serial_midi_listener_task( void *pvParameters );
 
@@ -44,6 +45,14 @@ void create_sampler_tasks ( void ) {
     xTaskCreate(
                     load_instrument_task,                   /* Function that implements the task. */
                     LOAD_INSTRUMENT_TASK_NAME,         /* Text name for the task. */
+                    0x2000,                            /* Stack size in words, not bytes. */
+                    ( void * ) patch_descriptor, /* Parameter passed into the task. */
+                    tskIDLE_PRIORITY,                  /* Priority at which the task is created. */
+                    NULL );                            /* Used to pass out the created task's handle. */                
+
+    xTaskCreate(
+                    load_sf3_task,                   /* Function that implements the task. */
+                    LOAD_SF3_TASK_NAME,         /* Text name for the task. */
                     0x2000,                            /* Stack size in words, not bytes. */
                     ( void * ) patch_descriptor, /* Parameter passed into the task. */
                     tskIDLE_PRIORITY,                  /* Priority at which the task is created. */
@@ -252,6 +261,60 @@ static void load_instrument_task( void *pvParameters ) {
 
                 // Load the samples
                 patch_descriptor = ulLoadPatchFromJSON( path_handler->file_dir, path_handler->file_path );
+
+                if (patch_descriptor == NULL) {
+                    xil_printf( "[ERROR] - Patch Loader returned patch_descriptor == NULL (0x%x)\n\r", patch_descriptor );
+                    return_value = 1;
+                }
+
+                xQueueSend(path_handler->return_handle, &return_value, 1000);
+            }
+
+        }
+
+    }
+
+    /* Tasks must not attempt to return from their implementing
+    function or otherwise exit.  In newer FreeRTOS port
+    attempting to do so will result in an configASSERT() being
+    called if it is defined.  If it is necessary for a task to
+    exit then have the task call vTaskDelete( NULL ) to ensure
+    its exit is clean. */
+    vTaskDelete( NULL );
+}
+
+// This task loads the instrument using a .json file
+// The .json file contains all the information regarding
+// Key, velocity ranges, and associated sample
+static void load_sf3_task( void *pvParameters ) {
+    BaseType_t          notification_received;
+    const TickType_t    xBlockTime = 500;
+    uint32_t            ulNotifiedValue;
+    file_path_handler_t *path_handler = malloc( sizeof( file_path_t ) );
+    uint32_t            return_value = 1;
+
+    for( ;; )
+    {
+        // Bits in this RTOS task's notification value are set by the notifying
+        // tasks and interrupts to indicate which events have occurred. */
+        notification_received = xTaskNotifyWait( 0x00,             /* Don't clear any notification bits on entry. */
+                                   0xffffffff,       /* Reset the notification value to 0 on exit. */
+                                   &ulNotifiedValue, /* Notified value pass out in ulNotifiedValue. */
+                                   portMAX_DELAY );  /* Block indefinitely. */
+
+        if ( notification_received == pdTRUE ) {
+
+            xil_printf("Starting SF3 loader...\n\n\r");
+
+            if( ! xQueueReceive((QueueHandle_t) ulNotifiedValue, path_handler, xBlockTime) ) {
+                xil_printf("Error receiving the Queue!\n\r");
+            }
+            else {
+                return_value = 0;
+                xil_printf("Loading SF3 \"%s\"\n\r", path_handler->file_path);
+
+                // Load the samples
+                patch_descriptor = ulLoadPatchFromSF3( path_handler->file_path );
 
                 if (patch_descriptor == NULL) {
                     xil_printf( "[ERROR] - Patch Loader returned patch_descriptor == NULL (0x%x)\n\r", patch_descriptor );

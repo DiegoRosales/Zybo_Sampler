@@ -33,6 +33,7 @@
 static BaseType_t play_key_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
 static BaseType_t stop_all_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
 static BaseType_t load_instrument_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
+static BaseType_t load_sf3_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
 static BaseType_t midi_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
 static BaseType_t midi_ascii_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
 static BaseType_t start_midi_listener_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
@@ -128,6 +129,15 @@ static const CLI_Command_Definition_t load_instrument_command_definition =
     1 /* One parameter is expected. */
 };
 
+// Structure defining the sf3 loader command
+static const CLI_Command_Definition_t load_sf3_command_definition =
+{
+    "load_sf3", /* The command string to type. */
+    "\r\nload_sf3 <filename>:\r\n Loads the specified *.sf3 file\r\n",
+    load_sf3_command, /* The function to run. */
+    1 /* One parameter is expected. */
+};
+
 // Structure defining the instrument loader command
 static const CLI_Command_Definition_t start_midi_listener_command_definition =
 {
@@ -164,6 +174,7 @@ void register_sampler_cli_commands( void ) {
     FreeRTOS_CLIRegisterCommand( &play_key_command_definition );
     FreeRTOS_CLIRegisterCommand( &stop_all_command_definition );
     FreeRTOS_CLIRegisterCommand( &load_instrument_command_definition );
+    FreeRTOS_CLIRegisterCommand( &load_sf3_command_definition );
     FreeRTOS_CLIRegisterCommand( &midi_command_definition );
     FreeRTOS_CLIRegisterCommand( &midi_ascii_command_definition );
     FreeRTOS_CLIRegisterCommand( &start_midi_listener_command_definition );
@@ -439,6 +450,88 @@ static BaseType_t load_instrument_command( char *pcWriteBuffer, size_t xWriteBuf
                     eSetValueWithOverwrite );
 
     if( ! xQueueReceive(my_return_queue_handler, &return_value, 10000) ) {
+        xil_printf("Error receiving the Queue!\n\r");
+    }
+    else {
+        xil_printf("Done! Return Value = %d\n\r", return_value);
+    }
+
+    return pdFALSE;
+
+}
+
+static BaseType_t load_sf3_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString ) {
+    
+    const char *pcParameter;
+
+    // Variables for the CLI Parameter Parser
+    BaseType_t   xParameterStringLength;
+
+    // Variables for the sf3 loader task
+    TaskHandle_t         task_handle = xTaskGetHandle( LOAD_SF3_TASK_NAME );
+    file_path_handler_t  my_file_path_handler;
+    uint32_t             return_value = 1;
+    uint32_t             cwd_path_len = 0;
+
+    /* The file has not been opened yet.  Find the file name. */
+    pcParameter = FreeRTOS_CLIGetParameter
+                    (
+                        pcCommandString,		/* The command string itself. */
+                        1,						/* Return the first parameter. */
+                        &xParameterStringLength	/* Store the parameter string length. */
+                    );
+
+    /* Sanity check something was returned. */
+    configASSERT( pcParameter );
+
+    configASSERT( ! (xParameterStringLength > MAX_PATH_LEN) );
+
+    // Initialize the path
+    memset( my_file_path_handler.file_path, 0x00, MAX_PATH_LEN );
+    memset( my_file_path_handler.file_dir, 0x00, MAX_PATH_LEN );
+    // Copy the Path
+    // 1 - Get the current directory
+    ff_getcwd( my_file_path_handler.file_dir, MAX_PATH_LEN );
+    xil_printf( "CWD: %s\n\r", my_file_path_handler.file_dir);
+    // Sanity check - Check if the path is less than the maximum allowable
+    cwd_path_len = strlen( my_file_path_handler.file_dir );
+    configASSERT( ! ( (cwd_path_len + xParameterStringLength + 1) > MAX_PATH_LEN) );
+
+    // 2 - Assemble the full path
+    // If you're in the root, append the path as is
+    if ( strcmp( my_file_path_handler.file_dir, (const char *)"/" ) == 0 ) {
+       // If the path is a full path (i.e. referenced from the root), copy as is
+        if ( pcParameter[0] == '/' ) {
+            sprintf(my_file_path_handler.file_path, "%s", pcParameter);
+        } else { // If it's a relative directory, prepend the root slash
+            strcat( my_file_path_handler.file_path, "/");
+        }
+        ff_get_file_dir( pcParameter, my_file_path_handler.file_dir );
+        //strncat( my_file_path_handler.file_path, my_file_path_handler.file_dir, STRLEN( my_file_path_handler.file_dir ) );
+        strncat( my_file_path_handler.file_path, pcParameter, xParameterStringLength ); 
+    } else {
+        // If the path is a full path (i.e. referenced from the root), copy as is
+        if ( pcParameter[0] == '/' ) {
+            sprintf(my_file_path_handler.file_path, "%s", pcParameter);
+        } else { // If it's a relative path, prepend the current directory
+            strncat( my_file_path_handler.file_path, my_file_path_handler.file_dir, cwd_path_len);
+            strcat( my_file_path_handler.file_path, "/");
+            strncat( my_file_path_handler.file_path, pcParameter, xParameterStringLength );
+        }
+    }
+
+    xil_printf( "File Path: %s\n\r", my_file_path_handler.file_path);
+
+    my_file_path_handler.return_handle = my_return_queue_handler;
+
+    // Send the filename to the task
+    xQueueSend(my_filename_queue_handler, &my_file_path_handler , 1000);
+
+    xTaskNotify(    task_handle,
+                    (uint32_t) my_filename_queue_handler,
+                    eSetValueWithOverwrite );
+
+    if( ! xQueueReceive(my_return_queue_handler, &return_value, 20000) ) {
         xil_printf("Error receiving the Queue!\n\r");
     }
     else {

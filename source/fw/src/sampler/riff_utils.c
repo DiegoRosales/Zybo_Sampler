@@ -14,6 +14,7 @@
 
 // Sampler includes
 #include "sampler_cfg.h"
+#include "soundfont.h"
 #include "riff_utils.h"
 
 // Find the audio data of a WAVE chunk
@@ -50,7 +51,7 @@ static void prv_vFindWAVEData( uint8_t * buffer, uint8_t * buffer_end, SAMPLE_FO
 }
 
 // This function will extract the information based on the canonical wave format
-void vDecodeRIFFInformation( uint8_t *riff_buffer, size_t riff_buffer_size, SAMPLE_FORMAT_t *sample_information ) {
+void vDecodeWAVEInformation( uint8_t *riff_buffer, size_t riff_buffer_size, SAMPLE_FORMAT_t *sample_information ) {
 
     WAVE_FORMAT_t             wave_format_data;
     RIFF_DESCRIPTOR_CHUNK_t * main_riff_chunk;
@@ -118,4 +119,18 @@ void vDecodeRIFFInformation( uint8_t *riff_buffer, size_t riff_buffer_size, SAMP
         xil_printf("[ERROR] - Error while parsing the RIFF information. Buffer format is not WAVE.\n\r");
         return;
     }
+}
+
+// Print SF3 Information
+void vPrintSF3Info( uint8_t* sf3_buffer ) {
+
+    RIFF_DESCRIPTOR_CHUNK_t * main_riff_chunk = NULL;
+
+    main_riff_chunk = cmdGET_RIFF_DESCRIPTOR_CHUNK(sf3_buffer);
+
+    if( main_riff_chunk->BaseChunk.ChunkID != RIFF_ASCII_TOKEN ) {
+        xil_printf("[ERROR] - Error while parsing the RIFF information. Buffer is not RIFF.\n\r");
+        return;
+    }
+
 }

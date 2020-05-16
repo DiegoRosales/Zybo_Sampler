@@ -50,7 +50,8 @@ static const NOTE_LUT_STRUCT_t MIDI_NOTES_LUT[12] = {
 };
 
 // Static variables
-static uint8_t json_patch_information_buffer[MAX_INST_FILE_SIZE]; // JSON File buffer
+static uint8_t   json_patch_information_buffer[MAX_INST_FILE_SIZE]; // JSON File buffer
+static uint8_t * sf3_patch_buffer = NULL; // SF3 Buffer
 
 //////////////////////////////////////////////////
 // Static Functions
@@ -128,6 +129,20 @@ PATCH_DESCRIPTOR_t * ulLoadPatchFromJSON( const char * json_file_dirname, const 
     return patch_descriptor;
 }
 
+// This function will load a SoundFont3 file
+PATCH_DESCRIPTOR_t * ulLoadPatchFromSF3( const char * sf3_file_fullpath ) {
+    PATCH_DESCRIPTOR_t *patch_descriptor = NULL;
+    //uint32_t error = 0;
+
+    // Step 1 - Open the json file containing the instrument information
+    xil_printf("Step 1 - Load the SF3 File\n\r");
+    load_file_to_memory_malloc( sf3_file_fullpath, &sf3_patch_buffer, MAX_SF3_FILE_SIZE, 0 );
+
+    
+
+    return patch_descriptor;
+
+}
 
 // This function converts an string in int or hex to a uint32_t
 static uint32_t prv_ulStr2Int( const char *input_string, uint32_t input_string_length ) {
@@ -403,7 +418,7 @@ uint32_t prv_ulLoadSamplesFromDescriptor( PATCH_DESCRIPTOR_t *patch_descriptor, 
             patch_descriptor->total_keys++;
 
             // Extract the RIFF information and configure the DMA data structures for the PL DMA functionality
-            vDecodeRIFFInformation( riff_buffer, riff_buffer_size, current_sample_format );
+            vDecodeWAVEInformation( riff_buffer, riff_buffer_size, current_sample_format );
             if ( (current_sample_format->audio_data_size == 0) || (current_sample_format->data_start_ptr == NULL)) {
                 xil_printf("[ERROR] - Failed decoding the RIFF audio data\n\r");
                 return error;

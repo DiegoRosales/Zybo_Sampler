@@ -7,6 +7,7 @@
 #define cliNEW_LINE "\n\r"
 
 #define LOAD_INSTRUMENT_TASK_NAME      "load_instrument"
+#define LOAD_SF3_TASK_NAME             "load_sf3"
 #define KEY_PLAYBACK_TASK_NAME         "key_playback"
 #define STOP_ALL_TASK_NAME             "stop_all"
 #define RUN_MIDI_CMD_TASK_NAME         "run_midi_cmd"
