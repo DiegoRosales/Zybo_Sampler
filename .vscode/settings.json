@@ -6,6 +6,9 @@
   },
   "files.associations": {
     "*.xdc": "tcl",
-    "*.svh": "systemverilog"
+    "*.cfg": "tcl",
+    "*.svh": "systemverilog",
+    "atomic": "c",
+    "cstdint": "c"
   }
 }
