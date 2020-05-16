@@ -175,16 +175,16 @@ static void key_playback_task( void *pvParameters ) {
         if ( notification_received == pdTRUE ) {
             error = 0;
 
-            xil_printf("Starting key playback...\n\n\r");
+            SAMPLER_PRINTF("Starting key playback...\n\n\r");
 
             // Receive the key parameters from the CLI command
             if( ! xQueueReceive((QueueHandle_t) ulNotifiedValue, key_parameters, xBlockTime) ) {
-                xil_printf("[ERROR] - Error receiving the Queue!\n\r");
+                SAMPLER_PRINTF_ERROR("Error receiving the Queue!");
                 goto get_playback_notification;
             }
 
             if( key_parameters == NULL ){
-                xil_printf("[ERROR] - The key parameters are NULL!\n\r");
+                SAMPLER_PRINTF_ERROR("The key parameters are NULL!");
                 goto get_playback_notification;
             }
 
@@ -192,7 +192,7 @@ static void key_playback_task( void *pvParameters ) {
             error = ul_play_instrument_key( key_parameters->key, key_parameters->velocity, patch_descriptor );
 
             if( error ) {
-                xil_printf("[ERROR] - Failed playing the key\n\r");
+                SAMPLER_PRINTF_ERROR("Failed playing the key");
             }
 
         }
@@ -216,13 +216,13 @@ static void stop_all_task( void *pvParameters ) {
         if ( notification_received == pdTRUE ) {
             error = 0;
 
-            xil_printf("Stopping everything...\n\n\r");
+            SAMPLER_PRINTF("Stopping everything...\n\n\r");
 
             // Start the playback
             error = ul_stop_all( patch_descriptor );
 
             if( error ) {
-                xil_printf("[ERROR] - Failed stopping everything\n\r");
+                SAMPLER_PRINTF_ERROR("Failed stopping everything");
             }
 
         }
@@ -250,20 +250,20 @@ static void load_instrument_task( void *pvParameters ) {
 
         if ( notification_received == pdTRUE ) {
 
-            xil_printf("Starting instrument loader...\n\n\r");
+            SAMPLER_PRINTF("Starting instrument loader...\n\n\r");
 
             if( ! xQueueReceive((QueueHandle_t) ulNotifiedValue, path_handler, xBlockTime) ) {
-                xil_printf("Error receiving the Queue!\n\r");
+                SAMPLER_PRINTF("Error receiving the Queue!\n\r");
             }
             else {
                 return_value = 0;
-                xil_printf("Loading instrument \"%s\"\n\r", path_handler->file_path);
+                SAMPLER_PRINTF("Loading instrument \"%s\"\n\r", path_handler->file_path);
 
                 // Load the samples
                 patch_descriptor = ulLoadPatchFromJSON( path_handler->file_dir, path_handler->file_path );
 
                 if (patch_descriptor == NULL) {
-                    xil_printf( "[ERROR] - Patch Loader returned patch_descriptor == NULL (0x%x)\n\r", patch_descriptor );
+                    SAMPLER_PRINTF_ERROR("Patch Loader returned patch_descriptor == NULL (0x%x)", patch_descriptor );
                     return_value = 1;
                 }
 
@@ -304,20 +304,20 @@ static void load_sf3_task( void *pvParameters ) {
 
         if ( notification_received == pdTRUE ) {
 
-            xil_printf("Starting SF3 loader...\n\n\r");
+            SAMPLER_PRINTF("Starting SF3 loader...\n\n\r");
 
             if( ! xQueueReceive((QueueHandle_t) ulNotifiedValue, path_handler, xBlockTime) ) {
-                xil_printf("Error receiving the Queue!\n\r");
+                SAMPLER_PRINTF("Error receiving the Queue!\n\r");
             }
             else {
                 return_value = 0;
-                xil_printf("Loading SF3 \"%s\"\n\r", path_handler->file_path);
+                SAMPLER_PRINTF("Loading SF3 \"%s\"\n\r", path_handler->file_path);
 
                 // Load the samples
                 patch_descriptor = ulLoadPatchFromSF3( path_handler->file_path );
 
                 if (patch_descriptor == NULL) {
-                    xil_printf( "[ERROR] - Patch Loader returned patch_descriptor == NULL (0x%x)\n\r", patch_descriptor );
+                    SAMPLER_PRINTF_ERROR("Patch Loader returned patch_descriptor == NULL (0x%x)", patch_descriptor );
                     return_value = 1;
                 }
 

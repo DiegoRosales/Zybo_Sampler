@@ -337,7 +337,7 @@ static BaseType_t play_key_command( char *pcWriteBuffer, size_t xWriteBufferLen,
 
 
     if ( ( xParameter1StringLength != 2 ) && ( xParameter1StringLength != 4 ) ) {
-        xil_printf("[ERROR] - Incorrect key format.\n\rExample 1: f2\n\rExample 2: a5_s\n\r");
+        SAMPLER_PRINTF_ERROR("Incorrect key format.\n\rExample 1: f2\n\rExample 2: a5_s");
         return pdFALSE;
     }
 
@@ -345,7 +345,7 @@ static BaseType_t play_key_command( char *pcWriteBuffer, size_t xWriteBufferLen,
     key_parameters.key      = us_get_midi_note_number( key );
     key_parameters.velocity = str2int( velocity, xParameter2StringLength );
 
-    xil_printf("Playing back Key %d, Velocity: %d", key_parameters.key, key_parameters.velocity);
+    SAMPLER_PRINTF_INFO("Playing back Key %d, Velocity: %d", key_parameters.key, key_parameters.velocity);
 
 
     xQueueSend(my_key_parameters_queue_handler, &key_parameters , 1000);
@@ -410,7 +410,7 @@ static BaseType_t load_instrument_command( char *pcWriteBuffer, size_t xWriteBuf
     // Copy the Path
     // 1 - Get the current directory
     ff_getcwd( my_file_path_handler.file_dir, MAX_PATH_LEN );
-    xil_printf( "CWD: %s\n\r", my_file_path_handler.file_dir);
+    SAMPLER_PRINTF_DEBUG("CWD: %s", my_file_path_handler.file_dir);
     // Sanity check - Check if the path is less than the maximum allowable
     cwd_path_len = strlen( my_file_path_handler.file_dir );
     configASSERT( ! ( (cwd_path_len + xParameterStringLength + 1) > MAX_PATH_LEN) );
@@ -438,7 +438,7 @@ static BaseType_t load_instrument_command( char *pcWriteBuffer, size_t xWriteBuf
         }
     }
 
-    xil_printf( "File Path: %s\n\r", my_file_path_handler.file_path);
+    SAMPLER_PRINTF_DEBUG("File Path: %s", my_file_path_handler.file_path);
 
     my_file_path_handler.return_handle = my_return_queue_handler;
 
@@ -450,10 +450,10 @@ static BaseType_t load_instrument_command( char *pcWriteBuffer, size_t xWriteBuf
                     eSetValueWithOverwrite );
 
     if( ! xQueueReceive(my_return_queue_handler, &return_value, 10000) ) {
-        xil_printf("Error receiving the Queue!\n\r");
+        SAMPLER_PRINTF_ERROR("Error receiving the Queue!");
     }
     else {
-        xil_printf("Done! Return Value = %d\n\r", return_value);
+        SAMPLER_PRINTF("Done! Return Value = %d\n\r", return_value);
     }
 
     return pdFALSE;
@@ -492,7 +492,7 @@ static BaseType_t load_sf3_command( char *pcWriteBuffer, size_t xWriteBufferLen,
     // Copy the Path
     // 1 - Get the current directory
     ff_getcwd( my_file_path_handler.file_dir, MAX_PATH_LEN );
-    xil_printf( "CWD: %s\n\r", my_file_path_handler.file_dir);
+    SAMPLER_PRINTF_DEBUG("CWD: %s", my_file_path_handler.file_dir);
     // Sanity check - Check if the path is less than the maximum allowable
     cwd_path_len = strlen( my_file_path_handler.file_dir );
     configASSERT( ! ( (cwd_path_len + xParameterStringLength + 1) > MAX_PATH_LEN) );
@@ -520,7 +520,7 @@ static BaseType_t load_sf3_command( char *pcWriteBuffer, size_t xWriteBufferLen,
         }
     }
 
-    xil_printf( "File Path: %s\n\r", my_file_path_handler.file_path);
+    SAMPLER_PRINTF_DEBUG("File Path: %s", my_file_path_handler.file_path);
 
     my_file_path_handler.return_handle = my_return_queue_handler;
 
@@ -532,10 +532,10 @@ static BaseType_t load_sf3_command( char *pcWriteBuffer, size_t xWriteBufferLen,
                     eSetValueWithOverwrite );
 
     if( ! xQueueReceive(my_return_queue_handler, &return_value, 20000) ) {
-        xil_printf("Error receiving the Queue!\n\r");
+        SAMPLER_PRINTF_ERROR("Error receiving the Queue!");
     }
     else {
-        xil_printf("Done! Return Value = %d\n\r", return_value);
+        SAMPLER_PRINTF("Done! Return Value = %d\n\r", return_value);
     }
 
     return pdFALSE;
@@ -556,10 +556,10 @@ static BaseType_t start_midi_listener_command( char *pcWriteBuffer, size_t xWrit
 
 
     if( ! xQueueReceive(my_return_queue_handler, &return_value, 10000) ) {
-        xil_printf("Timeout!\n\r");
+        SAMPLER_PRINTF_ERROR("Timeout!");
     }
     else {
-        xil_printf("Done! Return Value = %d\n\r", return_value);
+        SAMPLER_PRINTF("Done! Return Value = %d\n\r", return_value);
     }
 
     // Don't wait for any feedback

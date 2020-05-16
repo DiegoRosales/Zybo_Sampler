@@ -1,7 +1,14 @@
 #ifndef __SAMPLER_H__
 #define __SAMPLER_H__
 
+// Enable/Disable FreeRTOS malloc() implementation
 #define ENABLE_FREERTOS_MALLOC 1
+// Enable/disable data realignment
+#define ENABLE_SAMPLE_REALIGN 0
+// Debug level
+#ifndef SAMPLER_DEBUG
+#define SAMPLER_DEBUG 0
+#endif
 
 #ifdef ENABLE_FREERTOS_MALLOC
     #if( ENABLE_FREERTOS_MALLOC == 1)
@@ -14,10 +21,40 @@
     #endif
 #endif
 
-#include "jsmn_utils.h"
+#ifndef SAMPLER_PRINTF
+    #define SAMPLER_PRINTF xil_printf
+#endif
 
-// Enable/disable data realignment
-#define ENABLE_SAMPLE_REALIGN 0
+#if defined(SAMPLER_DEBUG) 
+  #if SAMPLER_DEBUG >= 3
+    #define SAMPLER_PRINTF_INFO(fmt, args...)    SAMPLER_PRINTF("[SAMPLER_INFO]    : %s:%d:%s(): " fmt "\n\r", __FILE__, __LINE__, __func__, ##args)
+    #define SAMPLER_PRINTF_WARNING(fmt, args...) SAMPLER_PRINTF("[SAMPLER_WARNING] : %s:%d:%s(): " fmt "\n\r", __FILE__, __LINE__, __func__, ##args)
+    #define SAMPLER_PRINTF_ERROR(fmt, args...)   SAMPLER_PRINTF("[SAMPLER_ERROR]   : %s:%d:%s(): " fmt "\n\r", __FILE__, __LINE__, __func__, ##args)
+    #define SAMPLER_PRINTF_DEBUG(fmt, args...)   SAMPLER_PRINTF("[SAMPLER_DEBUG]   : %s:%d:%s(): " fmt "\n\r", __FILE__, __LINE__, __func__, ##args)
+  #elif SAMPLER_DEBUG == 2
+    #define SAMPLER_PRINTF_INFO(fmt, args...)    SAMPLER_PRINTF("[SAMPLER_INFO]    : "             fmt "\n\r", ##args)
+    #define SAMPLER_PRINTF_WARNING(fmt, args...) SAMPLER_PRINTF("[SAMPLER_WARNING] : "             fmt "\n\r", ##args)
+    #define SAMPLER_PRINTF_ERROR(fmt, args...)   SAMPLER_PRINTF("[SAMPLER_ERROR]   : %s:%d:%s(): " fmt "\n\r", __FILE__, __LINE__, __func__, ##args)
+    #define SAMPLER_PRINTF_DEBUG(fmt, args...)   SAMPLER_PRINTF("[SAMPLER_DEBUG]   : %s:%d:%s(): " fmt "\n\r", __FILE__, __LINE__, __func__, ##args)
+  #elif SAMPLER_DEBUG == 1
+    #define SAMPLER_PRINTF_INFO(fmt, args...)    SAMPLER_PRINTF("[SAMPLER_INFO]    : " fmt "\n\r", ##args)
+    #define SAMPLER_PRINTF_WARNING(fmt, args...) SAMPLER_PRINTF("[SAMPLER_WARNING] : " fmt "\n\r", ##args)
+    #define SAMPLER_PRINTF_ERROR(fmt, args...)   SAMPLER_PRINTF("[SAMPLER_ERROR]   : " fmt "\n\r", ##args)
+    #define SAMPLER_PRINTF_DEBUG(fmt, args...)   SAMPLER_PRINTF("[SAMPLER_DEBUG]   : " fmt "\n\r", ##args)
+  #else
+    #define SAMPLER_PRINTF_INFO(fmt, args...)    SAMPLER_PRINTF("[INFO]    : " fmt "\n\r", ##args)
+    #define SAMPLER_PRINTF_WARNING(fmt, args...) SAMPLER_PRINTF("[WARNING] : " fmt "\n\r", ##args)
+    #define SAMPLER_PRINTF_ERROR(fmt, args...)   SAMPLER_PRINTF("[ERROR]   : " fmt "\n\r", ##args)
+    #define SAMPLER_PRINTF_DEBUG(fmt, args...)   /* Nothing */
+  #endif
+#else
+    #define SAMPLER_PRINTF_INFO(fmt, args...)    SAMPLER_PRINTF("[INFO]    : " fmt "\n\r", ##args)
+    #define SAMPLER_PRINTF_WARNING(fmt, args...) SAMPLER_PRINTF("[WARNING] : " fmt "\n\r", ##args)
+    #define SAMPLER_PRINTF_ERROR(fmt, args...)   SAMPLER_PRINTF("[ERROR]   : " fmt "\n\r", ##args)
+    #define SAMPLER_PRINTF_DEBUG(fmt, args...)   /* Nothing */
+#endif
+
+#include "jsmn_utils.h"
 
 // Endinaness conversion
 // 12_34 -> 34_12

@@ -86,7 +86,7 @@ uint32_t ul_stop_all( PATCH_DESCRIPTOR_t *instrument_information ) {
             current_voice = current_key->key_voice_information[velocity_range];
 
             if ( current_voice->current_status != 0 ) {
-                xil_printf("[INFO] - [%d][%d] Stopping voice playback of slot %d\n\r", key, velocity_range, current_voice->current_slot);
+                SAMPLER_PRINTF_INFO("[%d][%d] Stopping voice playback of slot %d", key, velocity_range, current_voice->current_slot);
                 current_voice->current_status = 0;
                 current_voice->current_slot   = 0;
             }
@@ -108,17 +108,17 @@ uint32_t ul_play_instrument_key( uint8_t key, uint8_t velocity, PATCH_DESCRIPTOR
     // Sanity check
 
     if ( instrument_information == NULL ) {
-        xil_printf("[ERROR] - Instrument information = NULL\n\r");
+        SAMPLER_PRINTF_ERROR("[ERROR] - Instrument information = NULL");
         return 1;
     }
 
     if ( instrument_information->instrument_loaded == 0 ) {
-        xil_printf("[ERROR] - No instrument has been loaded\n\r");
+        SAMPLER_PRINTF_ERROR("[ERROR] - No instrument has been loaded");
         return 1;		
     }
 
     if ( instrument_information->key_information[key] == NULL ) {
-        xil_printf("[ERROR] - There is no information related to this key: %d\n\r", key);
+        SAMPLER_PRINTF_ERROR("[ERROR] - There is no information related to this key: %d", key);
         return 1;
     }
 
@@ -137,7 +137,7 @@ uint32_t ul_play_instrument_key( uint8_t key, uint8_t velocity, PATCH_DESCRIPTOR
             current_voice = current_key->key_voice_information[velocity_range];
 
             if ( current_voice->current_status != 0 ) {
-                xil_printf("[INFO] - Stopping voice playback of slot %d\n\r", current_voice->current_slot);
+                SAMPLER_PRINTF_INFO("[INFO] - Stopping voice playback of slot %d", current_voice->current_slot);
                 stop_voice_playback( current_voice->current_slot );
                 current_voice->current_status = 0;
                 current_voice->current_slot   = 0;
@@ -163,13 +163,13 @@ uint32_t ul_play_instrument_key( uint8_t key, uint8_t velocity, PATCH_DESCRIPTOR
 
         // Check if the sample is not already being played back
         if ( current_voice->current_status != 0 ) {
-            xil_printf("[ERROR] - Current sample is being played on slot %d\n\r", current_voice->current_slot);
+            SAMPLER_PRINTF_ERROR("Current sample is being played on slot %d", current_voice->current_slot);
             return 3;
         }
 
         // Check if sample is present
         if ( current_voice->sample_present == 0 ) {
-            xil_printf("[ERROR] - There's no sample for the specified velocity! %d\n\r", current_voice->current_slot);
+            SAMPLER_PRINTF_ERROR("There's no sample for the specified velocity! %d", current_voice->current_slot);
             return 2;
         }
 
@@ -180,11 +180,11 @@ uint32_t ul_play_instrument_key( uint8_t key, uint8_t velocity, PATCH_DESCRIPTOR
         
         // If there are no available slots, don't update the status
         if ( voice_slot == 0xffff ) {
-            xil_printf("[ERROR] - No available slots found! %d\n\r", voice_slot);
+            SAMPLER_PRINTF_ERROR("No available slots found! %d", voice_slot);
             break;
         }
 
-        xil_printf("[INFO] - Started playback on slot %d\n\r", voice_slot);
+        SAMPLER_PRINTF_INFO("Started playback on slot %d", voice_slot);
 
         current_voice->current_slot   = voice_slot;
         current_voice->current_status = 1;

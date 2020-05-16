@@ -59,17 +59,17 @@ void vDecodeWAVEInformation( uint8_t *riff_buffer, size_t riff_buffer_size, SAMP
 
     // Step 1 - Check that the inputs are valid
     if( riff_buffer == NULL ) {
-        xil_printf("[ERROR] - Error while extracting the RIFF information. Sample buffer = NULL\n\r");
+        SAMPLER_PRINTF_ERROR("Error while extracting the RIFF information. Sample buffer = NULL");
         return;
     }
 
     if( riff_buffer_size <= (sizeof( WAVE_FORMAT_t ) + sizeof( RIFF_BASE_CHUNK_t ) ) ) {
-        xil_printf("[ERROR] - Error while extracting the RIFF information. Sample buffer size is too small. Sample size = %d\n\r", riff_buffer_size);
+        SAMPLER_PRINTF_ERROR("Error while extracting the RIFF information. Sample buffer size is too small. Sample size = %d", riff_buffer_size);
         return;
     }
 
     if( sample_information == NULL ) {
-        xil_printf("[ERROR] - Error while extracting the RIFF information. Pointer to the riff information = NULL\n\r");
+        SAMPLER_PRINTF_ERROR("Error while extracting the RIFF information. Pointer to the riff information = NULL");
         return;
     }
 
@@ -81,7 +81,7 @@ void vDecodeWAVEInformation( uint8_t *riff_buffer, size_t riff_buffer_size, SAMP
 
     // Step 2 - Check that this is a RIFF file with proper format
     if( main_riff_chunk->BaseChunk.ChunkID != RIFF_ASCII_TOKEN ) {
-        xil_printf("[ERROR] - Error while parsing the RIFF information. Buffer is not RIFF.\n\r");
+        SAMPLER_PRINTF_ERROR("Error while parsing the RIFF information. Buffer is not RIFF.");
         return;
     }
 
@@ -90,7 +90,7 @@ void vDecodeWAVEInformation( uint8_t *riff_buffer, size_t riff_buffer_size, SAMP
         memcpy( &wave_format_data, riff_buffer, sizeof( WAVE_FORMAT_t ) );
 
         if( wave_format_data.FormatDescriptor.BaseChunk.ChunkID != FMT_ASCII_TOKEN ) {
-            xil_printf("[ERROR] - Error while parsing the RIFF information. Subc Chunk 1 is not \"fmt \".\n\r");
+            SAMPLER_PRINTF_ERROR("Error while parsing the RIFF information. Subc Chunk 1 is not \"fmt \".");
             return;
         }
 
@@ -110,15 +110,15 @@ void vDecodeWAVEInformation( uint8_t *riff_buffer, size_t riff_buffer_size, SAMP
         prv_vFindWAVEData( riff_buffer_idx, (riff_buffer + riff_buffer_size),  sample_information);
 
         if( sample_information->data_start_ptr == NULL ) {
-            xil_printf("[ERROR] - Couldn't find the DATA chunk!\n\r");
+            SAMPLER_PRINTF_ERROR("Couldn't find the DATA chunk!");
             return;
         } else if ( sample_information->audio_data_size == 0 ) {
-            xil_printf("[ERROR] - Audio Data Size = 0!\n\r");
+            SAMPLER_PRINTF_ERROR("Audio Data Size = 0!");
             return;
         }
 
     } else {
-        xil_printf("[ERROR] - Error while parsing the RIFF information. Buffer format is not WAVE.\n\r");
+        SAMPLER_PRINTF_ERROR("Error while parsing the RIFF information. Buffer format is not WAVE.");
         return;
     }
 }
@@ -131,7 +131,7 @@ void vPrintSF3Info( uint8_t* sf3_buffer ) {
     main_riff_chunk = cmdGET_RIFF_DESCRIPTOR_CHUNK(sf3_buffer);
 
     if( main_riff_chunk->BaseChunk.ChunkID != RIFF_ASCII_TOKEN ) {
-        xil_printf("[ERROR] - Error while parsing the RIFF information. Buffer is not RIFF.\n\r");
+        SAMPLER_PRINTF_ERROR("Error while parsing the RIFF information. Buffer is not RIFF.");
         return;
     }
 

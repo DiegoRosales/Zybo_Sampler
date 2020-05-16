@@ -113,12 +113,13 @@ static const CLI_Command_Definition_t xPWD =
 
 // This function loads a file in the form of a FF_FILE into memory
 void file_to_buffer( FF_FILE *pxFile, uint8_t *buffer, size_t buffer_len ) {
-    //xil_printf("[INFO] - Loading the file into memory\n\r");
+    //SD_PRINTF_INFO("Loading the file into memory");
     memset( buffer, 0x00, buffer_len );
+    SD_PRINTF_DEBUG("Memory initialized");
 
     ff_fread( buffer, buffer_len, 1, pxFile );
+    SD_PRINTF_DEBUG("File succesfully loaded into memory. Loaded %d bytes. Address = 0x%x", buffer_len, buffer);
     Xil_DCacheFlushRange( (unsigned int) buffer, (unsigned int) buffer_len );
-    //xil_printf("[INFO] - File succesfully loaded into memory. Loaded %d bytes. Address = 0x%x\n\r", buffer_len, buffer);
 }
 
 // This functions loads a file into memory. You need to provide the full file path
@@ -128,17 +129,17 @@ size_t load_file_to_memory( const char *file_name, uint8_t *buffer, size_t buffe
 
     // Step 0 - Check the inputs
     if ( buffer == NULL ) {
-        xil_printf("[ERROR] - Pointer to the buffer is NULL! Enable do_malloc option to allocate a new pointer.\n\r");
+        SD_PRINTF_ERROR("Pointer to the buffer is NULL! Enable do_malloc option to allocate a new pointer.");
         return 0;
     }
 
     // Step 1 - Open the file
-    xil_printf("[INFO] - Opening the file: \"%s\"\n\r", file_name);
+    SD_PRINTF_INFO("Opening the file: \"%s\"", file_name);
     pxFile = ff_fopen( file_name, "r" );
 
     // Throw an error if the file cannot be opened
     if ( pxFile == NULL ) {
-        xil_printf("[ERROR] - File %s could not be opened!\n\r", file_name);
+        SD_PRINTF_ERROR("File %s could not be opened!", file_name);
         return 0;
     }
 
@@ -147,12 +148,12 @@ size_t load_file_to_memory( const char *file_name, uint8_t *buffer, size_t buffe
 
     // If the file is too big, give an error
     if ( file_size > buffer_len ) {
-        xil_printf( "[ERROR] - The File is too large. File = %d bytes | Buffer Size = %d bytes\n\r", file_size, buffer_len );
-        xil_printf( cliNEW_LINE );
+        SD_PRINTF_ERROR("The File is too large. File = %d bytes | Buffer Size = %d bytes", file_size, buffer_len );
+        SD_PRINTF( cliNEW_LINE );
         return 0;
     }
 
-    xil_printf("[INFO] - File opened succesfully. File Size = %d bytes\n\r", file_size);
+    SD_PRINTF_DEBUG("File opened succesfully. File Size = %d bytes", file_size);
 
     // Step 2 - Load the file into memory
     file_to_buffer( pxFile, buffer, buffer_len );
@@ -169,12 +170,12 @@ size_t load_file_to_memory_malloc( const char *file_name, uint8_t ** buffer, siz
     *buffer = NULL;
 
     // Step 1 - Open the file
-    //xil_printf("[INFO] - Opening the file: \"%s\"\n\r", file_name);
+    //SD_PRINTF_INFO("Opening the file: \"%s\"", file_name);
     pxFile = ff_fopen( file_name, "r" );
-    //xil_printf("Loading file %s ...\n\r", file_name);
+    //SD_PRINTF("Loading file %s ...\n\r", file_name);
     // Throw an error if the file cannot be opened
     if ( pxFile == NULL ) {
-        xil_printf("[ERROR] - File %s could not be opened!\n\r", file_name);
+        SD_PRINTF_ERROR("File %s could not be opened!", file_name);
         return 0;
     }
 
@@ -183,27 +184,29 @@ size_t load_file_to_memory_malloc( const char *file_name, uint8_t ** buffer, siz
 
     // If the file is too big, give an error
     if ( file_size > max_buffer_len ) {
-        xil_printf( "[ERROR] - The File is too large. File = %d bytes | Max Buffer Size = %d bytes\n\r", file_size, max_buffer_len );
-        xil_printf( cliNEW_LINE );
+        SD_PRINTF_ERROR("The File is too large. File = %d bytes | Max Buffer Size = %d bytes", file_size, max_buffer_len );
+        SD_PRINTF( cliNEW_LINE );
         return 0;
     }
 
-    //xil_printf("[INFO] - File opened succesfully. File Size = %d bytes\n\r", file_size);
+    SD_PRINTF_DEBUG("File opened succesfully. File Size = %d bytes", file_size);
 
     // Perform memory allocation for the buffer
-    //xil_printf( "[INFO] - Performing memory allocation for the buffer. Requesting %d bytes\n\r", file_size );
+    SD_PRINTF_DEBUG("Performing memory allocation for the buffer. Requesting %d bytes", file_size );
     new_buffer = pvPortMalloc( file_size + overhead ); // Added overhead
     //new_buffer = malloc( file_size );
     // Check if malloc was succesfull
     if ( new_buffer == NULL ) {
-        xil_printf( "[ERROR] - Memory allocation failed. Requested %d bytes\n\r", file_size );
+        SD_PRINTF_ERROR("Memory allocation failed. Requested %d bytes", file_size );
         return 0;
     } else {
-        //xil_printf( "[INFO] - Memory allocation was succesfull. Buffer address =  0x%x\n\r", new_buffer );
+        SD_PRINTF_DEBUG("Memory allocation was succesfull. Buffer address =  0x%x", new_buffer );
     }
 
     // Step 2 - Load the file into memory
     file_to_buffer( pxFile, new_buffer, file_size );
+
+		SD_PRINTF_DEBUG("File loaded successfully. Buffer address =  0x%x", new_buffer );
 
     *buffer = new_buffer;
 
