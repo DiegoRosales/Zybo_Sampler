@@ -32,67 +32,68 @@
 
 static PATCH_DESCRIPTOR_t *patch_descriptor = NULL;
 
-static void key_playback_task( void *pvParameters );
-static void stop_all_task( void *pvParameters );
-static void load_instrument_task( void *pvParameters );
-static void load_sf3_task( void *pvParameters );
-static void run_midi_cmd_task( void *pvParameters );
-static void serial_midi_listener_task( void *pvParameters );
+// Task definitions
+static void prv_vKeyPlaybackTask( void *pvParameters );
+static void prv_vStopAllPlaybackTask( void *pvParameters );
+static void prv_vLoadInstrumentTask( void *pvParameters );
+static void prv_vLoadSF3Task( void *pvParameters );
+static void prv_vRunMIDICommandTask( void *pvParameters );
+static void prv_vSerialMIDIListenerTask( void *pvParameters );
 
 void create_sampler_tasks ( void ) {
 
     /* Create the task, storing the handle. */
     xTaskCreate(
-                    load_instrument_task,                   /* Function that implements the task. */
+                    prv_vLoadInstrumentTask,           /* Function that implements the task. */
                     LOAD_INSTRUMENT_TASK_NAME,         /* Text name for the task. */
                     0x2000,                            /* Stack size in words, not bytes. */
-                    ( void * ) patch_descriptor, /* Parameter passed into the task. */
+                    ( void * ) patch_descriptor,       /* Parameter passed into the task. */
                     tskIDLE_PRIORITY,                  /* Priority at which the task is created. */
-                    NULL );                            /* Used to pass out the created task's handle. */                
+                    NULL );                            /* Used to pass out the created task's handle. */
 
     xTaskCreate(
-                    load_sf3_task,                   /* Function that implements the task. */
-                    LOAD_SF3_TASK_NAME,         /* Text name for the task. */
+                    prv_vLoadSF3Task,                  /* Function that implements the task. */
+                    LOAD_SF3_TASK_NAME,                /* Text name for the task. */
                     0x2000,                            /* Stack size in words, not bytes. */
-                    ( void * ) patch_descriptor, /* Parameter passed into the task. */
+                    ( void * ) patch_descriptor,       /* Parameter passed into the task. */
                     tskIDLE_PRIORITY,                  /* Priority at which the task is created. */
-                    NULL );                            /* Used to pass out the created task's handle. */                
+                    NULL );                            /* Used to pass out the created task's handle. */
 
     xTaskCreate(
-                    key_playback_task,                 /* Function that implements the task. */
+                    prv_vKeyPlaybackTask,              /* Function that implements the task. */
                     KEY_PLAYBACK_TASK_NAME,            /* Text name for the task. */
                     0x2000,                            /* Stack size in words, not bytes. */
-                    ( void * ) patch_descriptor, /* Parameter passed into the task. */
+                    ( void * ) patch_descriptor,       /* Parameter passed into the task. */
                     tskIDLE_PRIORITY,                  /* Priority at which the task is created. */
                     NULL );                            /* Used to pass out the created task's handle. */
 
     xTaskCreate(
-                    stop_all_task,                     /* Function that implements the task. */
+                    prv_vStopAllPlaybackTask,          /* Function that implements the task. */
                     STOP_ALL_TASK_NAME,                /* Text name for the task. */
                     0x2000,                            /* Stack size in words, not bytes. */
-                    ( void * ) patch_descriptor, /* Parameter passed into the task. */
+                    ( void * ) patch_descriptor,       /* Parameter passed into the task. */
                     tskIDLE_PRIORITY,                  /* Priority at which the task is created. */
                     NULL );                            /* Used to pass out the created task's handle. */
 
     xTaskCreate(
-                    run_midi_cmd_task,                 /* Function that implements the task. */
+                    prv_vRunMIDICommandTask,           /* Function that implements the task. */
                     RUN_MIDI_CMD_TASK_NAME,            /* Text name for the task. */
                     0x2000,                            /* Stack size in words, not bytes. */
-                    ( void * ) patch_descriptor, /* Parameter passed into the task. */
+                    ( void * ) patch_descriptor,       /* Parameter passed into the task. */
                     configMAX_PRIORITIES,              /* Priority at which the task is created. */
-                    NULL );                            /* Used to pass out the created task's handle. */  
+                    NULL );                            /* Used to pass out the created task's handle. */
 
     xTaskCreate(
-                    serial_midi_listener_task,         /* Function that implements the task. */
+                    prv_vSerialMIDIListenerTask,       /* Function that implements the task. */
                     SERIAL_MIDI_LISTENER_TASK_NAME,    /* Text name for the task. */
                     0x2000,                            /* Stack size in words, not bytes. */
-                    ( void * ) patch_descriptor, /* Parameter passed into the task. */
+                    ( void * ) patch_descriptor,       /* Parameter passed into the task. */
                     configMAX_PRIORITIES,              /* Priority at which the task is created. */
-                    NULL );                            /* Used to pass out the created task's handle. */  
+                    NULL );                            /* Used to pass out the created task's handle. */
 }
 
 
-static void run_midi_cmd_task( void *pvParameters ) {
+static void prv_vRunMIDICommandTask( void *pvParameters ) {
     BaseType_t        notification_received;
     uint32_t          ulNotifiedValue;
 
@@ -133,7 +134,7 @@ static void run_midi_cmd_task( void *pvParameters ) {
             case 0x90:
                 ulPlayInstrumentKey( byte1, byte2, patch_descriptor );
                 break;
-            
+
             default:
                 break;
         }
@@ -149,14 +150,14 @@ static void run_midi_cmd_task( void *pvParameters ) {
 
     vTaskDelete( NULL );
 }
-   
+
 
 
 // This task receives the notification to start playing a key
 // The notification must also pass the value of a Queue Handler
 // Once the notification is recieved, the task will receive the key parameters
 // using the provided Queue handler
-static void key_playback_task( void *pvParameters ) {
+static void prv_vKeyPlaybackTask( void *pvParameters ) {
     BaseType_t        notification_received;
     const TickType_t  xBlockTime = 500;
     uint32_t          ulNotifiedValue;
@@ -200,7 +201,7 @@ static void key_playback_task( void *pvParameters ) {
 }
 
 // This task stops all playback
-static void stop_all_task( void *pvParameters ) {
+static void prv_vStopAllPlaybackTask( void *pvParameters ) {
     BaseType_t        notification_received;
     uint32_t          ulNotifiedValue;
     uint32_t          error = 0;
@@ -232,7 +233,7 @@ static void stop_all_task( void *pvParameters ) {
 // This task loads the instrument using a .json file
 // The .json file contains all the information regarding
 // Key, velocity ranges, and associated sample
-static void load_instrument_task( void *pvParameters ) {
+static void prv_vLoadInstrumentTask( void *pvParameters ) {
     BaseType_t          notification_received;
     const TickType_t    xBlockTime = 500;
     uint32_t            ulNotifiedValue;
@@ -286,7 +287,7 @@ static void load_instrument_task( void *pvParameters ) {
 // This task loads the instrument using a .json file
 // The .json file contains all the information regarding
 // Key, velocity ranges, and associated sample
-static void load_sf3_task( void *pvParameters ) {
+static void prv_vLoadSF3Task( void *pvParameters ) {
     BaseType_t          notification_received;
     const TickType_t    xBlockTime = 500;
     uint32_t            ulNotifiedValue;
@@ -338,7 +339,7 @@ static void load_sf3_task( void *pvParameters ) {
 }
 
 
-static void serial_midi_listener_task( void *pvParameters ) {
+static void prv_vSerialMIDIListenerTask( void *pvParameters ) {
     BaseType_t        notification_received;
     uint32_t          ulNotifiedValue;
     uint32_t          return_value;
@@ -395,7 +396,7 @@ static void serial_midi_listener_task( void *pvParameters ) {
                     case 0xb0:
                         midi_listener_stop = pdTRUE;
                         break;
-                    
+
                     default:
                         break;
                 }
