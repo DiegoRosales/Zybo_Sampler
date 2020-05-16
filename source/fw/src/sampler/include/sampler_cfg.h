@@ -40,7 +40,11 @@
 #define SAMPLE_VEL_MAX_TOKEN_STR     "velocity_max"
 #define SAMPLE_PATH_TOKEN_STR        "sample_file"
 #define MAX_PATH_LEN                 100
-
+// Sample file format
+#define SAMPLE_FORMAT_RAW            0
+#define SAMPLE_FORMAT_WAVE           1
+#define SAMPLE_FORMAT_SF3            2
+#define SAMPLE_FORMAT_OTHER          127
 
 ////////////////////////////////////////////////////////////
 // Sample descriptor data structure
@@ -48,6 +52,8 @@
 
 // Information extracted from the RIFF file
 typedef struct {
+    uint8_t        sample_file_format; // 0 == No format (RAW data)
+    uint8_t       *sample_file_buffer; // Sample file pointer
     uint16_t       audio_format;       // PCM = 1 (i.e. Linear quantization). Values other than 1 indicate some form of compression
     uint16_t       number_of_channels; // Mono = 1, Stereo = 2, etc.
     uint32_t       sample_rate;        // 8000, 44100, etc.

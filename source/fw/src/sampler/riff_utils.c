@@ -95,6 +95,8 @@ void vDecodeWAVEInformation( uint8_t *riff_buffer, size_t riff_buffer_size, SAMP
         }
 
         // Step 3.1 - Extract the base information
+        sample_information->sample_file_format = SAMPLE_FORMAT_WAVE;
+        sample_information->sample_file_buffer = riff_buffer;
         sample_information->audio_format       = wave_format_data.FormatDescriptor.AudioFormat;
         sample_information->number_of_channels = wave_format_data.FormatDescriptor.NumChannels;
         sample_information->sample_rate        = wave_format_data.FormatDescriptor.SampleRate;
