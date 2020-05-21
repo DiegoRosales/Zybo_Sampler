@@ -136,13 +136,18 @@ PATCH_DESCRIPTOR_t * ulLoadPatchFromJSON( const char * json_file_dirname, const 
 // This function will load a SoundFont3 file
 PATCH_DESCRIPTOR_t * ulLoadPatchFromSF3( const char * sf3_file_fullpath ) {
     PATCH_DESCRIPTOR_t *patch_descriptor = NULL;
-    //uint32_t error = 0;
+    size_t              sf3_patch_buffer_len;
 
     // Step 1 - Open the json file containing the instrument information
     SAMPLER_PRINTF_INFO("Step 1 - Load the SF3 File");
-    xLoadFileToMemory_malloc( sf3_file_fullpath, &sf3_patch_buffer, MAX_SF3_FILE_SIZE, 0 );
+    sf3_patch_buffer_len = xLoadFileToMemory_malloc( sf3_file_fullpath, &sf3_patch_buffer, MAX_SF3_FILE_SIZE, 0 );
 
-    
+    if ( sf3_patch_buffer_len == 0 || sf3_patch_buffer == NULL ) {
+        SAMPLER_PRINTF_ERROR("Error while loading the SF3 file!");
+        return NULL;
+    }
+
+    vPrintSF3Info( sf3_patch_buffer, sf3_patch_buffer_len );
 
     return patch_descriptor;
 
