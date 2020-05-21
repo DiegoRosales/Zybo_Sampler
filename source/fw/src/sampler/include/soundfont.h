@@ -7,7 +7,43 @@
 #define __SOUNDFORMAT_H__
 
 #include "riff_utils.h"
- 
+
+// List Chunk Tokens
+#define SFBK_ASCII_TOKEN   0x6b626673 // ASCII String == "sfbk"
+#define INFO_ASCII_TOKEN   0x4F464E49 // ASCII String == "INFO"
+#define SDTA_ASCII_TOKEN   0x61746473 // ASCII String == "sdta"
+#define PDTA_ASCII_TOKEN   0x61746470 // ASCII String == "pdta"
+
+// Sub List Chunk Tokens
+
+// INFO
+#define IFIL_ASCII_TOKEN 0x6C696669 // ASCII String == "ifil"
+#define ISNG_ASCII_TOKEN 0x676E7369 // ASCII String == "isng"
+#define INAM_ASCII_TOKEN 0x4D414E49 // ASCII String == "INAM"
+#define IROM_ASCII_TOKEN 0x6D6F7269 // ASCII String == "irom"
+#define IVER_ASCII_TOKEN 0x72657669 // ASCII String == "iver"
+#define ICRD_ASCII_TOKEN 0x44524349 // ASCII String == "ICRD"
+#define IENG_ASCII_TOKEN 0x474E4549 // ASCII String == "IENG"
+#define IPRD_ASCII_TOKEN 0x44525049 // ASCII String == "IPRD"
+#define ICOP_ASCII_TOKEN 0x504F4349 // ASCII String == "ICOP"
+#define ICMT_ASCII_TOKEN 0x544D4349 // ASCII String == "ICMT"
+#define ISFT_ASCII_TOKEN 0x54465349 // ASCII String == "ISFT"
+
+// SDTA
+#define SMPL_ASCII_TOKEN 0x6C706D73 // ASCII String == "smpl"
+#define SM24_ASCII_TOKEN 0x34326D73 // ASCII String == "sm24"
+
+// PDTA
+#define PHDR_ASCII_TOKEN 0x72646870 // ASCII String == "phdr"
+#define PBAG_ASCII_TOKEN 0x67616270 // ASCII String == "pbag"
+#define PMOD_ASCII_TOKEN 0x646F6D70 // ASCII String == "pmod"
+#define PGEN_ASCII_TOKEN 0x6E656770 // ASCII String == "pgen"
+#define INST_ASCII_TOKEN 0x74736E69 // ASCII String == "inst"
+#define IBAG_ASCII_TOKEN 0x67616269 // ASCII String == "ibag"
+#define IMOD_ASCII_TOKEN 0x646F6D69 // ASCII String == "imod"
+#define IGEN_ASCII_TOKEN 0x6E656769 // ASCII String == "igen"
+#define SHDR_ASCII_TOKEN 0x72646873 // ASCII String == "shdr"
+
 #define SF_ASCII     char     // Char
 #define SF_BYTE      uint8_t  // 8-bit unsigned
 #define SF_CHAR      int8_t   // 8-bit signed
@@ -423,4 +459,16 @@ typedef struct {
   SF_IGEN_CHUNK_t * IGEN_CHUNK;
   SF_SHDR_CHUNK_t * SHDR_CHUNK;
 } SF_PDATA_LIST_DESCRIPTOR_t;
+
+/////////////////////////////////////////////////////////////////////
+// All descriptors combined
+/////////////////////////////////////////////////////////////////////
+
+typedef struct {
+  SF_INFO_LIST_DESCRIPTOR_t  sf_info_list_descriptor;
+  SF_SDATA_LIST_DESCRIPTOR_t sf_sdata_list_descriptor;
+  SF_PDATA_LIST_DESCRIPTOR_t sf_pdata_list_descriptor;
+} SF_DESCRIPTOR_t;
+
+
 #endif

@@ -12,6 +12,7 @@
 
 // Get chunks
 #define cmdGET_RIFF_DESCRIPTOR_CHUNK(buffer) (( RIFF_DESCRIPTOR_CHUNK_t * ) buffer) 
+#define cmdGET_RIFF_LIST_DESCRIPTOR_CHUNK(buffer) (( RIFF_LIST_DESCRIPTOR_CHUNK_t * ) buffer) 
 #define cmdGET_RIFF_BASE_CHUNK(buffer) (( RIFF_BASE_CHUNK_t * ) buffer) 
 
 ////////////////////////////////////////////////////////////

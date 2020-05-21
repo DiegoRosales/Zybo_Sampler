@@ -123,6 +123,302 @@ void vDecodeWAVEInformation( uint8_t *riff_buffer, size_t riff_buffer_size, SAMP
     }
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////////
+// Decode SF3 INFO Chunk
+//////////////////////////////////////////////////////////////////////////////////////////////////
+//<INFO-list> -> LIST (‘INFO’
+//                      {
+//                        <ifil-ck> ; Refers to the version of the Sound Font RIFF file
+//                        <isng-ck> ; Refers to the target Sound Engine
+//                        <INAM-ck> ; Refers to the Sound Font Bank Name
+//                        [<irom-ck>] ; Refers to the Sound ROM Name
+//                        [<iver-ck>] ; Refers to the Sound ROM Version
+//                        [<ICRD-ck>] ; Refers to the Date of Creation of the Bank
+//                        [<IENG-ck>] ; Sound Designers and Engineers for the Bank
+//                        [<IPRD-ck>] ; Product for which the Bank was intended
+//                        [<ICOP-ck>] ; Contains any Copyright message
+//                        [<ICMT-ck>] ; Contains any Comments on the Bank
+//                        [<ISFT-ck>] ; The SoundFont tools used to create and alter the bank
+//                      }
+//                    )
+//////////////////////////////////////////////////////////////////////////////////////////////////
+void prv_vSF3DecodeINFO( uint8_t * info_chunk_buffer, size_t info_chunk_buffer_len, SF_DESCRIPTOR_t * sf_descriptor ) {
+
+    // Sanity check
+    if ( sf_descriptor == NULL ) {
+        SAMPLER_PRINTF_ERROR("Error decoding SF3 Info - sf_descriptor == NULL");
+        return;
+    }
+
+    SF_INFO_LIST_DESCRIPTOR_t * sf_info_descriptor = &sf_descriptor->sf_info_list_descriptor;
+    uint8_t                   * curr_buffer_pointer;
+    RIFF_BASE_CHUNK_t         * curr_chunk;
+
+    // Initialize
+    sf_info_descriptor->IFIL_CHUNK = NULL;
+    sf_info_descriptor->ISNG_CHUNK = NULL;
+    sf_info_descriptor->INAM_CHUNK = NULL;
+    sf_info_descriptor->IROM_CHUNK = NULL;
+    sf_info_descriptor->IVER_CHUNK = NULL;
+    sf_info_descriptor->ICRD_CHUNK = NULL;
+    sf_info_descriptor->IENG_CHUNK = NULL;
+    sf_info_descriptor->IPRD_CHUNK = NULL;
+    sf_info_descriptor->ICOP_CHUNK = NULL;
+    sf_info_descriptor->ICMT_CHUNK = NULL;
+    sf_info_descriptor->ISFT_CHUNK = NULL;
+
+    curr_buffer_pointer = info_chunk_buffer;
+
+    do {
+       curr_chunk = cmdGET_RIFF_BASE_CHUNK(curr_buffer_pointer);
+
+       switch (curr_chunk->ChunkID) {
+        // IFIL
+        case IFIL_ASCII_TOKEN:
+            SAMPLER_PRINTF_INFO("INFO sub-chunk is IFIL");
+            sf_info_descriptor->IFIL_CHUNK = (SF_IFIL_CHUNK_t *) curr_buffer_pointer;
+            break;
+
+        // ISNG
+        case ISNG_ASCII_TOKEN:
+            SAMPLER_PRINTF_INFO("INFO sub-chunk is ISNG");
+            sf_info_descriptor->ISNG_CHUNK = (SF_ISNG_CHUNK_t *) curr_buffer_pointer;
+            break;
+
+        // INAM
+        case INAM_ASCII_TOKEN:
+            SAMPLER_PRINTF_INFO("INFO sub-chunk is INAM");
+            sf_info_descriptor->INAM_CHUNK = (SF_INAM_CHUNK_t *) curr_buffer_pointer;
+            break;
+
+        // IROM
+        case IROM_ASCII_TOKEN:
+            SAMPLER_PRINTF_INFO("INFO sub-chunk is IROM");
+            sf_info_descriptor->IROM_CHUNK = (SF_IROM_CHUNK_t *) curr_buffer_pointer;
+            break;
+
+        // IVER
+        case IVER_ASCII_TOKEN:
+            SAMPLER_PRINTF_INFO("INFO sub-chunk is IVER");
+            sf_info_descriptor->IVER_CHUNK = (SF_IVER_CHUNK_t *) curr_buffer_pointer;
+            break;
+
+        // ICRD
+        case ICRD_ASCII_TOKEN:
+            SAMPLER_PRINTF_INFO("INFO sub-chunk is ICRD");
+            sf_info_descriptor->ICRD_CHUNK = (SF_ICRD_CHUNK_t *) curr_buffer_pointer;
+            break;
+
+        // IENG
+        case IENG_ASCII_TOKEN:
+            SAMPLER_PRINTF_INFO("INFO sub-chunk is IENG");
+            sf_info_descriptor->IENG_CHUNK = (SF_IENG_CHUNK_t *) curr_buffer_pointer;
+            break;
+
+        // IPRD
+        case IPRD_ASCII_TOKEN:
+            SAMPLER_PRINTF_INFO("INFO sub-chunk is IPRD");
+            sf_info_descriptor->IPRD_CHUNK = (SF_IPRD_CHUNK_t *) curr_buffer_pointer;
+            break;
+
+        // ICOP
+        case ICOP_ASCII_TOKEN:
+            SAMPLER_PRINTF_INFO("INFO sub-chunk is ICOP");
+            sf_info_descriptor->ICOP_CHUNK = (SF_ICOP_CHUNK_t *) curr_buffer_pointer;
+            break;
+
+        // ICMT
+        case ICMT_ASCII_TOKEN:
+            SAMPLER_PRINTF_INFO("INFO sub-chunk is ICMT");
+            sf_info_descriptor->ICMT_CHUNK = (SF_ICMT_CHUNK_t *) curr_buffer_pointer;
+            break;
+
+        // ISFT
+        case ISFT_ASCII_TOKEN:
+            SAMPLER_PRINTF_INFO("INFO sub-chunk is ISFT");
+            sf_info_descriptor->ISFT_CHUNK = (SF_ISFT_CHUNK_t *) curr_buffer_pointer;
+            break;
+        // Unknown
+        default:
+            SAMPLER_PRINTF_WARNING("Unknown chunk inside INFO sub-chunk! %x", curr_chunk->ChunkID);
+            break;
+        }
+
+        // Go to the next chunk
+        curr_buffer_pointer += sizeof(RIFF_BASE_CHUNK_t) + curr_chunk->ChunkSize;
+
+    } while ( curr_buffer_pointer < (info_chunk_buffer + info_chunk_buffer_len) );
+    
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+// Decode SF3 sdta Chunk
+//////////////////////////////////////////////////////////////////////////////////////////////////
+//<sdta-ck> -> LIST (‘sdta’
+//                    {
+//                      [<smpl-ck>] ; The Digital Audio Samples for the upper 16 bits
+//                    }
+//                    {
+//                      [<sm24-ck>] ; The Digital Audio Samples for the lower 8 bits
+//                    }
+//                  )
+//////////////////////////////////////////////////////////////////////////////////////////////////
+void prv_vSF3DecodeSDTA( uint8_t * sdta_chunk_buffer, size_t sdta_chunk_buffer_len, SF_DESCRIPTOR_t * sf_descriptor  ) {
+
+    // Sanity check
+    if ( sf_descriptor == NULL ) {
+        SAMPLER_PRINTF_ERROR("Error decoding SF3 SDTA - sf_descriptor == NULL");
+        return;
+    }
+
+    SF_SDATA_LIST_DESCRIPTOR_t * sf_sdta_descriptor = &sf_descriptor->sf_sdata_list_descriptor;
+    uint8_t                    * curr_buffer_pointer;
+    RIFF_BASE_CHUNK_t          * curr_chunk;
+
+    sf_sdta_descriptor->SM24_CHUNK = NULL;
+    sf_sdta_descriptor->SMPL_CHUNK = NULL;
+
+    curr_buffer_pointer = sdta_chunk_buffer;
+
+    do {
+       curr_chunk = cmdGET_RIFF_BASE_CHUNK(curr_buffer_pointer);
+
+       switch (curr_chunk->ChunkID) {
+        // SM24
+        case SM24_ASCII_TOKEN:
+            SAMPLER_PRINTF_INFO("SDTA sub-chunk is SM24");
+            sf_sdta_descriptor->SM24_CHUNK = (SF_SM24_CHUNK_t *) curr_buffer_pointer;
+            break;
+
+        // SMPL
+        case SMPL_ASCII_TOKEN:
+            SAMPLER_PRINTF_INFO("SDTA sub-chunk is SMPL");
+            sf_sdta_descriptor->SMPL_CHUNK = (SF_SMPL_CHUNK_t *) curr_buffer_pointer;
+            break;
+
+        // Unknown
+        default:
+            SAMPLER_PRINTF_WARNING("Unknown chunk inside SDTA sub-chunk! %x", curr_chunk->ChunkID);
+            break;
+       }
+
+        // Go to the next chunk
+        curr_buffer_pointer += sizeof(RIFF_BASE_CHUNK_t) + curr_chunk->ChunkSize;
+
+    } while ( curr_buffer_pointer < (sdta_chunk_buffer + sdta_chunk_buffer_len) );
+
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+// Decode SF3 pdta Chunk
+//////////////////////////////////////////////////////////////////////////////////////////////////
+//<pdta-ck> -> LIST (‘pdta’
+//                    {
+//                      <phdr-ck> ; The Preset Headers
+//                      <pbag-ck> ; The Preset Index list
+//                      <pmod-ck> ; The Preset Modulator list
+//                      <pgen-ck> ; The Preset Generator list
+//                      <inst-ck> ; The Instrument Names and Indices
+//                      <ibag-ck> ; The Instrument Index list
+//                      <imod-ck> ; The Instrument Modulator list
+//                      <igen-ck> ; The Instrument Generator list
+//                      <shdr-ck> ; The Sample Headers
+//                    }
+//                  )
+//////////////////////////////////////////////////////////////////////////////////////////////////
+void prv_vSF3DecodePDTA( uint8_t * pdta_chunk_buffer, size_t pdta_chunk_buffer_len, SF_DESCRIPTOR_t * sf_descriptor  ) {
+    // Sanity check
+    if ( sf_descriptor == NULL ) {
+        SAMPLER_PRINTF_ERROR("Error decoding SF3 PDTA - sf_descriptor == NULL");
+        return;
+    }
+
+    SF_PDATA_LIST_DESCRIPTOR_t * sf_pdta_descriptor = &sf_descriptor->sf_pdata_list_descriptor;
+    uint8_t                    * curr_buffer_pointer;
+    RIFF_BASE_CHUNK_t          * curr_chunk;
+
+    sf_pdta_descriptor->PHDR_CHUNK = NULL;
+    sf_pdta_descriptor->PBAG_CHUNK = NULL;
+    sf_pdta_descriptor->PMOD_CHUNK = NULL;
+    sf_pdta_descriptor->PGEN_CHUNK = NULL;
+    sf_pdta_descriptor->INST_CHUNK = NULL;
+    sf_pdta_descriptor->IBAG_CHUNK = NULL;
+    sf_pdta_descriptor->IMOD_CHUNK = NULL;
+    sf_pdta_descriptor->IGEN_CHUNK = NULL;
+    sf_pdta_descriptor->SHDR_CHUNK = NULL;
+
+    curr_buffer_pointer = pdta_chunk_buffer;
+
+    do {
+       curr_chunk = cmdGET_RIFF_BASE_CHUNK(curr_buffer_pointer);
+
+       switch (curr_chunk->ChunkID) {
+        // PHDR
+        case PHDR_ASCII_TOKEN:
+            SAMPLER_PRINTF_INFO("PDTA sub-chunk is PHDR");
+            sf_pdta_descriptor->PHDR_CHUNK = (SF_PHDR_CHUNK_t *) curr_buffer_pointer;
+            break;
+        
+        // PBAG
+        case PBAG_ASCII_TOKEN:
+            SAMPLER_PRINTF_INFO("PDTA sub-chunk is PBAG");
+            sf_pdta_descriptor->PBAG_CHUNK = (SF_PBAG_CHUNK_t *) curr_buffer_pointer;
+            break;
+        
+        // PMOD
+        case PMOD_ASCII_TOKEN:
+            SAMPLER_PRINTF_INFO("PDTA sub-chunk is PMOD");
+            sf_pdta_descriptor->PMOD_CHUNK = (SF_PMOD_CHUNK_t *) curr_buffer_pointer;
+            break;
+        
+        // PGEN
+        case PGEN_ASCII_TOKEN:
+            SAMPLER_PRINTF_INFO("PDTA sub-chunk is PGEN");
+            sf_pdta_descriptor->PGEN_CHUNK = (SF_PGEN_CHUNK_t *) curr_buffer_pointer;
+            break;
+        
+        // INST
+        case INST_ASCII_TOKEN:
+            SAMPLER_PRINTF_INFO("PDTA sub-chunk is INST");
+            sf_pdta_descriptor->INST_CHUNK = (SF_INST_CHUNK_t *) curr_buffer_pointer;
+            break;
+        
+        // IBAG
+        case IBAG_ASCII_TOKEN:
+            SAMPLER_PRINTF_INFO("PDTA sub-chunk is IBAG");
+            sf_pdta_descriptor->IBAG_CHUNK = (SF_IBAG_CHUNK_t *) curr_buffer_pointer;
+            break;
+        
+        // IMOD
+        case IMOD_ASCII_TOKEN:
+            SAMPLER_PRINTF_INFO("PDTA sub-chunk is IMOD");
+            sf_pdta_descriptor->IMOD_CHUNK = (SF_IMOD_CHUNK_t *) curr_buffer_pointer;
+            break;
+        
+        // IGEN
+        case IGEN_ASCII_TOKEN:
+            SAMPLER_PRINTF_INFO("PDTA sub-chunk is IGEN");
+            sf_pdta_descriptor->IGEN_CHUNK = (SF_IGEN_CHUNK_t *) curr_buffer_pointer;
+            break;
+        
+        // SHDR
+        case SHDR_ASCII_TOKEN:
+            SAMPLER_PRINTF_INFO("PDTA sub-chunk is SHDR");
+            sf_pdta_descriptor->SHDR_CHUNK = (SF_SHDR_CHUNK_t *) curr_buffer_pointer;
+            break;
+
+        // Unknown
+        default:
+            SAMPLER_PRINTF_WARNING("Unknown chunk inside SDTA sub-chunk! %x", curr_chunk->ChunkID);
+            break;
+       }
+
+        // Go to the next chunk
+        curr_buffer_pointer += sizeof(RIFF_BASE_CHUNK_t) + curr_chunk->ChunkSize;
+
+    } while ( curr_buffer_pointer < (pdta_chunk_buffer + pdta_chunk_buffer_len) );
+}
+
 // Print SF3 Information
 void vPrintSF3Info( uint8_t* sf3_buffer ) {
 
