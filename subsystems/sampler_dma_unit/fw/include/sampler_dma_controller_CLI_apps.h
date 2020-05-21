@@ -3,6 +3,6 @@
 
 #define cliNEW_LINE "\n\r"
 
-void register_sampler_dma_ctrl_cli_commands( void );
+void vRegisterSamplerDMAControllerCLICommands( void );
 
 #endif

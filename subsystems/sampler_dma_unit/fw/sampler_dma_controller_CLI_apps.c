@@ -24,11 +24,11 @@
 #define cliNEW_LINE "\n\r"
 #define APPEND_NEWLINE(BUFFER) strcat( BUFFER, cliNEW_LINE )
 
-static BaseType_t sampler_reg_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
-static BaseType_t get_sampler_version_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
+static BaseType_t prv_xSamplerRegCMD( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
+static BaseType_t prv_xGetSamplerHWVersionCMD( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
 
 // This function converts an string in int or hex to a uint32_t
-static uint32_t str2int( const char *input_string, BaseType_t input_string_length ) {
+static uint32_t prv_ulStr2Int( const char *input_string, BaseType_t input_string_length ) {
 
     const char *start_char = input_string;
     char *end_char;
@@ -47,33 +47,33 @@ static uint32_t str2int( const char *input_string, BaseType_t input_string_lengt
 }
 
 // Command to read a register from the Sampler DMA Controller
-static const CLI_Command_Definition_t sampler_reg_command_definition =
+static const CLI_Command_Definition_t prv_xSamplerRegCMD_definition =
 {
     "sampler_reg",
     "\r\nsampler_reg <ADDR>\n\rsampler_reg <ADDR> <DATA>\r\n Read/Write a register from the sampler\r\n",
-    sampler_reg_command, /* The function to run. */
+    prv_xSamplerRegCMD, /* The function to run. */
     -1 /* The user can enter any number of commands. */
 };
 
 // Command to get the version of the Sampler DMA Controller
-static const CLI_Command_Definition_t get_sampler_version_command_definition =
+static const CLI_Command_Definition_t prv_xGetSamplerHWVersionCMD_definition =
 {
-    "get_sampler_version",
-    "\r\nget_sampler_version\r\n Returns the version of the Hardware Sampler\r\n",
-    get_sampler_version_command, /* The function to run. */
+    "get_sampler_dma_hw_version",
+    "\r\nget_sampler_dma_hw_version\r\n Returns the version of the Hardware Sampler\r\n",
+    prv_xGetSamplerHWVersionCMD, /* The function to run. */
     0 /* The user can enter any number of commands. */
 };
 
 // Register all the CLI commands
-void register_sampler_dma_ctrl_cli_commands( void ) {
-    FreeRTOS_CLIRegisterCommand( &sampler_reg_command_definition );         // Sampler Read/Write Command
-   	FreeRTOS_CLIRegisterCommand( &get_sampler_version_command_definition ); // Get sampler version
+void vRegisterSamplerDMAControllerCLICommands( void ) {
+    FreeRTOS_CLIRegisterCommand( &prv_xSamplerRegCMD_definition );         // Sampler Read/Write Command
+   	FreeRTOS_CLIRegisterCommand( &prv_xGetSamplerHWVersionCMD_definition ); // Get sampler version
 
 }
 
 
 // This command reads the data from the sampler in the PL
-static BaseType_t sampler_reg_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString ) {
+static BaseType_t prv_xSamplerRegCMD( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString ) {
     const char         *pcParameter;
     BaseType_t         xParameterStringLength;
     BaseType_t         xReturn;
@@ -124,11 +124,11 @@ static BaseType_t sampler_reg_command( char *pcWriteBuffer, size_t xWriteBufferL
 			switch ( uxParameterNumber )
 			{
 				case 1: // Address
-					addr_int = str2int(pcParameter, xParameterStringLength);
+					addr_int = prv_ulStr2Int(pcParameter, xParameterStringLength);
 					sprintf( pcWriteBuffer, "Address = 0x%lx", addr_int );
 					break;
 				case 2: // Data
-					data_int = str2int(pcParameter, xParameterStringLength);
+					data_int = prv_ulStr2Int(pcParameter, xParameterStringLength);
 					sprintf( pcWriteBuffer, "Data = 0x%lx", addr_int );
 					break;
 				default:
@@ -147,11 +147,11 @@ static BaseType_t sampler_reg_command( char *pcWriteBuffer, size_t xWriteBufferL
 
 			if ( uxParameterNumber == 2 ) {
 				// Read the data
-				reg_output = SamplerRegRd(addr_int);
+				reg_output = ulSamplerRegRd(addr_int);
 				sprintf( pcWriteBuffer, "SAMPLER[0x%lx] = 0x%lx", addr_int, reg_output );
 			} else if ( uxParameterNumber == 3 ) {
 				// Write the data
-				SamplerRegWr( addr_int, data_int, 0);
+				ulSamplerRegWr( addr_int, data_int, 0);
 				sprintf( pcWriteBuffer, "SAMPLER[0x%lx] <== 0x%lx", addr_int, data_int );
 			} else {
 				sprintf( pcWriteBuffer, "[ERROR] - Bad number of arguments. Number of parameters = %lu", (uxParameterNumber - 1) );
@@ -179,11 +179,11 @@ static BaseType_t sampler_reg_command( char *pcWriteBuffer, size_t xWriteBufferL
 }
 
 // This loads a section of memory with a sine wave of a give frequency
-static BaseType_t get_sampler_version_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString ) {
+static BaseType_t prv_xGetSamplerHWVersionCMD( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString ) {
     BaseType_t         xReturn;
 
 	// Custom variables
-    uint32_t sampler_version;
+  uint32_t sampler_version;
 	uint32_t major_version;
 	uint32_t minor_version;
 	static BaseType_t command_done = pdFALSE;
@@ -197,7 +197,7 @@ static BaseType_t get_sampler_version_command( char *pcWriteBuffer, size_t xWrit
 
 
 	if ( command_done != pdTRUE ) {
-		sampler_version = get_sampler_version();
+		sampler_version = ulGetDMAEngineHWVersion();
 		major_version   = ( sampler_version >> 16 ) & 0xffff;
 		minor_version   = sampler_version & 0xffff;
 

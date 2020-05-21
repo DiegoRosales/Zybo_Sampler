@@ -93,7 +93,7 @@ void main_rtos_program() {
     register_codec_cli_commands();
     vRegisterFATCLICommands();
     vRegisterSamplerCLICommands();
-    register_sampler_dma_ctrl_cli_commands();
+    vRegisterSamplerDMAControllerCLICommands();
 
     pxSDDisk = FF_SDDiskInit( mainSD_CARD_DISK_NAME );
 
@@ -122,7 +122,7 @@ void system_init( void ) {
     xil_printf("Audio Data Address Start = 0x%x\n\r", sine_nco.audio_data);
     xil_printf("Done!\n\r");    
 
-    sampler_init();
+    vSamplerDMAInit();
 
     xil_printf("Done!\n\r");
     xil_printf("==========================\n\r");

@@ -69,7 +69,7 @@ uint32_t ulStopAllPlayback( PATCH_DESCRIPTOR_t *instrument_information ) {
     SAMPLER_CONTROL_REGISTER_ACCESS->SAMPLER_CONTROL_REG.value = SAMPLER_CONTROL_STOP;
 
     // Stop the playback
-    for ( voice_slot = 0; voice_slot < MAX_VOICES; voice_slot++ ) stop_voice_playback( voice_slot );
+    for ( voice_slot = 0; voice_slot < MAX_VOICES; voice_slot++ ) ulStopVoicePlayback( voice_slot );
 
     if( instrument_information == NULL ) return 0;
 
@@ -138,7 +138,7 @@ uint32_t ulPlayInstrumentKey( uint8_t key, uint8_t velocity, PATCH_DESCRIPTOR_t 
 
             if ( current_voice->current_status != 0 ) {
                 SAMPLER_PRINTF_INFO("[INFO] - Stopping voice playback of slot %d", current_voice->current_slot);
-                stop_voice_playback( current_voice->current_slot );
+                ulStopVoicePlayback( current_voice->current_slot );
                 current_voice->current_status = 0;
                 current_voice->current_slot   = 0;
             }
@@ -174,7 +174,7 @@ uint32_t ulPlayInstrumentKey( uint8_t key, uint8_t velocity, PATCH_DESCRIPTOR_t 
         }
 
         // Start playback
-        voice_slot = start_voice_playback( (uint32_t) current_voice->sample_format.data_start_ptr, // Audio data pointer
+        voice_slot = ulStartVoicePlayback( (uint32_t) current_voice->sample_format.data_start_ptr, // Audio data pointer
                                                       current_voice->sample_format.audio_data_size // Audio data size
                                             );
         

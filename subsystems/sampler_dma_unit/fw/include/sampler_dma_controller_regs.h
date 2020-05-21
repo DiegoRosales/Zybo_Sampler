@@ -233,8 +233,4 @@ typedef struct {
     SAMPLER_DMA_t sampler_dma[MAX_VOICES]; // The number of registers depends on the number of voices
 } SAMPLER_DMA_REGISTERS_t;
 
-
-// Functions
-uint32_t get_sampler_version( void );
-
 #endif

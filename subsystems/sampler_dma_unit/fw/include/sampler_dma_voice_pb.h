@@ -38,10 +38,8 @@ typedef struct {
     uint32_t voice_size;
 } SAMPLER_VOICE_t;
 
-void     sampler_init ( void );
-uint16_t get_available_voice_slot( void );
-void     release_slot( uint16_t slot );
-uint32_t stop_voice_playback( uint32_t voice_slot_number );
-uint32_t start_voice_playback( uint32_t sample_addr, uint32_t sample_size );
+void     vSamplerDMAInit ( void );
+uint32_t ulStopVoicePlayback( uint32_t voice_slot_number );
+uint32_t ulStartVoicePlayback( uint32_t sample_addr, uint32_t sample_size );
 
 #endif

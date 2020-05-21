@@ -8,7 +8,7 @@
 #include "sampler_dma_controller_reg_utils.h"
 
 
-uint32_t SamplerRegWr(uint32_t addr, uint32_t value, uint32_t check) {
+uint32_t ulSamplerRegWr(uint32_t addr, uint32_t value, uint32_t check) {
     uint32_t readback  = 0;
     uint32_t ok        = 0;
     uint32_t full_addr = GET_SAMPLER_FULL_ADDR(addr);
@@ -23,7 +23,7 @@ uint32_t SamplerRegWr(uint32_t addr, uint32_t value, uint32_t check) {
     return ok;
 }
 
-uint32_t SamplerRegRd(uint32_t addr) {
+uint32_t ulSamplerRegRd(uint32_t addr) {
     uint32_t readback  = 0;
     uint32_t full_addr = GET_SAMPLER_FULL_ADDR(addr);
 
@@ -32,6 +32,6 @@ uint32_t SamplerRegRd(uint32_t addr) {
     return readback;
 }
 
-uint32_t get_sampler_version( void ) {
+uint32_t ulGetDMAEngineHWVersion( void ) {
     return SAMPLER_CONTROL_REGISTER_ACCESS->SAMPLER_VER_REG.value;
 }

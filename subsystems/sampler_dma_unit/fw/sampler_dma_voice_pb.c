@@ -7,7 +7,6 @@
 
 // Xilinx Includes
 #include "xparameters.h"
-#include "xil_printf.h"
 #include "xil_io.h"
 #include "xil_cache.h"
 
@@ -16,6 +15,10 @@
 #include "sampler_dma_controller_reg_utils.h"
 #include "sampler_dma_voice_pb.h"
 
+// Private functions
+uint16_t prv_usGetAvailableVoiceSlot( void );
+void     prv_vReleaseSlot( uint16_t slot );
+
 // Tracking variables
 static VOICE_TRK_t     sampler_voices[MAX_VOICES];
 static uint8_t         last_voice_slot;
@@ -23,7 +26,7 @@ static uint8_t         number_of_active_slots;
 static SAMPLER_VOICE_t sampler_voices_information[MAX_VOICES];
 
 // Initialize the sampler registers
-void sampler_init ( void ) {
+void vSamplerDMAInit ( void ) {
 
     // Initialize the slots
     last_voice_slot        = 0;
@@ -38,7 +41,7 @@ void sampler_init ( void ) {
 }
 
 // This function will return the number of the voice slot available to start the playback
-uint16_t get_available_voice_slot( void ) {
+uint16_t prv_usGetAvailableVoiceSlot( void ) {
     uint16_t current_slot     = 0xffff;
     uint16_t previous_slot    = 0;
     uint16_t next_slot        = 0;
@@ -71,7 +74,7 @@ uint16_t get_available_voice_slot( void ) {
     if( current_slot == 0xffff ) return current_slot;
 
     next_slot = sampler_voices[ previous_slot ].next_voice_slot;
-    
+
     // Step 4 - Insert the voice slot into the link
     sampler_voices[ current_slot ].previous_voice_slot = previous_slot;
     sampler_voices[ current_slot ].next_voice_slot     = next_slot;
@@ -89,7 +92,7 @@ uint16_t get_available_voice_slot( void ) {
     return current_slot;
 }
 
-void release_slot( uint16_t slot ) {
+void prv_vReleaseSlot( uint16_t slot ) {
     uint16_t previous_slot;
     uint16_t next_slot;
 
@@ -101,7 +104,7 @@ void release_slot( uint16_t slot ) {
     // If this is the last voice remaining
     if( number_of_active_slots == 1 ){
         // Clean all slots
-        for ( int i = 0; i < MAX_VOICES; i++){  
+        for ( int i = 0; i < MAX_VOICES; i++){
             sampler_voices[ i ].previous_voice_slot = 0;
             sampler_voices[ i ].next_voice_slot     = 0;
             sampler_voices[ i ].slot_is_last        = 0;
@@ -121,6 +124,7 @@ void release_slot( uint16_t slot ) {
     // The nest slot of the previous slot is now the next slot of the current slot
     sampler_voices[ previous_slot ].next_voice_slot = next_slot;
     sampler_voices[ next_slot ].previous_voice_slot = previous_slot; // The previous slot of the first item is the last item
+
     // If the current slot was the last of the chain, now the previous one is the last of the chain
     if( sampler_voices[ slot ].slot_is_last ) {
         sampler_voices[ previous_slot ].slot_is_last = 1;
@@ -136,10 +140,10 @@ void release_slot( uint16_t slot ) {
 
     return;
 
-} 
+}
 
 // This function will trigger the playback of a voice based on the voice information
-uint32_t start_voice_playback( uint32_t sample_addr, uint32_t sample_size ) {
+uint32_t ulStartVoicePlayback( uint32_t sample_addr, uint32_t sample_size ) {
     uint32_t voice_slot          = 0;
     uint32_t previous_voice_slot = 0;
     uint32_t number_of_samples   = 0;
@@ -148,7 +152,7 @@ uint32_t start_voice_playback( uint32_t sample_addr, uint32_t sample_size ) {
 
 
     // Step 1 - Get a voice slot
-    voice_slot = get_available_voice_slot();
+    voice_slot = prv_usGetAvailableVoiceSlot();
     if( voice_slot == 0xffff ) return voice_slot;
 
     // Step 2 - Calculate Number of sampler
@@ -191,13 +195,13 @@ uint32_t start_voice_playback( uint32_t sample_addr, uint32_t sample_size ) {
 }
 
 // This function will stop the playback of the voice
-uint32_t stop_voice_playback( uint32_t voice_slot ) {
+uint32_t ulStopVoicePlayback( uint32_t voice_slot ) {
     uint32_t                  previous_voice_slot = 0;
     SAMPLER_DMA_CONTROL_REG_t temp_ctrl_reg;
 
     // Sanity check
     if( voice_slot >= MAX_VOICES ) return 1;
-    
+
     // Step 1 - Remove the sample from the chain
     if ( number_of_active_slots > 1 ) {
         previous_voice_slot = sampler_voices[voice_slot].previous_voice_slot;
@@ -216,10 +220,9 @@ uint32_t stop_voice_playback( uint32_t voice_slot ) {
     SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_start_addr.value  = 0;
     SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_end_addr.value    = 0;
     SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_control.value     = 0;
-    //SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_next_sample.value = 0;
 
     // Release the voice slot
-    release_slot( voice_slot );
+    prv_vReleaseSlot( voice_slot );
 
     return 0;
 }

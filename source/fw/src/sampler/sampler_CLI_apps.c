@@ -631,7 +631,7 @@ static BaseType_t prv_xPlaybackSineWaveCMD( char *pcWriteBuffer, size_t xWriteBu
 			Xil_DCacheFlushRange( (unsigned int) sine_nco.audio_data, (0x100000 * 2));
 
 			// Step 5 - Start the playback
-			voice_slot    = start_voice_playback( (uint32_t) sine_nco.audio_data, sine_nco.target_memory_size );
+			voice_slot    = ulStartVoicePlayback( (uint32_t) sine_nco.audio_data, sine_nco.target_memory_size );
 			uint32_t addr = (uint32_t) sine_nco.audio_data;
 
 			/* Return the parameter string. */
