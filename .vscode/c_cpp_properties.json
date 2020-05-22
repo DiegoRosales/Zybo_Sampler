@@ -7,6 +7,12 @@
             "${vitisGCCPath}/arm-none-eabi/libc/usr/include/**",
             "${vitisGCCPath}/lib/gcc/arm-none-eabi/8.2.0/include/**",
             "${vitisGCCPath}/lib/gcc/arm-none-eabi/8.2.0/include-fixed/**"
+        ],
+        "projIncludes": [
+            "${workspaceFolder}/results/zybo_sampler_vitis_ws/zybo_sampler_platform/export/zybo_sampler_platform/sw/**",
+            "${workspaceFolder}/subsystems/sampler_dma_unit/fw/**",
+            "${workspaceFolder}/subsystems/codec_unit/fw/**",
+            "${workspaceFolder}/source/fw/src/**"
         ]
     },
     "configurations": [
@@ -32,19 +38,16 @@
             ],
             "includePath": [
                 "${vitisSTDIncludes}",
-                "${workspaceFolder}/results/zybo_sampler_vitis_ws/zybo_sampler_platform/export/zybo_sampler_platform/sw/**",
-                "${workspaceFolder}/subsystems/sampler_dma_unit/fw/**",
-                "${workspaceFolder}/subsystems/codec_unit/fw/**",
-                "${workspaceFolder}/source/fw/src/**"
+                "${projIncludes}"
             ],
             "defines": [
                 "_DEBUG",
                 "UNICODE",
                 "_UNICODE"
             ],
-            "compilerPath": "${vitisGCCPath}/bin/arm-none-eabi-gcc.exe",
-            "cStandard": "c11",
-            "cppStandard": "c++17",
+            "compilerPath":     "${vitisGCCPath}/bin/arm-none-eabi-gcc.exe",
+            "cStandard":        "c11",
+            "cppStandard":      "c++17",
             "intelliSenseMode": "gcc-arm"
         }
     ],
