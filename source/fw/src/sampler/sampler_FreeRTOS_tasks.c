@@ -38,6 +38,7 @@ static void prv_vKeyPlaybackTask( void *pvParameters );
 static void prv_vStopAllPlaybackTask( void *pvParameters );
 static void prv_vLoadInstrumentTask( void *pvParameters );
 static void prv_vLoadSF3Task( void *pvParameters );
+static void prv_vPrintSF3InfoTask( void *pvParameters );
 static void prv_vRunMIDICommandTask( void *pvParameters );
 static void prv_vSerialMIDIListenerTask( void *pvParameters );
 
@@ -55,6 +56,14 @@ void vRegisterSamplerEngineTasks ( void ) {
     xTaskCreate(
                     prv_vLoadSF3Task,                  /* Function that implements the task. */
                     LOAD_SF3_TASK_NAME,                /* Text name for the task. */
+                    0x2000,                            /* Stack size in words, not bytes. */
+                    ( void * ) patch_descriptor,       /* Parameter passed into the task. */
+                    tskIDLE_PRIORITY,                  /* Priority at which the task is created. */
+                    NULL );                            /* Used to pass out the created task's handle. */
+
+    xTaskCreate(
+                    prv_vPrintSF3InfoTask,             /* Function that implements the task. */
+                    PRINT_SF3_INFO_TASK_NAME,          /* Text name for the task. */
                     0x2000,                            /* Stack size in words, not bytes. */
                     ( void * ) patch_descriptor,       /* Parameter passed into the task. */
                     tskIDLE_PRIORITY,                  /* Priority at which the task is created. */
@@ -322,6 +331,54 @@ static void prv_vLoadSF3Task( void *pvParameters ) {
                     SAMPLER_PRINTF_ERROR("Patch Loader returned patch_descriptor == NULL (0x%x)", patch_descriptor );
                     return_value = 1;
                 }
+
+                xQueueSend(path_handler->return_handle, &return_value, 1000);
+            }
+
+        }
+
+    }
+
+    /* Tasks must not attempt to return from their implementing
+    function or otherwise exit.  In newer FreeRTOS port
+    attempting to do so will result in an configASSERT() being
+    called if it is defined.  If it is necessary for a task to
+    exit then have the task call vTaskDelete( NULL ) to ensure
+    its exit is clean. */
+    vTaskDelete( NULL );
+}
+
+
+// This task loads an SF3 patch and prints its information
+static void prv_vPrintSF3InfoTask( void *pvParameters ) {
+    BaseType_t          notification_received;
+    const TickType_t    xBlockTime = 500;
+    uint32_t            ulNotifiedValue;
+    file_path_handler_t *path_handler = malloc( sizeof( file_path_t ) );
+    uint32_t            return_value = 1;
+
+    for( ;; )
+    {
+        // Bits in this RTOS task's notification value are set by the notifying
+        // tasks and interrupts to indicate which events have occurred. */
+        notification_received = xTaskNotifyWait( 0x00,             /* Don't clear any notification bits on entry. */
+                                   0xffffffff,       /* Reset the notification value to 0 on exit. */
+                                   &ulNotifiedValue, /* Notified value pass out in ulNotifiedValue. */
+                                   portMAX_DELAY );  /* Block indefinitely. */
+
+        if ( notification_received == pdTRUE ) {
+
+            SAMPLER_PRINTF("Printing SF3 Info...\n\n\r");
+
+            if( ! xQueueReceive((QueueHandle_t) ulNotifiedValue, path_handler, xBlockTime) ) {
+                SAMPLER_PRINTF("Error receiving the Queue!\n\r");
+            }
+            else {
+                return_value = 0;
+                SAMPLER_PRINTF("Loading SF3 \"%s\"\n\r", path_handler->file_path);
+
+                // Load the samples
+                vPrintSF3FileInfo( path_handler->file_path );
 
                 xQueueSend(path_handler->return_handle, &return_value, 1000);
             }

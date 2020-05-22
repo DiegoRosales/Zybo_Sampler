@@ -34,6 +34,7 @@ static BaseType_t prv_xPlayKeyCMD( char *pcWriteBuffer, size_t xWriteBufferLen, 
 static BaseType_t prv_xStopAllPlaybackCMD( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
 static BaseType_t prv_xLoadInstrumentCMD( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
 static BaseType_t prv_xLoadSF3CMD( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
+static BaseType_t prv_xPrintSF3InfoCMD( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
 static BaseType_t prv_xMIDIKeyPlayCMD( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
 static BaseType_t prv_xMIDIKeyPlayASCIICMD( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
 static BaseType_t prv_xStartMIDIListenerCMD( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
@@ -140,6 +141,15 @@ static const CLI_Command_Definition_t prv_xLoadSF3CMD_definition =
     1 /* 1 parameter is expected. */
 };
 
+// >> print_sf3_info <FILENAME>
+static const CLI_Command_Definition_t prv_xPrintSF3InfoCMD_definition =
+{
+    "print_sf3_info", /* The command string to type. */
+    "\r\nprint_sf3_info <FILENAME>:\r\n Prints the information of a specified SF3 file\r\n",
+    prv_xPrintSF3InfoCMD, /* The function to run. */
+    1 /* 1 parameter is expected. */
+};
+
 // >> start_serial_midi_listener
 static const CLI_Command_Definition_t prv_xStartMIDIListenerCMD_definition =
 {
@@ -180,6 +190,7 @@ void vRegisterSamplerCLICommands( void ) {
     FreeRTOS_CLIRegisterCommand( &prv_xStopAllPlaybackCMD_definition );
     FreeRTOS_CLIRegisterCommand( &prv_xLoadInstrumentCMD_definition );
     FreeRTOS_CLIRegisterCommand( &prv_xLoadSF3CMD_definition );
+    FreeRTOS_CLIRegisterCommand( &prv_xPrintSF3InfoCMD_definition );
     FreeRTOS_CLIRegisterCommand( &prv_xMIDIKeyPlayCMD_definition );
     FreeRTOS_CLIRegisterCommand( &prv_xMIDIKeyPlayASCIICMD_definition );
     FreeRTOS_CLIRegisterCommand( &prv_xStartMIDIListenerCMD_definition );
@@ -498,6 +509,90 @@ static BaseType_t prv_xLoadSF3CMD( char *pcWriteBuffer, size_t xWriteBufferLen, 
     // 1 - Get the current directory
     ff_getcwd( my_file_path_handler.file_dir, MAX_PATH_LEN );
     SAMPLER_PRINTF_DEBUG("CWD: %s", my_file_path_handler.file_dir);
+    // Sanity check - Check if the path is less than the maximum allowable
+    cwd_path_len = strlen( my_file_path_handler.file_dir );
+    configASSERT( ! ( (cwd_path_len + xParameterStringLength + 1) > MAX_PATH_LEN) );
+
+    // 2 - Assemble the full path
+    // If you're in the root, append the path as is
+    if ( strcmp( my_file_path_handler.file_dir, (const char *)"/" ) == 0 ) {
+       // If the path is a full path (i.e. referenced from the root), copy as is
+        if ( pcParameter[0] == '/' ) {
+            sprintf(my_file_path_handler.file_path, "%s", pcParameter);
+        } else { // If it's a relative directory, prepend the root slash
+            strcat( my_file_path_handler.file_path, "/");
+        }
+        ff_get_file_dir( pcParameter, my_file_path_handler.file_dir );
+        //strncat( my_file_path_handler.file_path, my_file_path_handler.file_dir, STRLEN( my_file_path_handler.file_dir ) );
+        strncat( my_file_path_handler.file_path, pcParameter, xParameterStringLength ); 
+    } else {
+        // If the path is a full path (i.e. referenced from the root), copy as is
+        if ( pcParameter[0] == '/' ) {
+            sprintf(my_file_path_handler.file_path, "%s", pcParameter);
+        } else { // If it's a relative path, prepend the current directory
+            strncat( my_file_path_handler.file_path, my_file_path_handler.file_dir, cwd_path_len);
+            strcat( my_file_path_handler.file_path, "/");
+            strncat( my_file_path_handler.file_path, pcParameter, xParameterStringLength );
+        }
+    }
+
+    SAMPLER_PRINTF_DEBUG("File Path: %s", my_file_path_handler.file_path);
+
+    my_file_path_handler.return_handle = xReturnQueueHandler;
+
+    // Send the filename to the task
+    xQueueSend(xFilenameQueueHandler, &my_file_path_handler , 1000);
+
+    xTaskNotify(    task_handle,
+                    (uint32_t) xFilenameQueueHandler,
+                    eSetValueWithOverwrite );
+
+    if( ! xQueueReceive(xReturnQueueHandler, &return_value, 20000) ) {
+        SAMPLER_PRINTF_ERROR("Error receiving the Queue!");
+    }
+    else {
+        SAMPLER_PRINTF("Done! Return Value = %d\n\r", return_value);
+    }
+
+    return pdFALSE;
+
+}
+
+static BaseType_t prv_xPrintSF3InfoCMD( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString ) {
+    
+    const char *pcParameter;
+
+    // Variables for the CLI Parameter Parser
+    BaseType_t   xParameterStringLength;
+
+    // Variables for the sf3 loader task
+    TaskHandle_t         task_handle = xTaskGetHandle( PRINT_SF3_INFO_TASK_NAME );
+    file_path_handler_t  my_file_path_handler;
+    uint32_t             return_value = 1;
+    uint32_t             cwd_path_len = 0;
+
+    /* The file has not been opened yet.  Find the file name. */
+    pcParameter = FreeRTOS_CLIGetParameter
+                    (
+                        pcCommandString,		/* The command string itself. */
+                        1,						/* Return the first parameter. */
+                        &xParameterStringLength	/* Store the parameter string length. */
+                    );
+
+    /* Sanity check something was returned. */
+    configASSERT( pcParameter );
+
+    configASSERT( ! (xParameterStringLength > MAX_PATH_LEN) );
+
+    // Initialize the path
+    memset( my_file_path_handler.file_path, 0x00, MAX_PATH_LEN );
+    memset( my_file_path_handler.file_dir, 0x00, MAX_PATH_LEN );
+
+    // Copy the Path
+    // 1 - Get the current directory
+    ff_getcwd( my_file_path_handler.file_dir, MAX_PATH_LEN );
+    SAMPLER_PRINTF_DEBUG("CWD: %s", my_file_path_handler.file_dir);
+
     // Sanity check - Check if the path is less than the maximum allowable
     cwd_path_len = strlen( my_file_path_handler.file_dir );
     configASSERT( ! ( (cwd_path_len + xParameterStringLength + 1) > MAX_PATH_LEN) );

@@ -153,6 +153,28 @@ PATCH_DESCRIPTOR_t * ulLoadPatchFromSF3( const char * sf3_file_fullpath ) {
 
 }
 
+// This function will print the information of a SoundFont3 file
+void vPrintSF3FileInfo( const char * sf3_file_fullpath ) {
+    PATCH_DESCRIPTOR_t * patch_descriptor = NULL;
+    uint8_t            * local_sf3_patch_buffer;
+    size_t               local_sf3_patch_buffer_len;
+
+    // Step 1 - Open the json file containing the instrument information
+    SAMPLER_PRINTF_INFO("Step 1 - Load the SF3 File");
+    local_sf3_patch_buffer_len = xLoadFileToMemory_malloc( sf3_file_fullpath, &local_sf3_patch_buffer, MAX_SF3_FILE_SIZE, 0 );
+
+    if ( local_sf3_patch_buffer_len == 0 || local_sf3_patch_buffer == NULL ) {
+        SAMPLER_PRINTF_ERROR("Error while loading the SF3 file!");
+        return;
+    }
+
+    // Step 2 - Print SF3 information
+    vPrintSF3Info( local_sf3_patch_buffer, local_sf3_patch_buffer_len );
+
+    // Step 3 - Unload the SF3 file
+    vClearMemoryBuffer( local_sf3_patch_buffer );
+}
+
 // This function converts an string in int or hex to a uint32_t
 static uint32_t prv_ulStr2Int( const char *input_string, uint32_t input_string_length ) {
     const char *start_char = input_string;

@@ -17,6 +17,11 @@
 #include "soundfont.h"
 #include "riff_utils.h"
 
+// Static functions
+static void prv_vSF3DecodeINFO( uint8_t * info_chunk_buffer, size_t info_chunk_buffer_len, SF_DESCRIPTOR_t * sf_descriptor );
+static void prv_vSF3DecodeSDTA( uint8_t * sdta_chunk_buffer, size_t sdta_chunk_buffer_len, SF_DESCRIPTOR_t * sf_descriptor  );
+static void prv_vSF3DecodePDTA( uint8_t * pdta_chunk_buffer, size_t pdta_chunk_buffer_len, SF_DESCRIPTOR_t * sf_descriptor  );
+
 // Find the audio data of a WAVE chunk
 static void prv_vFindWAVEData( uint8_t * buffer, uint8_t * buffer_end, SAMPLE_FORMAT_t *sample_information ) {
 
@@ -121,6 +126,83 @@ void vDecodeWAVEInformation( uint8_t *riff_buffer, size_t riff_buffer_size, SAMP
         SAMPLER_PRINTF_ERROR("Error while parsing the RIFF information. Buffer format is not WAVE.");
         return;
     }
+}
+
+// Print SF3 Information
+void vPrintSF3Info( uint8_t* sf3_buffer, size_t sf3_buffer_len ) {
+
+    RIFF_DESCRIPTOR_CHUNK_t      * riff_descriptor_chunk = NULL;
+    RIFF_BASE_CHUNK_t            * curr_chunk            = NULL;
+    RIFF_LIST_DESCRIPTOR_CHUNK_t * curr_list_chunk       = NULL;
+    uint8_t                      * current_buffer_ptr    = NULL;
+    uint8_t                      * current_sub_chunk_ptr = NULL;
+    size_t                         current_sub_chunk_len = 0;
+    SF_DESCRIPTOR_t                sf_descriptor;
+
+    riff_descriptor_chunk = cmdGET_RIFF_DESCRIPTOR_CHUNK(sf3_buffer);
+
+    if( riff_descriptor_chunk->BaseChunk.ChunkID != RIFF_ASCII_TOKEN ) {
+        SAMPLER_PRINTF_ERROR("Error while parsing the RIFF information. Buffer is not RIFF.");
+        return;
+    }
+
+    if( riff_descriptor_chunk->FormType != SFBK_ASCII_TOKEN ) {
+        SAMPLER_PRINTF_ERROR("Error while parsing the SF3 information. Buffer is not SF3");
+        return;
+    } else {
+        SAMPLER_PRINTF_INFO("Buffer is SF3!");
+    }
+
+    // Go to the first section
+    current_buffer_ptr = sf3_buffer + sizeof(RIFF_DESCRIPTOR_CHUNK_t);
+
+    // Go through all the chunks
+    do {
+        // Get the chunk descriptor (should be LIST)
+        curr_chunk = cmdGET_RIFF_BASE_CHUNK(current_buffer_ptr);
+
+        if (curr_chunk->ChunkID == LIST_ASCII_TOKEN) {
+            SAMPLER_PRINTF_DEBUG("Current SF3 chunk is LIST at address 0x%x", current_buffer_ptr);
+
+            curr_list_chunk = cmdGET_RIFF_LIST_DESCRIPTOR_CHUNK(current_buffer_ptr);
+
+            // Sub-chunk should be sdta || pdta || INFO
+            switch (curr_list_chunk->ListType)
+            {
+                case SDTA_ASCII_TOKEN:
+                    SAMPLER_PRINTF_DEBUG("Current LIST sub-chunk is sdta at address 0x%x", current_buffer_ptr);
+                    current_sub_chunk_ptr = current_buffer_ptr + sizeof(RIFF_LIST_DESCRIPTOR_CHUNK_t);
+                    current_sub_chunk_len = curr_list_chunk->BaseChunk.ChunkSize - sizeof(RIFF_BASE_CHUNK_t);
+                    prv_vSF3DecodeSDTA(current_sub_chunk_ptr, current_sub_chunk_len, &sf_descriptor);
+                    break;
+
+                case PDTA_ASCII_TOKEN:
+                    SAMPLER_PRINTF_DEBUG("Current LIST sub-chunk is pdta at address 0x%x", current_buffer_ptr);
+                    current_sub_chunk_ptr = current_buffer_ptr + sizeof(RIFF_LIST_DESCRIPTOR_CHUNK_t);
+                    current_sub_chunk_len = curr_list_chunk->BaseChunk.ChunkSize - sizeof(RIFF_BASE_CHUNK_t);
+                    prv_vSF3DecodePDTA(current_sub_chunk_ptr, current_sub_chunk_len, &sf_descriptor);
+                    break;
+
+                case INFO_ASCII_TOKEN:
+                    SAMPLER_PRINTF_DEBUG("Current LIST sub-chunk is INFO at address 0x%x", current_buffer_ptr);
+                    current_sub_chunk_ptr = current_buffer_ptr + sizeof(RIFF_LIST_DESCRIPTOR_CHUNK_t);
+                    current_sub_chunk_len = curr_list_chunk->BaseChunk.ChunkSize - sizeof(RIFF_BASE_CHUNK_t);
+                    prv_vSF3DecodeINFO(current_sub_chunk_ptr, current_sub_chunk_len, &sf_descriptor);
+                    break;
+                
+                default:
+                    SAMPLER_PRINTF_ERROR("I don't know what type of LIST sub-chunk this is! ChunkID = %x, Address = 0x%x", curr_chunk->ChunkID, current_buffer_ptr);
+                    break;
+            }
+
+        } else {
+            SAMPLER_PRINTF_ERROR("I don't know what type of SF3 chunk this is! ChunkID = %x, Address = 0x%x", curr_chunk->ChunkID, current_buffer_ptr);
+            break;
+        }
+
+        // Go to the next chunk
+        current_buffer_ptr += curr_chunk->ChunkSize + sizeof(RIFF_BASE_CHUNK_t);
+    } while ( current_buffer_ptr < (sf3_buffer + sf3_buffer_len) );
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -417,72 +499,4 @@ void prv_vSF3DecodePDTA( uint8_t * pdta_chunk_buffer, size_t pdta_chunk_buffer_l
         curr_buffer_pointer += sizeof(RIFF_BASE_CHUNK_t) + curr_chunk->ChunkSize;
 
     } while ( curr_buffer_pointer < (pdta_chunk_buffer + pdta_chunk_buffer_len) );
-}
-
-// Print SF3 Information
-void vPrintSF3Info( uint8_t* sf3_buffer, size_t sf3_buffer_len ) {
-
-    RIFF_DESCRIPTOR_CHUNK_t      * riff_descriptor_chunk = NULL;
-    RIFF_BASE_CHUNK_t            * curr_chunk            = NULL;
-    RIFF_LIST_DESCRIPTOR_CHUNK_t * curr_list_chunk       = NULL;
-    uint8_t                      * current_buffer_ptr    = NULL;
-    uint8_t                      * current_sub_chunk_ptr = NULL;
-    size_t                         current_sub_chunk_len = 0;
-    SF_DESCRIPTOR_t                sf_descriptor;
-
-    riff_descriptor_chunk = cmdGET_RIFF_DESCRIPTOR_CHUNK(sf3_buffer);
-
-    if( riff_descriptor_chunk->BaseChunk.ChunkID != RIFF_ASCII_TOKEN ) {
-        SAMPLER_PRINTF_ERROR("Error while parsing the RIFF information. Buffer is not RIFF.");
-        return;
-    }
-
-    if( riff_descriptor_chunk->FormType != SFBK_ASCII_TOKEN ) {
-        SAMPLER_PRINTF_ERROR("Error while parsing the SF3 information. Buffer is not SF3");
-        return;
-    } else {
-        SAMPLER_PRINTF_INFO("Buffer is SF3!");
-    }
-
-    // Go to the first section
-    current_buffer_ptr = sf3_buffer + sizeof(RIFF_DESCRIPTOR_CHUNK_t);
-
-    // Go through all the chunks
-    do {
-        // Get the chunk descriptor (should be LIST)
-        curr_chunk = cmdGET_RIFF_BASE_CHUNK(current_buffer_ptr);
-
-        if (curr_chunk->ChunkID == LIST_ASCII_TOKEN) {
-            SAMPLER_PRINTF_INFO("Current chunk is LIST");
-
-            curr_list_chunk = cmdGET_RIFF_LIST_DESCRIPTOR_CHUNK(current_buffer_ptr);
-
-            // Sub-chunk be sdata || pdata || INFO
-            if ( curr_list_chunk->ListType ==  SDTA_ASCII_TOKEN) {
-                SAMPLER_PRINTF_INFO("Current sub-chunk is sdta");
-                current_sub_chunk_ptr = current_buffer_ptr + sizeof(RIFF_LIST_DESCRIPTOR_CHUNK_t);
-                current_sub_chunk_len = curr_list_chunk->BaseChunk.ChunkSize - sizeof(RIFF_BASE_CHUNK_t);
-                prv_vSF3DecodeSDTA(current_sub_chunk_ptr, current_sub_chunk_len, &sf_descriptor);
-            } else if ( curr_list_chunk->ListType ==  PDTA_ASCII_TOKEN) {
-                SAMPLER_PRINTF_INFO("Current sub-chunk is pdta");
-                current_sub_chunk_ptr = current_buffer_ptr + sizeof(RIFF_LIST_DESCRIPTOR_CHUNK_t);
-                current_sub_chunk_len = curr_list_chunk->BaseChunk.ChunkSize - sizeof(RIFF_BASE_CHUNK_t);
-                prv_vSF3DecodePDTA(current_sub_chunk_ptr, current_sub_chunk_len, &sf_descriptor);
-            } else if ( curr_list_chunk->ListType ==  INFO_ASCII_TOKEN ) {
-                SAMPLER_PRINTF_INFO("Current sub-chunk ist INFO");
-                current_sub_chunk_ptr = current_buffer_ptr + sizeof(RIFF_LIST_DESCRIPTOR_CHUNK_t);
-                current_sub_chunk_len = curr_list_chunk->BaseChunk.ChunkSize - sizeof(RIFF_BASE_CHUNK_t);
-                prv_vSF3DecodeINFO(current_sub_chunk_ptr, current_sub_chunk_len, &sf_descriptor);
-            } else {
-                SAMPLER_PRINTF_ERROR("I don't know what type of sub-chunk this is! %x", curr_chunk->ChunkID);
-                break;
-            }
-        } else {
-            SAMPLER_PRINTF_ERROR("I don't know what type of chunk this is! %x", curr_chunk->ChunkID);
-            break;
-        }
-
-        // Go to the next chunk
-        current_buffer_ptr += curr_chunk->ChunkSize + sizeof(RIFF_BASE_CHUNK_t);
-    } while ( current_buffer_ptr < (sf3_buffer + sf3_buffer_len) );
 }
