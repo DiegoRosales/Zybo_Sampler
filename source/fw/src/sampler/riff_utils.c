@@ -49,7 +49,6 @@ static void prv_vFindWAVEData( uint8_t * buffer, uint8_t * buffer_end, SAMPLE_FO
             current_buffer_idx += current_chunk->ChunkSize + sizeof( RIFF_BASE_CHUNK_t );
             if( current_buffer_idx <= buffer_end ){
                 current_chunk = cmdGET_RIFF_BASE_CHUNK(current_buffer_idx);
-                //memcpy( &current_chunk, current_buffer_idx, sizeof( RIFF_BASE_CHUNK_t ) );
             }
         }
     }
@@ -137,6 +136,8 @@ void vPrintSF3Info( uint8_t* sf3_buffer, size_t sf3_buffer_len ) {
     uint8_t                      * current_buffer_ptr    = NULL;
     uint8_t                      * current_sub_chunk_ptr = NULL;
     size_t                         current_sub_chunk_len = 0;
+    size_t                         phdr_len              = 0;
+    uint32_t                       num_of_presets        = 0;
     SF_DESCRIPTOR_t                sf_descriptor;
 
     riff_descriptor_chunk = cmdGET_RIFF_DESCRIPTOR_CHUNK(sf3_buffer);
@@ -203,6 +204,34 @@ void vPrintSF3Info( uint8_t* sf3_buffer, size_t sf3_buffer_len ) {
         // Go to the next chunk
         current_buffer_ptr += curr_chunk->ChunkSize + sizeof(RIFF_BASE_CHUNK_t);
     } while ( current_buffer_ptr < (sf3_buffer + sf3_buffer_len) );
+
+    SAMPLER_PRINTF_INFO("SF3 Decoding done!");
+
+    // Print presets
+    if ( sf_descriptor.sf_pdata_list_descriptor.PHDR_CHUNK == NULL ) {
+        SAMPLER_PRINTF_ERROR("SF3 Doesn't have a preset header!");
+        return;
+    }
+
+    SF_PHDR_CHUNK_DATA_t * curr_phdr_chunk = NULL;
+    SF_CHAR_t              preset_name[21];
+
+    phdr_len       = sf_descriptor.sf_pdata_list_descriptor.PHDR_CHUNK->BaseChunk.ChunkSize;
+    num_of_presets = phdr_len/38;
+
+    memset(preset_name, 0x00, sizeof(SF_CHAR_t) * 21);
+
+    SAMPLER_PRINTF_INFO("Preset Header chunk starts at 0x%x", sf_descriptor.sf_pdata_list_descriptor.PHDR_CHUNK);
+    SAMPLER_PRINTF_INFO("There are %d number of presets in this SF3 file", num_of_presets);
+
+    // First header
+    curr_phdr_chunk = &sf_descriptor.sf_pdata_list_descriptor.PHDR_CHUNK->SF_PHDR_CHUNK_DATA;
+
+    for( int i = 0; i < num_of_presets; i = i + 1 ) {
+        memcpy(preset_name, curr_phdr_chunk->achPresetName, sizeof(SF_CHAR_t)*20);
+        SAMPLER_PRINTF_INFO("Preset name at address 0x%x = %s",curr_phdr_chunk, preset_name);
+        curr_phdr_chunk += 1;
+    }
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
