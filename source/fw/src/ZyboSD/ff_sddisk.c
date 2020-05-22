@@ -218,7 +218,7 @@ uint8_t *pucCurrBuffer;
 
 			for ( ulTransferNumber = 0; ulTransferNumber < ulNumOfTransfers; ulTransferNumber++ ) {
   			/* Update for the next sector read */
-				ulCurrSectorNumber = ulSectorNumber + (ulTransferNumber * ulCurrSectorCount);
+				ulCurrSectorNumber = ulSectorNumber + ulSectorsRead;
 
 				/* Convert LBA to byte address if needed */
 				if( pxSDCardInstance->HCS == 0 )
@@ -265,7 +265,7 @@ uint8_t *pucCurrBuffer;
 				pucCurrBuffer += ulCurrSectorCount_bytes;
 
 				/* Last sector. Check if the number of sectors left is lower than the default */
-				if ( ulTransferNumber == ulNumOfTransfers - 1 ) {
+				if ( ulTransferNumber == ulNumOfTransfers - 2 ) {
 					if (( ulSectorsRead + ulCurrSectorCount ) > ulSectorCount) {
 						ulCurrSectorCount = ulSectorCount - ulSectorsRead;
 					}
