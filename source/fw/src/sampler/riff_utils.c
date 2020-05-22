@@ -175,72 +175,72 @@ void prv_vSF3DecodeINFO( uint8_t * info_chunk_buffer, size_t info_chunk_buffer_l
        switch (curr_chunk->ChunkID) {
         // IFIL
         case IFIL_ASCII_TOKEN:
-            SAMPLER_PRINTF_INFO("INFO sub-chunk is IFIL");
+            SAMPLER_PRINTF_DEBUG("INFO sub-chunk is IFIL at address 0x%x", curr_buffer_pointer);
             sf_info_descriptor->IFIL_CHUNK = (SF_IFIL_CHUNK_t *) curr_buffer_pointer;
             break;
 
         // ISNG
         case ISNG_ASCII_TOKEN:
-            SAMPLER_PRINTF_INFO("INFO sub-chunk is ISNG");
+            SAMPLER_PRINTF_DEBUG("INFO sub-chunk is ISNG at address 0x%x", curr_buffer_pointer);
             sf_info_descriptor->ISNG_CHUNK = (SF_ISNG_CHUNK_t *) curr_buffer_pointer;
             break;
 
         // INAM
         case INAM_ASCII_TOKEN:
-            SAMPLER_PRINTF_INFO("INFO sub-chunk is INAM");
+            SAMPLER_PRINTF_DEBUG("INFO sub-chunk is INAM at address 0x%x", curr_buffer_pointer);
             sf_info_descriptor->INAM_CHUNK = (SF_INAM_CHUNK_t *) curr_buffer_pointer;
             break;
 
         // IROM
         case IROM_ASCII_TOKEN:
-            SAMPLER_PRINTF_INFO("INFO sub-chunk is IROM");
+            SAMPLER_PRINTF_DEBUG("INFO sub-chunk is IROM at address 0x%x", curr_buffer_pointer);
             sf_info_descriptor->IROM_CHUNK = (SF_IROM_CHUNK_t *) curr_buffer_pointer;
             break;
 
         // IVER
         case IVER_ASCII_TOKEN:
-            SAMPLER_PRINTF_INFO("INFO sub-chunk is IVER");
+            SAMPLER_PRINTF_DEBUG("INFO sub-chunk is IVER at address 0x%x", curr_buffer_pointer);
             sf_info_descriptor->IVER_CHUNK = (SF_IVER_CHUNK_t *) curr_buffer_pointer;
             break;
 
         // ICRD
         case ICRD_ASCII_TOKEN:
-            SAMPLER_PRINTF_INFO("INFO sub-chunk is ICRD");
+            SAMPLER_PRINTF_DEBUG("INFO sub-chunk is ICRD at address 0x%x", curr_buffer_pointer);
             sf_info_descriptor->ICRD_CHUNK = (SF_ICRD_CHUNK_t *) curr_buffer_pointer;
             break;
 
         // IENG
         case IENG_ASCII_TOKEN:
-            SAMPLER_PRINTF_INFO("INFO sub-chunk is IENG");
+            SAMPLER_PRINTF_DEBUG("INFO sub-chunk is IENG at address 0x%x", curr_buffer_pointer);
             sf_info_descriptor->IENG_CHUNK = (SF_IENG_CHUNK_t *) curr_buffer_pointer;
             break;
 
         // IPRD
         case IPRD_ASCII_TOKEN:
-            SAMPLER_PRINTF_INFO("INFO sub-chunk is IPRD");
+            SAMPLER_PRINTF_DEBUG("INFO sub-chunk is IPRD at address 0x%x", curr_buffer_pointer);
             sf_info_descriptor->IPRD_CHUNK = (SF_IPRD_CHUNK_t *) curr_buffer_pointer;
             break;
 
         // ICOP
         case ICOP_ASCII_TOKEN:
-            SAMPLER_PRINTF_INFO("INFO sub-chunk is ICOP");
+            SAMPLER_PRINTF_DEBUG("INFO sub-chunk is ICOP at address 0x%x", curr_buffer_pointer);
             sf_info_descriptor->ICOP_CHUNK = (SF_ICOP_CHUNK_t *) curr_buffer_pointer;
             break;
 
         // ICMT
         case ICMT_ASCII_TOKEN:
-            SAMPLER_PRINTF_INFO("INFO sub-chunk is ICMT");
+            SAMPLER_PRINTF_DEBUG("INFO sub-chunk is ICMT at address 0x%x", curr_buffer_pointer);
             sf_info_descriptor->ICMT_CHUNK = (SF_ICMT_CHUNK_t *) curr_buffer_pointer;
             break;
 
         // ISFT
         case ISFT_ASCII_TOKEN:
-            SAMPLER_PRINTF_INFO("INFO sub-chunk is ISFT");
+            SAMPLER_PRINTF_DEBUG("INFO sub-chunk is ISFT at address 0x%x", curr_buffer_pointer);
             sf_info_descriptor->ISFT_CHUNK = (SF_ISFT_CHUNK_t *) curr_buffer_pointer;
             break;
         // Unknown
         default:
-            SAMPLER_PRINTF_WARNING("Unknown chunk inside INFO sub-chunk! %x", curr_chunk->ChunkID);
+            SAMPLER_PRINTF_WARNING("Unknown chunk inside INFO sub-chunk! ChunkID = %x, Address = 0x%x", curr_chunk->ChunkID, curr_buffer_pointer);
             break;
         }
 
@@ -248,7 +248,7 @@ void prv_vSF3DecodeINFO( uint8_t * info_chunk_buffer, size_t info_chunk_buffer_l
         curr_buffer_pointer += sizeof(RIFF_BASE_CHUNK_t) + curr_chunk->ChunkSize;
 
     } while ( curr_buffer_pointer < (info_chunk_buffer + info_chunk_buffer_len) );
-    
+
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -286,19 +286,19 @@ void prv_vSF3DecodeSDTA( uint8_t * sdta_chunk_buffer, size_t sdta_chunk_buffer_l
        switch (curr_chunk->ChunkID) {
         // SM24
         case SM24_ASCII_TOKEN:
-            SAMPLER_PRINTF_INFO("SDTA sub-chunk is SM24");
+            SAMPLER_PRINTF_DEBUG("SDTA sub-chunk is SM24 at address 0x%x", curr_buffer_pointer);
             sf_sdta_descriptor->SM24_CHUNK = (SF_SM24_CHUNK_t *) curr_buffer_pointer;
             break;
 
         // SMPL
         case SMPL_ASCII_TOKEN:
-            SAMPLER_PRINTF_INFO("SDTA sub-chunk is SMPL");
+            SAMPLER_PRINTF_DEBUG("SDTA sub-chunk is SMPL at address 0x%x", curr_buffer_pointer);
             sf_sdta_descriptor->SMPL_CHUNK = (SF_SMPL_CHUNK_t *) curr_buffer_pointer;
             break;
 
         // Unknown
         default:
-            SAMPLER_PRINTF_WARNING("Unknown chunk inside SDTA sub-chunk! %x", curr_chunk->ChunkID);
+            SAMPLER_PRINTF_WARNING("Unknown chunk inside SDTA sub-chunk! ChunkID = %x, Address = 0x%x", curr_chunk->ChunkID, curr_buffer_pointer);
             break;
        }
 
@@ -355,61 +355,61 @@ void prv_vSF3DecodePDTA( uint8_t * pdta_chunk_buffer, size_t pdta_chunk_buffer_l
        switch (curr_chunk->ChunkID) {
         // PHDR
         case PHDR_ASCII_TOKEN:
-            SAMPLER_PRINTF_INFO("PDTA sub-chunk is PHDR");
+            SAMPLER_PRINTF_DEBUG("PDTA sub-chunk is PHDR at address 0x%x", curr_buffer_pointer);
             sf_pdta_descriptor->PHDR_CHUNK = (SF_PHDR_CHUNK_t *) curr_buffer_pointer;
             break;
-        
+
         // PBAG
         case PBAG_ASCII_TOKEN:
-            SAMPLER_PRINTF_INFO("PDTA sub-chunk is PBAG");
+            SAMPLER_PRINTF_DEBUG("PDTA sub-chunk is PBAG at address 0x%x", curr_buffer_pointer);
             sf_pdta_descriptor->PBAG_CHUNK = (SF_PBAG_CHUNK_t *) curr_buffer_pointer;
             break;
-        
+
         // PMOD
         case PMOD_ASCII_TOKEN:
-            SAMPLER_PRINTF_INFO("PDTA sub-chunk is PMOD");
+            SAMPLER_PRINTF_DEBUG("PDTA sub-chunk is PMOD at address 0x%x", curr_buffer_pointer);
             sf_pdta_descriptor->PMOD_CHUNK = (SF_PMOD_CHUNK_t *) curr_buffer_pointer;
             break;
-        
+
         // PGEN
         case PGEN_ASCII_TOKEN:
-            SAMPLER_PRINTF_INFO("PDTA sub-chunk is PGEN");
+            SAMPLER_PRINTF_DEBUG("PDTA sub-chunk is PGEN at address 0x%x", curr_buffer_pointer);
             sf_pdta_descriptor->PGEN_CHUNK = (SF_PGEN_CHUNK_t *) curr_buffer_pointer;
             break;
-        
+
         // INST
         case INST_ASCII_TOKEN:
-            SAMPLER_PRINTF_INFO("PDTA sub-chunk is INST");
+            SAMPLER_PRINTF_DEBUG("PDTA sub-chunk is INST at address 0x%x", curr_buffer_pointer);
             sf_pdta_descriptor->INST_CHUNK = (SF_INST_CHUNK_t *) curr_buffer_pointer;
             break;
-        
+
         // IBAG
         case IBAG_ASCII_TOKEN:
-            SAMPLER_PRINTF_INFO("PDTA sub-chunk is IBAG");
+            SAMPLER_PRINTF_DEBUG("PDTA sub-chunk is IBAG at address 0x%x", curr_buffer_pointer);
             sf_pdta_descriptor->IBAG_CHUNK = (SF_IBAG_CHUNK_t *) curr_buffer_pointer;
             break;
-        
+
         // IMOD
         case IMOD_ASCII_TOKEN:
-            SAMPLER_PRINTF_INFO("PDTA sub-chunk is IMOD");
+            SAMPLER_PRINTF_DEBUG("PDTA sub-chunk is IMOD at address 0x%x", curr_buffer_pointer);
             sf_pdta_descriptor->IMOD_CHUNK = (SF_IMOD_CHUNK_t *) curr_buffer_pointer;
             break;
-        
+
         // IGEN
         case IGEN_ASCII_TOKEN:
-            SAMPLER_PRINTF_INFO("PDTA sub-chunk is IGEN");
+            SAMPLER_PRINTF_DEBUG("PDTA sub-chunk is IGEN at address 0x%x", curr_buffer_pointer);
             sf_pdta_descriptor->IGEN_CHUNK = (SF_IGEN_CHUNK_t *) curr_buffer_pointer;
             break;
-        
+
         // SHDR
         case SHDR_ASCII_TOKEN:
-            SAMPLER_PRINTF_INFO("PDTA sub-chunk is SHDR");
+            SAMPLER_PRINTF_DEBUG("PDTA sub-chunk is SHDR at address 0x%x", curr_buffer_pointer);
             sf_pdta_descriptor->SHDR_CHUNK = (SF_SHDR_CHUNK_t *) curr_buffer_pointer;
             break;
 
         // Unknown
         default:
-            SAMPLER_PRINTF_WARNING("Unknown chunk inside SDTA sub-chunk! %x", curr_chunk->ChunkID);
+            SAMPLER_PRINTF_WARNING("Unknown chunk inside SDTA sub-chunk! ChunkID = %x, Address = 0xx", curr_chunk->ChunkID, curr_buffer_pointer);
             break;
        }
 
