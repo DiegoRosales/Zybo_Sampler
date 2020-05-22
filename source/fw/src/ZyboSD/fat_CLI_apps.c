@@ -113,7 +113,13 @@ static const CLI_Command_Definition_t xPWD =
 
 // This function loads a file in the form of a FF_FILE into memory
 void prv_vFileToBuffer( FF_FILE *pxFile, uint8_t *buffer, size_t buffer_len ) {
-    //SD_PRINTF_INFO("Loading the file into memory");
+
+	if (buffer == NULL) {
+		SD_PRINTF_ERROR("Buffer pointer = NULL");
+		return;
+	}
+
+    SD_PRINTF_DEBUG("Loading the file into memory location 0x%x", buffer);
     memset( buffer, 0x00, buffer_len );
     SD_PRINTF_DEBUG("Memory initialized");
 
@@ -164,10 +170,10 @@ size_t xLoadFileToMemory( const char *file_name, uint8_t *buffer, size_t buffer_
 // This functions loads a file into memory. You need to provide the full file path
 // This function performs memory allocation based on the file size
 size_t xLoadFileToMemory_malloc( const char *file_name, uint8_t ** buffer, size_t max_buffer_len, size_t overhead ) {
-    FF_FILE *pxFile = NULL;
-    size_t file_size;
-    uint8_t *new_buffer = NULL;
-    *buffer = NULL;
+    size_t    file_size;
+    FF_FILE * pxFile     = NULL;
+    uint8_t * new_buffer = NULL;
+    *buffer              = NULL;
 
     // Step 1 - Open the file
     //SD_PRINTF_INFO("Opening the file: \"%s\"", file_name);
@@ -189,13 +195,13 @@ size_t xLoadFileToMemory_malloc( const char *file_name, uint8_t ** buffer, size_
         return 0;
     }
 
-    SD_PRINTF_DEBUG("File opened succesfully. File Size = %d bytes", file_size);
+    SD_PRINTF_DEBUG("File opened successfully. File Size = %d bytes", file_size);
 
     // Perform memory allocation for the buffer
     SD_PRINTF_DEBUG("Performing memory allocation for the buffer. Requesting %d bytes", file_size );
     new_buffer = pvPortMalloc( file_size + overhead ); // Added overhead
-    //new_buffer = malloc( file_size );
-    // Check if malloc was succesfull
+
+    // Check if malloc was successful
     if ( new_buffer == NULL ) {
         SD_PRINTF_ERROR("Memory allocation failed. Requested %d bytes", file_size );
         return 0;
@@ -206,7 +212,7 @@ size_t xLoadFileToMemory_malloc( const char *file_name, uint8_t ** buffer, size_
     // Step 2 - Load the file into memory
     prv_vFileToBuffer( pxFile, new_buffer, file_size );
 
-		SD_PRINTF_DEBUG("File loaded successfully. Buffer address =  0x%x", new_buffer );
+    SD_PRINTF_DEBUG("File loaded successfully. Buffer address =  0x%x", new_buffer );
 
     *buffer = new_buffer;
 

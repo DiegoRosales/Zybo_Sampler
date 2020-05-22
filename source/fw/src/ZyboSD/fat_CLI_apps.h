@@ -14,30 +14,30 @@
 
 #if defined(SD_DEBUG) 
   #if SD_DEBUG >= 3
-    #define SD_PRINTF_INFO(fmt, args...)    SD_PRINTF("[SD_INFO]    : %s:%d:%s(): " fmt "\n\r", __FILE__, __LINE__, __func__, ##args)
-    #define SD_PRINTF_WARNING(fmt, args...) SD_PRINTF("[SD_WARNING] : %s:%d:%s(): " fmt "\n\r", __FILE__, __LINE__, __func__, ##args)
-    #define SD_PRINTF_ERROR(fmt, args...)   SD_PRINTF("[SD_ERROR]   : %s:%d:%s(): " fmt "\n\r", __FILE__, __LINE__, __func__, ##args)
-    #define SD_PRINTF_DEBUG(fmt, args...)   SD_PRINTF("[SD_DEBUG]   : %s:%d:%s(): " fmt "\n\r", __FILE__, __LINE__, __func__, ##args)
+    #define SD_PRINTF_INFO(fmt, args...)    SD_PRINTF("[SD][INFO]    : %s:%d:%s(): " fmt "\n\r", __FILE__, __LINE__, __func__, ##args)
+    #define SD_PRINTF_WARNING(fmt, args...) SD_PRINTF("[SD][WARNING] : %s:%d:%s(): " fmt "\n\r", __FILE__, __LINE__, __func__, ##args)
+    #define SD_PRINTF_ERROR(fmt, args...)   SD_PRINTF("[SD][ERROR]   : %s:%d:%s(): " fmt "\n\r", __FILE__, __LINE__, __func__, ##args)
+    #define SD_PRINTF_DEBUG(fmt, args...)   SD_PRINTF("[SD][DEBUG]   : %s:%d:%s(): " fmt "\n\r", __FILE__, __LINE__, __func__, ##args)
   #elif SD_DEBUG == 2
-    #define SD_PRINTF_INFO(fmt, args...)    SD_PRINTF("[SD_INFO]    : "             fmt "\n\r", ##args)
-    #define SD_PRINTF_WARNING(fmt, args...) SD_PRINTF("[SD_WARNING] : "             fmt "\n\r", ##args)
-    #define SD_PRINTF_ERROR(fmt, args...)   SD_PRINTF("[SD_ERROR]   : %s:%d:%s(): " fmt "\n\r", __FILE__, __LINE__, __func__, ##args)
-    #define SD_PRINTF_DEBUG(fmt, args...)   SD_PRINTF("[SD_DEBUG]   : %s:%d:%s(): " fmt "\n\r", __FILE__, __LINE__, __func__, ##args)
+    #define SD_PRINTF_INFO(fmt, args...)    SD_PRINTF("[SD][INFO]    : "             fmt "\n\r", ##args)
+    #define SD_PRINTF_WARNING(fmt, args...) SD_PRINTF("[SD][WARNING] : "             fmt "\n\r", ##args)
+    #define SD_PRINTF_ERROR(fmt, args...)   SD_PRINTF("[SD][ERROR]   : %s:%d:%s(): " fmt "\n\r", __FILE__, __LINE__, __func__, ##args)
+    #define SD_PRINTF_DEBUG(fmt, args...)   SD_PRINTF("[SD][DEBUG]   : %s:%d:%s(): " fmt "\n\r", __FILE__, __LINE__, __func__, ##args)
   #elif SD_DEBUG == 1
-    #define SD_PRINTF_INFO(fmt, args...)    SD_PRINTF("[SD_INFO]    : " fmt "\n\r", ##args)
-    #define SD_PRINTF_WARNING(fmt, args...) SD_PRINTF("[SD_WARNING] : " fmt "\n\r", ##args)
-    #define SD_PRINTF_ERROR(fmt, args...)   SD_PRINTF("[SD_ERROR]   : " fmt "\n\r", ##args)
-    #define SD_PRINTF_DEBUG(fmt, args...)   SD_PRINTF("[SD_DEBUG]   : " fmt "\n\r", ##args)
+    #define SD_PRINTF_INFO(fmt, args...)    SD_PRINTF("[SD][INFO]    : " fmt "\n\r", ##args)
+    #define SD_PRINTF_WARNING(fmt, args...) SD_PRINTF("[SD][WARNING] : " fmt "\n\r", ##args)
+    #define SD_PRINTF_ERROR(fmt, args...)   SD_PRINTF("[SD][ERROR]   : " fmt "\n\r", ##args)
+    #define SD_PRINTF_DEBUG(fmt, args...)   SD_PRINTF("[SD][DEBUG]   : " fmt "\n\r", ##args)
   #else
-    #define SD_PRINTF_INFO(fmt, args...)    SD_PRINTF("[INFO]    : " fmt "\n\r", ##args)
-    #define SD_PRINTF_WARNING(fmt, args...) SD_PRINTF("[WARNING] : " fmt "\n\r", ##args)
-    #define SD_PRINTF_ERROR(fmt, args...)   SD_PRINTF("[ERROR]   : " fmt "\n\r", ##args)
+    #define SD_PRINTF_INFO(fmt, args...)    SD_PRINTF("[SD][INFO]    : " fmt "\n\r", ##args)
+    #define SD_PRINTF_WARNING(fmt, args...) SD_PRINTF("[SD][WARNING] : " fmt "\n\r", ##args)
+    #define SD_PRINTF_ERROR(fmt, args...)   SD_PRINTF("[SD][ERROR]   : " fmt "\n\r", ##args)
     #define SD_PRINTF_DEBUG(fmt, args...)   /* Nothing */
   #endif
 #else
-    #define SD_PRINTF_INFO(fmt, args...)    SD_PRINTF("[INFO]    : " fmt "\n\r", ##args)
-    #define SD_PRINTF_WARNING(fmt, args...) SD_PRINTF("[WARNING] : " fmt "\n\r", ##args)
-    #define SD_PRINTF_ERROR(fmt, args...)   SD_PRINTF("[ERROR]   : " fmt "\n\r", ##args)
+    #define SD_PRINTF_INFO(fmt, args...)    SD_PRINTF("[SD][INFO]    : " fmt "\n\r", ##args)
+    #define SD_PRINTF_WARNING(fmt, args...) SD_PRINTF("[SD][WARNING] : " fmt "\n\r", ##args)
+    #define SD_PRINTF_ERROR(fmt, args...)   SD_PRINTF("[SD][ERROR]   : " fmt "\n\r", ##args)
     #define SD_PRINTF_DEBUG(fmt, args...)   /* Nothing */
 #endif
 
