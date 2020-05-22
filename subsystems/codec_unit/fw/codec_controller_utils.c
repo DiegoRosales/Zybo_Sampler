@@ -17,8 +17,8 @@
 #include "codec_controller_reg_utils.h"
 #include "codec_controller_utils.h"
 
-int CodecRd(int addr, int display, int debug) {
-	int data_rd = 0;
+uint32_t ulCodecRd(uint32_t addr, uint32_t display, uint32_t debug) {
+	uint32_t data_rd = 0;
 
 	// Step 0 - Check if there are no other transactions running. If there are none, clear all the Status bits
 	if ( CODEC_CONTROL_REGISTER_ACCESS->CODEC_I2C_CTRL_REG.field.controller_busy_reg ) {
@@ -28,7 +28,7 @@ int CodecRd(int addr, int display, int debug) {
 		return 0xffffffff;
 	}
 
-	ClearStatusBits(debug);
+	vClearStatusBits(debug);
 
 	// Step 1 - Write the Address
 	if (debug) xil_printf("-------------\n\r", addr);
@@ -41,9 +41,9 @@ int CodecRd(int addr, int display, int debug) {
 	CODEC_CONTROL_REGISTER_ACCESS->CODEC_I2C_CTRL_REG.field.codec_i2c_data_rd_reg = 1;
 
 	// Step 3 - Wait for the Busy bit to clear
-	BusyBitIsClear(debug);
+	vBusyBitIsClear(debug);
 
-	WaitUntilDataIsAvailable(debug);
+	vWaitUntilDataIsAvailable(debug);
 
 	// Step 4 - Read the data
 	if (debug) xil_printf("Reading the Data from the Register...\n\r", addr);
@@ -54,9 +54,9 @@ int CodecRd(int addr, int display, int debug) {
 	return data_rd;
 }
 
-int CodecWr(int addr, int data, int check, int display, int debug) {
-	int readback = 0;
-	int error    = 0;
+uint32_t ulCodecWr(uint32_t addr, uint32_t data, uint32_t check, uint32_t display, uint32_t debug) {
+	uint32_t readback = 0;
+	uint32_t error    = 0;
 	
 	// Step 0 - Check if there are no other transactions running. If there are none, clear all the Status bits
 	if ( CODEC_CONTROL_REGISTER_ACCESS->CODEC_I2C_CTRL_REG.field.controller_busy_reg ) {
@@ -67,7 +67,7 @@ int CodecWr(int addr, int data, int check, int display, int debug) {
 	}
 
 	if (debug) xil_printf("===============\n\r", addr);
-	ClearStatusBits(debug);
+	vClearStatusBits(debug);
 	if (debug | display)  xil_printf("CODEC Register[%02x] <---- 0x%02x\n\r", addr, data);
 
 	// Step 1 - Write the Address
@@ -84,12 +84,12 @@ int CodecWr(int addr, int data, int check, int display, int debug) {
 
 	// Step 4 - Wait for the Busy bit to clear
 	if (debug) xil_printf("Waiting for the transfer to complete\n\r");
-	BusyBitIsClear(debug);
+	vBusyBitIsClear(debug);
 
 	// Step 5 (optional) - Read back the data
 	if (check) {
 		if (debug) xil_printf("Performing Readback...\n\r");
-		readback = CodecRd(addr, 1, debug);
+		readback = ulCodecRd(addr, 1, debug);
 		if (data == readback){
 			if (debug | display) xil_printf("OK\n\r");
 		} else {
@@ -105,8 +105,8 @@ int CodecWr(int addr, int data, int check, int display, int debug) {
 	return error;
 }
 
-void ClearStatusBits(int debug) {
-	int status = 0;
+void vClearStatusBits(uint32_t debug) {
+	uint32_t status = 0;
 	if (debug) xil_printf("Clearing the Status Bits...\n\r");
 	// Read the status register
 	status = CODEC_CONTROL_REGISTER_ACCESS->CODEC_I2C_CTRL_REG.value;
@@ -116,9 +116,9 @@ void ClearStatusBits(int debug) {
 
 }
 
-void WaitUntilDataIsAvailable(int debug) {
-	int data_is_available = 0;
-	int missed_ack        = 0;
+void vWaitUntilDataIsAvailable(uint32_t debug) {
+	uint32_t data_is_available = 0;
+	uint32_t missed_ack        = 0;
 	CODEC_I2C_CTRL_REG_t xfer_done;
 
 	if (debug) xil_printf("Waiting for the valid data bit...\n\r");
@@ -137,7 +137,7 @@ void WaitUntilDataIsAvailable(int debug) {
 	if (debug) xil_printf("Bit is clear!\n\r");
 }
 
-void BusyBitIsClear(int debug) {
+void vBusyBitIsClear(uint32_t debug) {
 	if (debug) xil_printf("Waiting for the transfer to complete...\n\r");
 
 	// Do nothing while the controller is busy
@@ -146,7 +146,7 @@ void BusyBitIsClear(int debug) {
 	if (debug) xil_printf("Busy Bit is Clear!\n\r");
 }
 
-void ControllerReset(int debug) {
+void vControllerReset(uint32_t debug) {
 	xil_printf("Resetting the controller...\n\r");
 	// Write the reset value	
 	CODEC_CONTROL_REGISTER_ACCESS->CODEC_I2C_CTRL_REG.field.controller_reset_reg = 1;
@@ -155,17 +155,17 @@ void ControllerReset(int debug) {
 	xil_printf("DONE\n\r");
 }
 
-void CodecReset(int debug) {
+void vCodecReset(uint32_t debug) {
 	xil_printf("Resetting the CODEC...\n\r");
-	CodecWr(SW_RESET_REG_ADDR, 0x0, 0, 1, debug);
-	for (int i = 0; i < 1000000 ; i++);
-	CodecWr(SW_RESET_REG_ADDR, 0x1, 0, 1, debug);
-	for (int i = 0; i < 1000000 ; i++);
+	ulCodecWr(SW_RESET_REG_ADDR, 0x0, 0, 1, debug);
+	for (uint32_t i = 0; i < 1000000 ; i++);
+	ulCodecWr(SW_RESET_REG_ADDR, 0x1, 0, 1, debug);
+	for (uint32_t i = 0; i < 1000000 ; i++);
 	xil_printf("Done\n\n\r");
 }
 
 // Set the Volume in dB
-int SetOutputVolume(int volume) {
+uint32_t ulSetOutputVolume(uint32_t volume) {
 	LEFT_CHAN_DAC_VOL_t  left_volume;
 	RIGHT_CHAN_DAC_VOL_t right_volume;
 
@@ -173,9 +173,9 @@ int SetOutputVolume(int volume) {
 	left_volume.field.LRHPBOTH = 1; // Adjust left and right at the same time
 
 	// Write the Volume
-	CodecWr(LEFT_CHANN_OUTPUT_VOL_REG_ADDR, left_volume.value, 0, 1, 0);
+	ulCodecWr(LEFT_CHANN_OUTPUT_VOL_REG_ADDR, left_volume.value, 0, 1, 0);
 	// Read the volume of the other channel to see if it was set
-	right_volume.value = CodecRd(RIGHT_CHANN_OUTPUT_VOL_REG_ADDR, 1, 0);
+	right_volume.value = ulCodecRd(RIGHT_CHANN_OUTPUT_VOL_REG_ADDR, 1, 0);
 
 	// Check the values
 	if (left_volume.field.LHPVOL == right_volume.field.RHPVOL) {
@@ -187,7 +187,7 @@ int SetOutputVolume(int volume) {
 }
 
 // Set the Volume in dB
-int SetInputVolume(int volume) {
+uint32_t ulSetInputVolume(uint32_t volume) {
 	LEFT_CHAN_ADC_IN_VOL_t  left_volume;
 	RIGHT_CHAN_ADC_IN_VOL_t right_volume;
 
@@ -195,11 +195,11 @@ int SetInputVolume(int volume) {
 	left_volume.field.LINMUTE  = 0; // Disable Mute
 	left_volume.field.LRINBOTH = 1; // Adjust left and right at the same time
 
-	CodecRd(RIGHT_CHANN_INPUT_VOL_REG_ADDR, 1, 0);
+	ulCodecRd(RIGHT_CHANN_INPUT_VOL_REG_ADDR, 1, 0);
 	// Write the Volume
-	CodecWr(LEFT_CHANN_INPUT_VOL_REG_ADDR, left_volume.value, 0, 1, 0);
+	ulCodecWr(LEFT_CHANN_INPUT_VOL_REG_ADDR, left_volume.value, 0, 1, 0);
 	// Read the volume of the other channel to see if it was set
-	right_volume.value = CodecRd(RIGHT_CHANN_INPUT_VOL_REG_ADDR, 1, 0);
+	right_volume.value = ulCodecRd(RIGHT_CHANN_INPUT_VOL_REG_ADDR, 1, 0);
 
 	// Check the values
 	if (left_volume.field.LINVOL == right_volume.field.RINVOL) {
@@ -210,19 +210,19 @@ int SetInputVolume(int volume) {
 
 }
 
-void CodecInit(int debug) {
-	int check     = 0;
+void vCodecInit(uint32_t debug) {
+	uint32_t check     = 0;
 
 	CODEC_REGISTERS_t codec_registers;
 
 	// Reset the CODEC
-	CodecReset(debug);
+	vCodecReset(debug);
 
 	///////////////////////////////
 	// Set the PM Registers
 	///////////////////////////////
 	xil_printf("Enabling the PM Registers...\n\r");
-	codec_registers.POWER_MANAGEMENT.value = CodecRd(POWER_MGMT_REG_ADDR, 0, debug);
+	codec_registers.POWER_MANAGEMENT.value = ulCodecRd(POWER_MGMT_REG_ADDR, 0, debug);
 
 	// PM Settings
 	codec_registers.POWER_MANAGEMENT.value        = 0x0ff; // Initialize all powered OFF
@@ -232,9 +232,9 @@ void CodecInit(int debug) {
 	codec_registers.POWER_MANAGEMENT.field.LINEIN = 0; // Power UP the Line Input
 	codec_registers.POWER_MANAGEMENT.field.CLKOUT = 0; // Power UP the Clock Output to the FPGA
 	
-	check = CodecWr(POWER_MGMT_REG_ADDR, codec_registers.POWER_MANAGEMENT.value, 1, 0, debug);
+	check = ulCodecWr(POWER_MGMT_REG_ADDR, codec_registers.POWER_MANAGEMENT.value, 1, 0, debug);
 	if (check) {
-		CodecRd(POWER_MGMT_REG_ADDR, 1, debug);
+		ulCodecRd(POWER_MGMT_REG_ADDR, 1, debug);
 		xil_printf("[ERROR] Setting the PM Registers\n\n\r");
 	}
 	else {
@@ -249,16 +249,16 @@ void CodecInit(int debug) {
 	// Configure the CODEC as Master
 	///////////////////////////////////
 	xil_printf("Setting the CODEC as master...\n\r");
-	CodecRd(DIGITAL_AUDIO_IF_REG_ADDR, 0, debug);
+	ulCodecRd(DIGITAL_AUDIO_IF_REG_ADDR, 0, debug);
 
 	// Digital audio IF Settings
 	codec_registers.DIGITAL_AUDIO_IF.value        = 0;   // Initialize
 	codec_registers.DIGITAL_AUDIO_IF.field.Format = 0x3; // DSP Serial Mode
 	codec_registers.DIGITAL_AUDIO_IF.field.LRP    = 0x1; // DSP Submode 2
 	codec_registers.DIGITAL_AUDIO_IF.field.MS     = 0x1; // Master Mode
-	check = CodecWr(DIGITAL_AUDIO_IF_REG_ADDR, codec_registers.DIGITAL_AUDIO_IF.value, 1, 0, debug);
+	check = ulCodecWr(DIGITAL_AUDIO_IF_REG_ADDR, codec_registers.DIGITAL_AUDIO_IF.value, 1, 0, debug);
 	if (check) {
-		CodecRd(DIGITAL_AUDIO_IF_REG_ADDR, 1, debug);
+		ulCodecRd(DIGITAL_AUDIO_IF_REG_ADDR, 1, debug);
 		xil_printf("[ERROR] Setting the CODEC as Master\n\n\r");
 	}
 	else {
@@ -272,7 +272,7 @@ void CodecInit(int debug) {
 	// Configure the USB Mode
 	///////////////////////////////////
 	xil_printf("Setting USB Mode...\n\r");
-	CodecRd(SAMPLING_RATE_REG_ADDR, 0, debug);
+	ulCodecRd(SAMPLING_RATE_REG_ADDR, 0, debug);
 
 	// Sampling Rate settings
 	codec_registers.SAMPLING_RATE.value      = 0;   // Initialize
@@ -280,9 +280,9 @@ void CodecInit(int debug) {
 	codec_registers.SAMPLING_RATE.field.SR   = 0x8; // Set the sampling rate to 44.118KHz
 	codec_registers.SAMPLING_RATE.field.BOSR = 1;   // Set the sampling rate to 44.118KHz
 
-	check = CodecWr(SAMPLING_RATE_REG_ADDR, codec_registers.SAMPLING_RATE.value, 1, 0, debug);
+	check = ulCodecWr(SAMPLING_RATE_REG_ADDR, codec_registers.SAMPLING_RATE.value, 1, 0, debug);
 	if (check) {
-		CodecRd(SAMPLING_RATE_REG_ADDR, 1, debug);
+		ulCodecRd(SAMPLING_RATE_REG_ADDR, 1, debug);
 		xil_printf("[ERROR] Setting USB Mode...\n\n\r");
 	}
 	else {
@@ -293,16 +293,16 @@ void CodecInit(int debug) {
 	// Configure Analog Audio Path
 	///////////////////////////////////
 	xil_printf("Setting the Analog Audio Path...\n\r");
-	CodecRd(ANALOG_AUDIO_PATH_REG_ADDR, 0, debug);
+	ulCodecRd(ANALOG_AUDIO_PATH_REG_ADDR, 0, debug);
 
 	// Analog Audio Path Settings
 	codec_registers.ANALOG_AUDIO_PATH.value        = 0;   // Initialize
 	codec_registers.ANALOG_AUDIO_PATH.field.DACSEL = 0x1; // Select the DAC as the output
 	codec_registers.ANALOG_AUDIO_PATH.field.Bypass = 0x0; // Mix the input with the output
 
-	check = CodecWr(ANALOG_AUDIO_PATH_REG_ADDR, codec_registers.ANALOG_AUDIO_PATH.value, 1, 0, debug);
+	check = ulCodecWr(ANALOG_AUDIO_PATH_REG_ADDR, codec_registers.ANALOG_AUDIO_PATH.value, 1, 0, debug);
 	if (check) {
-		CodecRd(ANALOG_AUDIO_PATH_REG_ADDR, 1, debug);
+		ulCodecRd(ANALOG_AUDIO_PATH_REG_ADDR, 1, debug);
 		xil_printf("[ERROR] Setting the Analog Audio Path...\n\n\r");
 	}
 	else {
@@ -317,15 +317,15 @@ void CodecInit(int debug) {
 	xil_printf("Removing the Mute...\n\r");
 
 	// Initialize the value with the default settinfs
-	codec_registers.DIGITAL_AUDIO_PATH.value = CodecRd(DIGITAL_AUDIO_PATH_REG_ADDR, 0, debug);
+	codec_registers.DIGITAL_AUDIO_PATH.value = ulCodecRd(DIGITAL_AUDIO_PATH_REG_ADDR, 0, debug);
 
 	// Digital Audio Path Settings
 	codec_registers.DIGITAL_AUDIO_PATH.field.DACMU  = 0;
 	codec_registers.DIGITAL_AUDIO_PATH.field.ADCHPF = 1;
 
-	check = CodecWr(DIGITAL_AUDIO_PATH_REG_ADDR, codec_registers.DIGITAL_AUDIO_PATH.value, 1, 0, debug);
+	check = ulCodecWr(DIGITAL_AUDIO_PATH_REG_ADDR, codec_registers.DIGITAL_AUDIO_PATH.value, 1, 0, debug);
 	if (check) {
-		CodecRd(DIGITAL_AUDIO_PATH_REG_ADDR, 1, debug);
+		ulCodecRd(DIGITAL_AUDIO_PATH_REG_ADDR, 1, debug);
 		xil_printf("[ERROR] Removing the Mute...\n\n\r");
 	}
 	else {
@@ -337,7 +337,7 @@ void CodecInit(int debug) {
 	///////////////////////////////////
 	xil_printf("Setting the output volume...\n\r");
 
-	check = SetOutputVolume(-15);
+	check = ulSetOutputVolume(-15);
 
 	if (check) {
 		xil_printf("[ERROR] Setting the output volume...\n\n\r");
@@ -351,7 +351,7 @@ void CodecInit(int debug) {
 	///////////////////////////////////
 	xil_printf("Setting the input volume...\n\r");
 
-	check = SetInputVolume(0x17); // 0 dB
+	check = ulSetInputVolume(0x17); // 0 dB
 
 	if (check) {
 		xil_printf("[ERROR] Setting the input volume...\n\n\r");
@@ -368,15 +368,15 @@ void CodecInit(int debug) {
 	// Enable the digital core
 	///////////////////////////////////
 	xil_printf("Enabling the Digital Core...\n\r");
-	CodecRd(ACTIVE_REG_ADDR, 0, debug);
+	ulCodecRd(ACTIVE_REG_ADDR, 0, debug);
 
 	// Active register settings
 	codec_registers.ACTIVE.value        = 0;   // Initialize
 	codec_registers.ACTIVE.field.Active = 0x1; // Activate the digital core
 
-	check = CodecWr(ACTIVE_REG_ADDR, codec_registers.ACTIVE.value, 1, 0, debug);
+	check = ulCodecWr(ACTIVE_REG_ADDR, codec_registers.ACTIVE.value, 1, 0, debug);
 	if (check) {
-		CodecRd(ACTIVE_REG_ADDR, 1, debug);
+		ulCodecRd(ACTIVE_REG_ADDR, 1, debug);
 		xil_printf("[ERROR] Setting the CODEC as Master\n\n\r");
 	}
 	else {
@@ -390,14 +390,14 @@ void CodecInit(int debug) {
 	// Enable the output
 	///////////////////////////////////
 	xil_printf("Enabling the Output...\n\r");
-	CodecRd(POWER_MGMT_REG_ADDR, 0, debug);
+	ulCodecRd(POWER_MGMT_REG_ADDR, 0, debug);
 
 	// PM Settings
 	codec_registers.POWER_MANAGEMENT.field.Out = 0x0; // Power ON the output
 
-	check = CodecWr(POWER_MGMT_REG_ADDR, codec_registers.POWER_MANAGEMENT.value, 1, 0, debug);
+	check = ulCodecWr(POWER_MGMT_REG_ADDR, codec_registers.POWER_MANAGEMENT.value, 1, 0, debug);
 	if (check) {
-		CodecRd(POWER_MGMT_REG_ADDR, 1, debug);
+		ulCodecRd(POWER_MGMT_REG_ADDR, 1, debug);
 		xil_printf("ERROR Setting the Output Enable\n\r");
 	}
 	else {

@@ -24,62 +24,12 @@
 #define APPEND_NEWLINE(BUFFER) strcat( BUFFER, cliNEW_LINE )
 
 // Commands
-static BaseType_t echo_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
-static BaseType_t control_reg_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
-static BaseType_t codec_reg_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
-
-
-////////////////////////////////////////////////////
-// External variables
-////////////////////////////////////////////////////
-extern nco_t sine_nco;
-
-//////////////////////////////////////////////////////
-// CLI Command Definitions
-//////////////////////////////////////////////////////
-
-// Echo Command
-static const CLI_Command_Definition_t echo_command_definition =
-{
-    "echo",
-    "\r\necho:\r\n Simple echo command.\r\n",
-    echo_command, /* The function to run. */
-    -1 /* The user can enter any number of commands. */
-};
-
-// Command to read/write a register from the sampler in the PL
-static const CLI_Command_Definition_t control_reg_command_definition =
-{
-    "control_reg",
-    "\r\ncontrol_reg <ADDR>\n\rcontrol_reg <ADDR> <DATA>\r\n Read/Write a register from the sampler\r\n",
-    control_reg_command, /* The function to run. */
-    -1 /* The user can enter any number of commands. */
-};
-
-// Command to read a register from the CODEC in the Zybo board
-static const CLI_Command_Definition_t codec_reg_command_definition =
-{
-    "codec_reg",
-    "\r\ncodec_reg <ADDR>\n\rcodec_reg <ADDR> <DATA>\r\n Read/Write a register from the codec\r\n",
-    codec_reg_command, /* The function to run. */
-    -1 /* The user can enter any number of commands. */
-};
-
-////////////////////////////////////////////////////////
-// Functions
-////////////////////////////////////////////////////////
-
-// This function registers all the CLI applications
-void register_codec_cli_commands( void ) {
-
-    FreeRTOS_CLIRegisterCommand( &echo_command_definition ); // Echo Command
-    FreeRTOS_CLIRegisterCommand( &control_reg_command_definition ); // Control Reg Read/Write Command
-    FreeRTOS_CLIRegisterCommand( &codec_reg_command_definition ); // Sampler Read Command
-
-}
+static BaseType_t prv_xEchoCMD( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
+static BaseType_t prv_xControlRegCMD( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
+static BaseType_t prv_xCODECRegCMD( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
 
 // This function converts an string in int or hex to a uint32_t
-static uint32_t str2int( const char *input_string, BaseType_t input_string_length ) {
+static uint32_t prv_ulStr2Int( const char *input_string, BaseType_t input_string_length ) {
 
     const char *start_char = input_string;
     char *end_char;
@@ -97,13 +47,63 @@ static uint32_t str2int( const char *input_string, BaseType_t input_string_lengt
 
 }
 
+////////////////////////////////////////////////////
+// External variables
+////////////////////////////////////////////////////
+extern nco_t sine_nco;
+
+//////////////////////////////////////////////////////
+// CLI Command Definitions
+//////////////////////////////////////////////////////
+
+// Echo Command
+static const CLI_Command_Definition_t prv_xEchoCMD_definition =
+{
+    "echo",
+    "\r\necho:\r\n Simple echo command.\r\n",
+    prv_xEchoCMD, /* The function to run. */
+    -1 /* The user can enter any number of commands. */
+};
+
+// Command to read/write a register from the sampler in the PL
+static const CLI_Command_Definition_t prv_xControlRegCMD_definition =
+{
+    "control_reg",
+    "\r\ncontrol_reg <ADDR>\n\rcontrol_reg <ADDR> <DATA>\r\n Read/Write a register from the sampler\r\n",
+    prv_xControlRegCMD, /* The function to run. */
+    -1 /* The user can enter any number of commands. */
+};
+
+// Command to read a register from the CODEC in the Zybo board
+static const CLI_Command_Definition_t prv_xCODECRegCMD_definition =
+{
+    "codec_reg",
+    "\r\ncodec_reg <ADDR>\n\rcodec_reg <ADDR> <DATA>\r\n Read/Write a register from the codec\r\n",
+    prv_xCODECRegCMD, /* The function to run. */
+    -1 /* The user can enter any number of commands. */
+};
+
+////////////////////////////////////////////////////////
+// Functions
+////////////////////////////////////////////////////////
+
+// This function registers all the CLI applications
+void vRegisterCODECCLICommands( void ) {
+
+    FreeRTOS_CLIRegisterCommand( &prv_xEchoCMD_definition ); // Echo Command
+    FreeRTOS_CLIRegisterCommand( &prv_xControlRegCMD_definition ); // Control Reg Read/Write Command
+    FreeRTOS_CLIRegisterCommand( &prv_xCODECRegCMD_definition ); // Sampler Read Command
+
+}
+
+
 
 
 //////////////////////////////////////////////////////
 // CLI Command Implementations
 //////////////////////////////////////////////////////
 
-static BaseType_t echo_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString ) {
+static BaseType_t prv_xEchoCMD( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString ) {
     const char *pcParameter;
     BaseType_t xParameterStringLength, xReturn;
     static UBaseType_t uxParameterNumber = 0;
@@ -170,16 +170,16 @@ static BaseType_t echo_command( char *pcWriteBuffer, size_t xWriteBufferLen, con
 }
 
 // This command reads the data from the sampler in the PL
-static BaseType_t control_reg_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString ) {
+static BaseType_t prv_xControlRegCMD( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString ) {
     const char         *pcParameter;
     BaseType_t         xParameterStringLength;
     BaseType_t         xReturn;
     static UBaseType_t uxParameterNumber = 0;
 
 	// Internal Variables
-    static uint32_t addr_int;
+  static uint32_t addr_int;
 	static uint32_t data_int;
-    static uint32_t reg_output;
+  static uint32_t reg_output;
 	static BaseType_t command_done;
 
 	/* Remove compile time warnings about unused parameters, and check the
@@ -221,11 +221,11 @@ static BaseType_t control_reg_command( char *pcWriteBuffer, size_t xWriteBufferL
 			switch ( uxParameterNumber )
 			{
 				case 1: // Address
-					addr_int = str2int(pcParameter, xParameterStringLength);
+					addr_int = prv_ulStr2Int(pcParameter, xParameterStringLength);
 					sprintf( pcWriteBuffer, "Address = 0x%lx", addr_int );
 					break;
 				case 2: // Data
-					data_int = str2int(pcParameter, xParameterStringLength);
+					data_int = prv_ulStr2Int(pcParameter, xParameterStringLength);
 					sprintf( pcWriteBuffer, "Data = 0x%lx", addr_int );
 					break;
 				default:
@@ -244,11 +244,11 @@ static BaseType_t control_reg_command( char *pcWriteBuffer, size_t xWriteBufferL
 
 			if ( uxParameterNumber == 2 ) {
 				// Read the data
-				reg_output = CodecCtrlRegRd(addr_int, 0);
+				reg_output = ulCodecCtrlRegRd(addr_int, 0);
 				sprintf( pcWriteBuffer, "SAMPLER[0x%lx] = 0x%lx", addr_int, reg_output );
 			} else if ( uxParameterNumber == 3 ) {
 				// Write the data
-				CodecCtrlRegWr( addr_int, data_int, 0, 0 );
+				ulCodecCtrlRegWr( addr_int, data_int, 0, 0 );
 				sprintf( pcWriteBuffer, "SAMPLER[0x%lx] <== 0x%lx", addr_int, data_int );
 			} else {
 				sprintf( pcWriteBuffer, "[ERROR] - Bad number of arguments. Number of parameters = %lu", (uxParameterNumber - 1) );
@@ -277,7 +277,7 @@ static BaseType_t control_reg_command( char *pcWriteBuffer, size_t xWriteBufferL
 
 
 // This command reads/writes data from the CODEC chip of the Zybo board
-static BaseType_t codec_reg_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString ) {
+static BaseType_t prv_xCODECRegCMD( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString ) {
     const char         *pcParameter;
     BaseType_t         xParameterStringLength;
     BaseType_t         xReturn;
@@ -328,11 +328,11 @@ static BaseType_t codec_reg_command( char *pcWriteBuffer, size_t xWriteBufferLen
 			switch ( uxParameterNumber )
 			{
 				case 1: // Address
-					addr_int = str2int(pcParameter, xParameterStringLength);
+					addr_int = prv_ulStr2Int(pcParameter, xParameterStringLength);
 					sprintf( pcWriteBuffer, "Address = 0x%lx", addr_int );
 					break;
 				case 2: // Data
-					data_int = str2int(pcParameter, xParameterStringLength);
+					data_int = prv_ulStr2Int(pcParameter, xParameterStringLength);
 					sprintf( pcWriteBuffer, "Data = 0x%lx", addr_int );
 					break;
 				default:
@@ -349,11 +349,11 @@ static BaseType_t codec_reg_command( char *pcWriteBuffer, size_t xWriteBufferLen
 
 			if ( uxParameterNumber == 2 ) {
 				// Read the data
-				reg_output = CodecRd(addr_int, 0, 0);
+				reg_output = ulCodecRd(addr_int, 0, 0);
 				sprintf( pcWriteBuffer, "CODEC[0x%lx] = 0x%lx", addr_int, reg_output );
 			} else if ( uxParameterNumber == 3 ) {
 				// Write the data
-				CodecWr( addr_int, data_int, 0, 0, 0 );
+				ulCodecWr( addr_int, data_int, 0, 0, 0 );
 				sprintf( pcWriteBuffer, "CODEC[0x%lx] <== 0x%lx", addr_int, data_int );
 			} else {
 				sprintf( pcWriteBuffer, "Number of parameters = %lu", uxParameterNumber );

@@ -90,7 +90,7 @@ void main_rtos_program() {
     
     vUARTCommandConsoleStart( mainUART_COMMAND_CONSOLE_STACK_SIZE, mainUART_COMMAND_CONSOLE_TASK_PRIORITY );
 
-    register_codec_cli_commands();
+    vRegisterCODECCLICommands();
     vRegisterFATCLICommands();
     vRegisterSamplerCLICommands();
     vRegisterSamplerDMAControllerCLICommands();
@@ -113,7 +113,7 @@ void system_init( void ) {
     // CODEC Configuration
     ////////
     xil_printf("Initializing the CODEC registers...\n\r");
-    CodecInit(0);
+    vCodecInit(0);
     xil_printf("Done!\n\r");
 
     xil_printf("Initializing the Sine NCO memory...\n\r");

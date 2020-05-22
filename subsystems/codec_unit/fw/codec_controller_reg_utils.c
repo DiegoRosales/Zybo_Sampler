@@ -11,10 +11,10 @@
 #include "codec_controller_control_regs.h"
 #include "codec_controller_reg_utils.h"
 
-int CodecCtrlRegWr(int addr, int value, int check, int display) {
-	int readback  = 0;
-	int ok        = 0;
-	int full_addr = CODEC_CONTROLLER_REGISTERS_BAR + (addr*4);
+uint32_t ulCodecCtrlRegWr(uint32_t addr, uint32_t value, uint32_t check, uint32_t display) {
+	uint32_t readback  = 0;
+	uint32_t ok        = 0;
+	uint32_t full_addr = CODEC_CONTROLLER_REGISTERS_BAR + (addr*4);
 
 	if(display) {
 		xil_printf("CODEC_CTRL_REG[0x%02x] <--- 0x%08x\n\r", addr, value);
@@ -41,9 +41,9 @@ int CodecCtrlRegWr(int addr, int value, int check, int display) {
 	return ok;
 }
 
-int CodecCtrlRegRd(int addr, int display) {
-	int readback  = 0;
-	int full_addr = CODEC_CONTROLLER_REGISTERS_BAR + (addr*4);
+uint32_t ulCodecCtrlRegRd(uint32_t addr, uint32_t display) {
+	uint32_t readback  = 0;
+	uint32_t full_addr = CODEC_CONTROLLER_REGISTERS_BAR + (addr*4);
 
 	readback = Xil_In32(full_addr);
 	if (display) {

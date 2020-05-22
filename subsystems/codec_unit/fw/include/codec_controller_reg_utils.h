@@ -10,7 +10,7 @@
 #define CONTROLLER_RESET_BIT 31
 
 
-int CodecCtrlRegWr(int addr, int value, int check, int display);
-int CodecCtrlRegRd(int addr, int display);
+uint32_t ulCodecCtrlRegWr(uint32_t addr, uint32_t value, uint32_t check, uint32_t display);
+uint32_t ulCodecCtrlRegRd(uint32_t addr, uint32_t display);
 
 #endif

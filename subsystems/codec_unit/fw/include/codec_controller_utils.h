@@ -5,15 +5,15 @@
 #define BUSY_BIT 2
 
 
-int CodecRd(int addr, int display, int debug);
-int CodecWr(int addr, int data, int check, int display, int debug);
-void BusyBitIsClear(int debug);
-void ControllerReset(int debug);
-void ClearStatusBits(int debug);
-void WaitUntilDataIsAvailable(int debug);
-void CodecInit(int debug);
-void CodecReset(int debug);
-int SetOutputVolume(int volume);
-int SetInputVolume(int volume);
+uint32_t ulCodecRd(uint32_t addr, uint32_t display, uint32_t debug);
+uint32_t ulCodecWr(uint32_t addr, uint32_t data, uint32_t check, uint32_t display, uint32_t debug);
+void vBusyBitIsClear(uint32_t debug);
+void vControllerReset(uint32_t debug);
+void vClearStatusBits(uint32_t debug);
+void vWaitUntilDataIsAvailable(uint32_t debug);
+void vCodecInit(uint32_t debug);
+void vCodecReset(uint32_t debug);
+uint32_t ulSetOutputVolume(uint32_t volume);
+uint32_t ulSetInputVolume(uint32_t volume);
 
 #endif
