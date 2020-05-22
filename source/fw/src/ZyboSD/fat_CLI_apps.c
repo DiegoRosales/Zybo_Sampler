@@ -164,6 +164,9 @@ size_t xLoadFileToMemory( const char *file_name, uint8_t *buffer, size_t buffer_
     // Step 2 - Load the file into memory
     prv_vFileToBuffer( pxFile, buffer, buffer_len );
 
+		// Step 3 - Close the file
+		ff_fclose( pxFile );
+
     return file_size;
 }
 
@@ -215,6 +218,9 @@ size_t xLoadFileToMemory_malloc( const char *file_name, uint8_t ** buffer, size_
     SD_PRINTF_DEBUG("File loaded successfully. Buffer address =  0x%x", new_buffer );
 
     *buffer = new_buffer;
+
+		// Step 3 - Close the file
+		ff_fclose( pxFile );
 
     return file_size;
 }
