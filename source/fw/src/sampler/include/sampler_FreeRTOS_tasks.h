@@ -24,6 +24,6 @@ typedef struct {
     uint8_t velocity;
 } key_parameters_t;
 
-void create_sampler_tasks ( void );
+void vRegisterSamplerEngineTasks ( void );
 
 #endif

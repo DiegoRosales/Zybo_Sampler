@@ -40,7 +40,7 @@ static void prv_vLoadSF3Task( void *pvParameters );
 static void prv_vRunMIDICommandTask( void *pvParameters );
 static void prv_vSerialMIDIListenerTask( void *pvParameters );
 
-void create_sampler_tasks ( void ) {
+void vRegisterSamplerEngineTasks ( void ) {
 
     /* Create the task, storing the handle. */
     xTaskCreate(

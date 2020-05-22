@@ -69,36 +69,55 @@
 //////////////////////////////////////////
 
 // Static Functions
-static void system_init( void );
-static void main_rtos_program( void );
-
+static void prv_vSystemInit( void );
+static void prv_StartMainRTOSProgram( void );
+static void prv_RegisterFreeRTOSTasks( void );
+static void prv_RegisterFreeRTOSCLIApps( void );
 // Global Variables
 static audio_data_t output_stream_audio_data[ NUM_OF_SINE_SAMPLES ];
 FF_Disk_t *pxSDDisk;
 nco_t      sine_nco;
 
+// Main application
 int main() {
-    main_rtos_program();
+    // Start the RTOS program
+    prv_StartMainRTOSProgram();
 }
 
-// Launch FreeRTOS
-void main_rtos_program() {
+// Register all user tasks
+void prv_RegisterFreeRTOSTasks() {
+    // Sampler Engine
+    vRegisterSamplerEngineTasks();
+}
 
-    system_init();
-
-    create_sampler_tasks();
-    
-    vUARTCommandConsoleStart( mainUART_COMMAND_CONSOLE_STACK_SIZE, mainUART_COMMAND_CONSOLE_TASK_PRIORITY );
-
+// Register all user CLI applications
+void prv_RegisterFreeRTOSCLIApps() {
     vRegisterCODECCLICommands();
     vRegisterFATCLICommands();
     vRegisterSamplerCLICommands();
     vRegisterSamplerDMAControllerCLICommands();
+}
 
+// Launch FreeRTOS
+void prv_StartMainRTOSProgram() {
+
+    // Initialize the PL registers
+    prv_vSystemInit();
+
+    // Register all user tasks
+    prv_RegisterFreeRTOSTasks();
+    
+    // Register all CLI applications
+    prv_RegisterFreeRTOSCLIApps();
+
+    // Start the UART Console
+    vUARTCommandConsoleStart( mainUART_COMMAND_CONSOLE_STACK_SIZE, mainUART_COMMAND_CONSOLE_TASK_PRIORITY );
+
+    // Initialize the SD card
     pxSDDisk = FF_SDDiskInit( mainSD_CARD_DISK_NAME );
 
+    // Start FreeRTOS
     vTaskStartScheduler();
-
 
     while(1);
 }
@@ -106,7 +125,7 @@ void main_rtos_program() {
 /////////////////////////////////
 // System Initialization Task  //
 /////////////////////////////////
-void system_init( void ) {
+void prv_vSystemInit( void ) {
     xil_printf("==========================\n\r");
     xil_printf("Initializing the system...\n\r");
     ////////

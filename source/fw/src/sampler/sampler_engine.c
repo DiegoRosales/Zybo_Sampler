@@ -20,8 +20,6 @@
 #include "patch_loader.h"
 #include "sampler_engine.h"
 
-static uint32_t prv_ulStrToInt( const char *input_string, uint32_t input_string_length );
-
 // Lookup table to correlate note names with MIDI notes
 static const NOTE_LUT_STRUCT_t MIDI_NOTES_LUT[12] = {
     {"Ax",   21}, // Starts from A0
@@ -39,7 +37,7 @@ static const NOTE_LUT_STRUCT_t MIDI_NOTES_LUT[12] = {
 };
 
 // This function converts an string in int or hex to a uint32_t
-static uint32_t prv_ulStrToInt( const char *input_string, uint32_t input_string_length ) {
+static uint32_t prv_ulStrToInt( const char *input_string ) {
 
     const char *start_char = input_string;
     char *end_char;
@@ -203,7 +201,7 @@ uint8_t usGetMIDINoteNumber( const char *note_name ) {
     const char *note_number = note_letter + 1;
     const char *sharp_flag  = note_letter + 3;
 
-    uint32_t note_number_int = prv_ulStrToInt( note_number, 1 );
+    uint32_t note_number_int = prv_ulStrToInt( note_number );
 
     for( int i = 0; i < 12; i++ ) {
         if( MIDI_NOTES_LUT[i].note_name[0] == toupper(*note_letter) ) {
