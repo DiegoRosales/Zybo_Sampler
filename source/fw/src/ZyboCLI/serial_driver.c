@@ -46,7 +46,7 @@
 #include "semphr.h"
 
 /* Demo application includes. */
-#include "serial.h"
+#include "serial_driver.h"
 
 /* Xilinx includes. */
 #include "xuartps.h"

@@ -1,10 +1,11 @@
+//////////////////////////////////////////
+// FreeRTOS Tasks for the sampler engine
+//////////////////////////////////////////
+
 // C includes
 #include <string.h>
 
-/////////////////////////////////////////
 // Xilinx Includes
-/////////////////////////////////////////
-
 #include "xil_printf.h"
 #include "xparameters.h"
 #include "xgpio.h"
@@ -22,7 +23,7 @@
 #include "fat_CLI_apps.h"
 
 // Serial includes
-#include "serial.h"
+#include "serial_driver.h"
 
 // Sampler Includes
 #include "sampler_FreeRTOS_tasks.h"

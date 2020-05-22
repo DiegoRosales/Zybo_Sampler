@@ -18,7 +18,7 @@
 #include "FreeRTOS_CLI.h"
 
 /* Demo application includes. */
-#include "serial.h"
+#include "serial_driver.h"
 
 #include "zybo_uart_driver.h"
 
