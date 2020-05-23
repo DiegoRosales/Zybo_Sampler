@@ -51,7 +51,7 @@ static const NOTE_LUT_STRUCT_t MIDI_NOTES_LUT[12] = {
 
 // Static variables
 static uint8_t   json_patch_information_buffer[MAX_INST_FILE_SIZE]; // JSON File buffer
-static uint8_t * sf3_patch_buffer = NULL; // SF3 Buffer
+static uint8_t * sf2_patch_buffer = NULL; // SF2 Buffer
 
 //////////////////////////////////////////////////
 // Static Functions
@@ -134,44 +134,44 @@ PATCH_DESCRIPTOR_t * ulLoadPatchFromJSON( const char * json_file_dirname, const 
 }
 
 // This function will load a SoundFont3 file
-PATCH_DESCRIPTOR_t * ulLoadPatchFromSF3( const char * sf3_file_fullpath ) {
+PATCH_DESCRIPTOR_t * ulLoadPatchFromSF2( const char * sf2_file_fullpath ) {
     PATCH_DESCRIPTOR_t *patch_descriptor = NULL;
-    size_t              sf3_patch_buffer_len;
+    size_t              sf2_patch_buffer_len;
 
     // Step 1 - Open the json file containing the instrument information
-    SAMPLER_PRINTF_INFO("Step 1 - Load the SF3 File");
-    sf3_patch_buffer_len = xLoadFileToMemory_malloc( sf3_file_fullpath, &sf3_patch_buffer, MAX_SF3_FILE_SIZE, 0 );
+    SAMPLER_PRINTF_INFO("Step 1 - Load the SF2 File");
+    sf2_patch_buffer_len = xLoadFileToMemory_malloc( sf2_file_fullpath, &sf2_patch_buffer, MAX_SF2_FILE_SIZE, 0 );
 
-    if ( sf3_patch_buffer_len == 0 || sf3_patch_buffer == NULL ) {
-        SAMPLER_PRINTF_ERROR("Error while loading the SF3 file!");
+    if ( sf2_patch_buffer_len == 0 || sf2_patch_buffer == NULL ) {
+        SAMPLER_PRINTF_ERROR("Error while loading the SF2 file!");
         return NULL;
     }
 
-    vPrintSF3Info( sf3_patch_buffer, sf3_patch_buffer_len );
+    vPrintSF2Info( sf2_patch_buffer, sf2_patch_buffer_len );
 
     return patch_descriptor;
 
 }
 
 // This function will print the information of a SoundFont3 file
-void vPrintSF3FileInfo( const char * sf3_file_fullpath ) {
-    uint8_t            * local_sf3_patch_buffer;
-    size_t               local_sf3_patch_buffer_len;
+void vPrintSF2FileInfo( const char * sf2_file_fullpath ) {
+    uint8_t            * local_sf2_patch_buffer;
+    size_t               local_sf2_patch_buffer_len;
 
     // Step 1 - Open the json file containing the instrument information
-    SAMPLER_PRINTF_INFO("Step 1 - Load the SF3 File");
-    local_sf3_patch_buffer_len = xLoadFileToMemory_malloc( sf3_file_fullpath, &local_sf3_patch_buffer, MAX_SF3_FILE_SIZE, 0 );
+    SAMPLER_PRINTF_INFO("Step 1 - Load the SF2 File");
+    local_sf2_patch_buffer_len = xLoadFileToMemory_malloc( sf2_file_fullpath, &local_sf2_patch_buffer, MAX_SF2_FILE_SIZE, 0 );
 
-    if ( local_sf3_patch_buffer_len == 0 || local_sf3_patch_buffer == NULL ) {
-        SAMPLER_PRINTF_ERROR("Error while loading the SF3 file!");
+    if ( local_sf2_patch_buffer_len == 0 || local_sf2_patch_buffer == NULL ) {
+        SAMPLER_PRINTF_ERROR("Error while loading the SF2 file!");
         return;
     }
 
-    // Step 2 - Print SF3 information
-    vPrintSF3Info( local_sf3_patch_buffer, local_sf3_patch_buffer_len );
+    // Step 2 - Print SF2 information
+    vPrintSF2Info( local_sf2_patch_buffer, local_sf2_patch_buffer_len );
 
-    // Step 3 - Unload the SF3 file
-    vClearMemoryBuffer( local_sf3_patch_buffer );
+    // Step 3 - Unload the SF2 file
+    vClearMemoryBuffer( local_sf2_patch_buffer );
 }
 
 // This function converts an string in int or hex to a uint32_t

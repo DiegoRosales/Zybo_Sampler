@@ -7,8 +7,8 @@
 #define cliNEW_LINE "\n\r"
 
 #define LOAD_INSTRUMENT_TASK_NAME      "load_instrument"
-#define LOAD_SF3_TASK_NAME             "load_sf3"
-#define PRINT_SF3_INFO_TASK_NAME       "print_sf3_info"
+#define LOAD_SF2_TASK_NAME             "load_sf2"
+#define PRINT_SF2_INFO_TASK_NAME       "print_sf2_info"
 #define KEY_PLAYBACK_TASK_NAME         "key_playback"
 #define STOP_ALL_TASK_NAME             "stop_all"
 #define RUN_MIDI_CMD_TASK_NAME         "run_midi_cmd"

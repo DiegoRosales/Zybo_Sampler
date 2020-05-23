@@ -11,7 +11,7 @@ typedef struct {
 } file_path_t;
 
 PATCH_DESCRIPTOR_t * ulLoadPatchFromJSON( const char * json_file_dirname, const char * json_file_fullpath);
-PATCH_DESCRIPTOR_t * ulLoadPatchFromSF3( const char * sf3_file_fullpath );
-void                 vPrintSF3FileInfo( const char * sf3_file_fullpath );
+PATCH_DESCRIPTOR_t * ulLoadPatchFromSF2( const char * sf2_file_fullpath );
+void                 vPrintSF2FileInfo( const char * sf2_file_fullpath );
 
 #endif

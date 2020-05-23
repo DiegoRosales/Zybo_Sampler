@@ -28,18 +28,18 @@
 ///////////////////////////////////////
 // Static Functions
 ///////////////////////////////////////
-static BaseType_t prv_xPrintSF3InfoCMD( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
+static BaseType_t prv_xPrintSF2InfoCMD( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString );
 static void       ff_get_file_dir ( const char *file_path, char* dest );
 
 ///////////////////////////////////////
 // Command Definition Structure
 ///////////////////////////////////////
-// >> print_sf3_info <FILENAME>
-static const CLI_Command_Definition_t prv_xPrintSF3InfoCMD_definition =
+// >> print_sf2_info <FILENAME>
+static const CLI_Command_Definition_t prv_xPrintSF2InfoCMD_definition =
 {
-    "print_sf3_info", /* The command string to type. */
-    "\r\nprint_sf3_info <FILENAME>:\r\n Prints the information of a specified SF3 file\r\n",
-    prv_xPrintSF3InfoCMD, /* The function to run. */
+    "print_sf2_info", /* The command string to type. */
+    "\r\nprint_sf2_info <FILENAME>:\r\n Prints the information of a specified SF2 file\r\n",
+    prv_xPrintSF2InfoCMD, /* The function to run. */
     1 /* 1 parameter is expected. */
 };
 
@@ -55,28 +55,28 @@ static xQueueHandle xKeyParamsQueueHandler;
 ///////////////////////////////////////
 // Function to register the command
 ///////////////////////////////////////
-void vRegisterPrintSF3InfoCMD( void ) {
+void vRegisterPrintSF2InfoCMD( void ) {
 
   // Queue handlers to send data between the Commands and the Tasks
   xFilenameQueueHandler  = xQueueCreate(1, sizeof(file_path_handler_t));
   xReturnQueueHandler    = xQueueCreate(1, sizeof(uint32_t));
   xKeyParamsQueueHandler = xQueueCreate(1, sizeof(uint32_t));
 
-  FreeRTOS_CLIRegisterCommand( &prv_xPrintSF3InfoCMD_definition );
+  FreeRTOS_CLIRegisterCommand( &prv_xPrintSF2InfoCMD_definition );
 }
 
 ///////////////////////////////////////
 // Actual Command Implementation
 ///////////////////////////////////////
-static BaseType_t prv_xPrintSF3InfoCMD( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString ) {
+static BaseType_t prv_xPrintSF2InfoCMD( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString ) {
     
     const char *pcParameter;
 
     // Variables for the CLI Parameter Parser
     BaseType_t   xParameterStringLength;
 
-    // Variables for the sf3 loader task
-    TaskHandle_t         task_handle = xTaskGetHandle( PRINT_SF3_INFO_TASK_NAME );
+    // Variables for the sf2 loader task
+    TaskHandle_t         task_handle = xTaskGetHandle( PRINT_SF2_INFO_TASK_NAME );
     file_path_handler_t  my_file_path_handler;
     uint32_t             return_value = 1;
     uint32_t             cwd_path_len = 0;

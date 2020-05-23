@@ -53,6 +53,6 @@ typedef struct {
 
 
 void vDecodeWAVEInformation( uint8_t *riff_buffer, size_t riff_buffer_size, SAMPLE_FORMAT_t *sample_information );
-void vPrintSF3Info( uint8_t* sf3_buffer, size_t sf3_buffer_len );
+void vPrintSF2Info( uint8_t* sf2_buffer, size_t sf2_buffer_len );
 
 #endif

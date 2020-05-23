@@ -65,7 +65,7 @@
 
 // Instrument information
 #define MAX_INST_FILE_SIZE  20000     // 20k Characters for the json file
-#define MAX_SF3_FILE_SIZE   0x7F00000 // 133MB
+#define MAX_SF2_FILE_SIZE   0x7F00000 // 133MB
 #define MAX_SAMPLE_SIZE     0x1F00000 // 32MB
 #define MAX_NUM_OF_KEYS     128       // The MIDI spec allows for 128 keys
 #define MAX_NUM_OF_VELOCITY 128       // 7 bits of veolcity information according to the MIDI specification
@@ -80,7 +80,7 @@
 // Sample file format
 #define SAMPLE_FORMAT_RAW            0
 #define SAMPLE_FORMAT_WAVE           1
-#define SAMPLE_FORMAT_SF3            2
+#define SAMPLE_FORMAT_SF2            2
 #define SAMPLE_FORMAT_OTHER          127
 
 ////////////////////////////////////////////////////////////

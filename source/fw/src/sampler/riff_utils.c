@@ -19,9 +19,9 @@
 
 // Static functions
 static void prv_vPrintPHDR( SF_DESCRIPTOR_t * sf_descriptor );
-static void prv_vSF3DecodeINFO( uint8_t * info_chunk_buffer, size_t info_chunk_buffer_len, SF_DESCRIPTOR_t * sf_descriptor );
-static void prv_vSF3DecodeSDTA( uint8_t * sdta_chunk_buffer, size_t sdta_chunk_buffer_len, SF_DESCRIPTOR_t * sf_descriptor  );
-static void prv_vSF3DecodePDTA( uint8_t * pdta_chunk_buffer, size_t pdta_chunk_buffer_len, SF_DESCRIPTOR_t * sf_descriptor  );
+static void prv_vSF2DecodeINFO( uint8_t * info_chunk_buffer, size_t info_chunk_buffer_len, SF_DESCRIPTOR_t * sf_descriptor );
+static void prv_vSF2DecodeSDTA( uint8_t * sdta_chunk_buffer, size_t sdta_chunk_buffer_len, SF_DESCRIPTOR_t * sf_descriptor  );
+static void prv_vSF2DecodePDTA( uint8_t * pdta_chunk_buffer, size_t pdta_chunk_buffer_len, SF_DESCRIPTOR_t * sf_descriptor  );
 // Find the audio data of a WAVE chunk
 static void prv_vFindWAVEData( uint8_t * buffer, uint8_t * buffer_end, SAMPLE_FORMAT_t *sample_information ) {
 
@@ -127,8 +127,8 @@ void vDecodeWAVEInformation( uint8_t *riff_buffer, size_t riff_buffer_size, SAMP
     }
 }
 
-// Print SF3 Information
-void vPrintSF3Info( uint8_t* sf3_buffer, size_t sf3_buffer_len ) {
+// Print SF2 Information
+void vPrintSF2Info( uint8_t* sf2_buffer, size_t sf2_buffer_len ) {
 
     RIFF_DESCRIPTOR_CHUNK_t      * riff_descriptor_chunk = NULL;
     RIFF_BASE_CHUNK_t            * curr_chunk            = NULL;
@@ -138,7 +138,7 @@ void vPrintSF3Info( uint8_t* sf3_buffer, size_t sf3_buffer_len ) {
     size_t                         current_sub_chunk_len = 0;
     SF_DESCRIPTOR_t                sf_descriptor;
 
-    riff_descriptor_chunk = cmdGET_RIFF_DESCRIPTOR_CHUNK(sf3_buffer);
+    riff_descriptor_chunk = cmdGET_RIFF_DESCRIPTOR_CHUNK(sf2_buffer);
 
     if( riff_descriptor_chunk->BaseChunk.ChunkID != RIFF_ASCII_TOKEN ) {
         SAMPLER_PRINTF_ERROR("Error while parsing the RIFF information. Buffer is not RIFF.");
@@ -146,14 +146,14 @@ void vPrintSF3Info( uint8_t* sf3_buffer, size_t sf3_buffer_len ) {
     }
 
     if( riff_descriptor_chunk->FormType != SFBK_ASCII_TOKEN ) {
-        SAMPLER_PRINTF_ERROR("Error while parsing the SF3 information. Buffer is not SF3");
+        SAMPLER_PRINTF_ERROR("Error while parsing the SF2 information. Buffer is not SF2");
         return;
     } else {
-        SAMPLER_PRINTF_INFO("Buffer is SF3!");
+        SAMPLER_PRINTF_INFO("Buffer is SF2!");
     }
 
     // Go to the first section
-    current_buffer_ptr = sf3_buffer + sizeof(RIFF_DESCRIPTOR_CHUNK_t);
+    current_buffer_ptr = sf2_buffer + sizeof(RIFF_DESCRIPTOR_CHUNK_t);
 
     // Go through all the chunks
     do {
@@ -161,7 +161,7 @@ void vPrintSF3Info( uint8_t* sf3_buffer, size_t sf3_buffer_len ) {
         curr_chunk = cmdGET_RIFF_BASE_CHUNK(current_buffer_ptr);
 
         if (curr_chunk->ChunkID == LIST_ASCII_TOKEN) {
-            SAMPLER_PRINTF_DEBUG("Current SF3 chunk is LIST at address 0x%x", current_buffer_ptr);
+            SAMPLER_PRINTF_DEBUG("Current SF2 chunk is LIST at address 0x%x", current_buffer_ptr);
 
             curr_list_chunk = cmdGET_RIFF_LIST_DESCRIPTOR_CHUNK(current_buffer_ptr);
 
@@ -172,21 +172,21 @@ void vPrintSF3Info( uint8_t* sf3_buffer, size_t sf3_buffer_len ) {
                     SAMPLER_PRINTF_DEBUG("Current LIST sub-chunk is sdta at address 0x%x", current_buffer_ptr);
                     current_sub_chunk_ptr = current_buffer_ptr + sizeof(RIFF_LIST_DESCRIPTOR_CHUNK_t);
                     current_sub_chunk_len = curr_list_chunk->BaseChunk.ChunkSize - sizeof(RIFF_BASE_CHUNK_t);
-                    prv_vSF3DecodeSDTA(current_sub_chunk_ptr, current_sub_chunk_len, &sf_descriptor);
+                    prv_vSF2DecodeSDTA(current_sub_chunk_ptr, current_sub_chunk_len, &sf_descriptor);
                     break;
 
                 case PDTA_ASCII_TOKEN:
                     SAMPLER_PRINTF_DEBUG("Current LIST sub-chunk is pdta at address 0x%x", current_buffer_ptr);
                     current_sub_chunk_ptr = current_buffer_ptr + sizeof(RIFF_LIST_DESCRIPTOR_CHUNK_t);
                     current_sub_chunk_len = curr_list_chunk->BaseChunk.ChunkSize - sizeof(RIFF_BASE_CHUNK_t);
-                    prv_vSF3DecodePDTA(current_sub_chunk_ptr, current_sub_chunk_len, &sf_descriptor);
+                    prv_vSF2DecodePDTA(current_sub_chunk_ptr, current_sub_chunk_len, &sf_descriptor);
                     break;
 
                 case INFO_ASCII_TOKEN:
                     SAMPLER_PRINTF_DEBUG("Current LIST sub-chunk is INFO at address 0x%x", current_buffer_ptr);
                     current_sub_chunk_ptr = current_buffer_ptr + sizeof(RIFF_LIST_DESCRIPTOR_CHUNK_t);
                     current_sub_chunk_len = curr_list_chunk->BaseChunk.ChunkSize - sizeof(RIFF_BASE_CHUNK_t);
-                    prv_vSF3DecodeINFO(current_sub_chunk_ptr, current_sub_chunk_len, &sf_descriptor);
+                    prv_vSF2DecodeINFO(current_sub_chunk_ptr, current_sub_chunk_len, &sf_descriptor);
                     break;
                 
                 default:
@@ -195,19 +195,19 @@ void vPrintSF3Info( uint8_t* sf3_buffer, size_t sf3_buffer_len ) {
             }
 
         } else {
-            SAMPLER_PRINTF_ERROR("I don't know what type of SF3 chunk this is! ChunkID = %x, Address = 0x%x", curr_chunk->ChunkID, current_buffer_ptr);
+            SAMPLER_PRINTF_ERROR("I don't know what type of SF2 chunk this is! ChunkID = %x, Address = 0x%x", curr_chunk->ChunkID, current_buffer_ptr);
             break;
         }
 
         // Go to the next chunk
         current_buffer_ptr += curr_chunk->ChunkSize + sizeof(RIFF_BASE_CHUNK_t);
-    } while ( current_buffer_ptr < (sf3_buffer + sf3_buffer_len) );
+    } while ( current_buffer_ptr < (sf2_buffer + sf2_buffer_len) );
 
-    SAMPLER_PRINTF_INFO("SF3 Decoding done!");
+    SAMPLER_PRINTF_INFO("SF2 Decoding done!");
 
     // Print presets
     if ( sf_descriptor.sf_pdata_list_descriptor.PHDR_CHUNK == NULL ) {
-        SAMPLER_PRINTF_ERROR("SF3 Doesn't have a preset header!");
+        SAMPLER_PRINTF_ERROR("SF2 Doesn't have a preset header!");
         return;
     }
 
@@ -219,18 +219,16 @@ void prv_vPrintPHDR( SF_DESCRIPTOR_t * sf_descriptor ) {
     size_t                   phdr_len        = 0;
     uint32_t                 num_of_presets  = 0;
     SF_PHDR_CHUNK_DATA_t   * curr_phdr_chunk = NULL;
-    SF_CHAR_t                preset_name[21];
 
     // Get the length
     phdr_len       = sf_descriptor->sf_pdata_list_descriptor.PHDR_CHUNK->BaseChunk.ChunkSize;
-    num_of_presets = phdr_len/38;
+    num_of_presets = phdr_len/SF_PHDR_DATA_LEN;
 
     // First header
     curr_phdr_chunk = &sf_descriptor->sf_pdata_list_descriptor.PHDR_CHUNK->SF_PHDR_CHUNK_DATA;
 
     for( int i = 0; i < num_of_presets; i = i + 1 ) {
-        memcpy(preset_name, curr_phdr_chunk->achPresetName, sizeof(SF_CHAR_t)*20);
-        SAMPLER_PRINTF_INFO("Preset [%03d] ---------- %s", i, preset_name);
+        SAMPLER_PRINTF_INFO("Preset [%03d] --------------- %.20s", i, curr_phdr_chunk->achPresetName);
         SAMPLER_PRINTF_INFO("  MIDI Preset Number = 0x%x ", curr_phdr_chunk->wPreset);
         SAMPLER_PRINTF_INFO("  MIDI Bank Number   = 0x%x ", curr_phdr_chunk->wBank);
         SAMPLER_PRINTF_INFO("  Preset Bag Index   = 0x%x ", curr_phdr_chunk->wPresetBagNdx);
@@ -242,7 +240,7 @@ void prv_vPrintPHDR( SF_DESCRIPTOR_t * sf_descriptor ) {
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// Decode SF3 INFO Chunk
+// Decode SF2 INFO Chunk
 //////////////////////////////////////////////////////////////////////////////////////////////////
 //<INFO-list> -> LIST (‘INFO’
 //                      {
@@ -260,11 +258,11 @@ void prv_vPrintPHDR( SF_DESCRIPTOR_t * sf_descriptor ) {
 //                      }
 //                    )
 //////////////////////////////////////////////////////////////////////////////////////////////////
-void prv_vSF3DecodeINFO( uint8_t * info_chunk_buffer, size_t info_chunk_buffer_len, SF_DESCRIPTOR_t * sf_descriptor ) {
+void prv_vSF2DecodeINFO( uint8_t * info_chunk_buffer, size_t info_chunk_buffer_len, SF_DESCRIPTOR_t * sf_descriptor ) {
 
     // Sanity check
     if ( sf_descriptor == NULL ) {
-        SAMPLER_PRINTF_ERROR("Error decoding SF3 Info - sf_descriptor == NULL");
+        SAMPLER_PRINTF_ERROR("Error decoding SF2 Info - sf_descriptor == NULL");
         return;
     }
 
@@ -370,7 +368,7 @@ void prv_vSF3DecodeINFO( uint8_t * info_chunk_buffer, size_t info_chunk_buffer_l
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// Decode SF3 sdta Chunk
+// Decode SF2 sdta Chunk
 //////////////////////////////////////////////////////////////////////////////////////////////////
 //<sdta-ck> -> LIST (‘sdta’
 //                    {
@@ -381,11 +379,11 @@ void prv_vSF3DecodeINFO( uint8_t * info_chunk_buffer, size_t info_chunk_buffer_l
 //                    }
 //                  )
 //////////////////////////////////////////////////////////////////////////////////////////////////
-void prv_vSF3DecodeSDTA( uint8_t * sdta_chunk_buffer, size_t sdta_chunk_buffer_len, SF_DESCRIPTOR_t * sf_descriptor  ) {
+void prv_vSF2DecodeSDTA( uint8_t * sdta_chunk_buffer, size_t sdta_chunk_buffer_len, SF_DESCRIPTOR_t * sf_descriptor  ) {
 
     // Sanity check
     if ( sf_descriptor == NULL ) {
-        SAMPLER_PRINTF_ERROR("Error decoding SF3 SDTA - sf_descriptor == NULL");
+        SAMPLER_PRINTF_ERROR("Error decoding SF2 SDTA - sf_descriptor == NULL");
         return;
     }
 
@@ -428,7 +426,7 @@ void prv_vSF3DecodeSDTA( uint8_t * sdta_chunk_buffer, size_t sdta_chunk_buffer_l
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// Decode SF3 pdta Chunk
+// Decode SF2 pdta Chunk
 //////////////////////////////////////////////////////////////////////////////////////////////////
 //<pdta-ck> -> LIST (‘pdta’
 //                    {
@@ -444,10 +442,10 @@ void prv_vSF3DecodeSDTA( uint8_t * sdta_chunk_buffer, size_t sdta_chunk_buffer_l
 //                    }
 //                  )
 //////////////////////////////////////////////////////////////////////////////////////////////////
-void prv_vSF3DecodePDTA( uint8_t * pdta_chunk_buffer, size_t pdta_chunk_buffer_len, SF_DESCRIPTOR_t * sf_descriptor  ) {
+void prv_vSF2DecodePDTA( uint8_t * pdta_chunk_buffer, size_t pdta_chunk_buffer_len, SF_DESCRIPTOR_t * sf_descriptor  ) {
     // Sanity check
     if ( sf_descriptor == NULL ) {
-        SAMPLER_PRINTF_ERROR("Error decoding SF3 PDTA - sf_descriptor == NULL");
+        SAMPLER_PRINTF_ERROR("Error decoding SF2 PDTA - sf_descriptor == NULL");
         return;
     }
 

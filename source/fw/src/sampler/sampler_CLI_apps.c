@@ -34,12 +34,12 @@ void vRegisterSamplerCLICommands( void ) {
     vRegisterPlayKeyCMD();
     vRegisterLoadSineWaveCMD();
     vRegisterPlaybackSineWaveCMD();
-    vRegisterPrintSF3InfoCMD();
+    vRegisterPrintSF2InfoCMD();
     vRegisterStartMIDIListenerCMD();
     vRegisterStopAllPlaybackCMD();
     vRegisterMIDIKeyPlayASCIICMD();
     vRegisterMIDIKeyPlayCMD();
-    vRegisterLoadSF3CMD();
+    vRegisterLoadSF2CMD();
     vRegisterLoadInstrumentCMD();
 }
 

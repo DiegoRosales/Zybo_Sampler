@@ -8,6 +8,10 @@
 
 #include "riff_utils.h"
 
+/////////////////////////////////////////
+// RIFF ChunkID Tokens
+/////////////////////////////////////////
+
 // List Chunk Tokens
 #define SFBK_ASCII_TOKEN   0x6b626673 // ASCII String == "sfbk"
 #define INFO_ASCII_TOKEN   0x4F464E49 // ASCII String == "INFO"
@@ -15,7 +19,6 @@
 #define PDTA_ASCII_TOKEN   0x61746470 // ASCII String == "pdta"
 
 // Sub List Chunk Tokens
-
 // INFO
 #define IFIL_ASCII_TOKEN 0x6C696669 // ASCII String == "ifil"
 #define ISNG_ASCII_TOKEN 0x676E7369 // ASCII String == "isng"
@@ -44,7 +47,16 @@
 #define IGEN_ASCII_TOKEN 0x6E656769 // ASCII String == "igen"
 #define SHDR_ASCII_TOKEN 0x72646873 // ASCII String == "shdr"
 
-// Data types
+/////////////////////////////////////////
+// Misc. Constants from the SoundFont spec
+/////////////////////////////////////////
+// PHDR
+#define SF_PHDR_DATA_LEN      38 // Each data segment is 38 bytes long
+#define SF_PHDR_PRST_NAME_LEN 20 // The preset name is 20 characters long
+
+/////////////////////////////////////////
+// SoundFont Data types
+/////////////////////////////////////////
 typedef char     SF_ASCII_t;     // Char
 typedef uint8_t  SF_BYTE_t;      // 8-bit unsigned
 typedef int8_t   SF_CHAR_t;      // 8-bit signed
@@ -396,7 +408,7 @@ typedef struct {
 // multiple of thirty-eight bytes in length, and contains a minimum of two records, one record for each preset and one for a
 // terminal record according to the structure:
 typedef struct {
-  SF_CHAR_t           achPresetName[20];
+  SF_CHAR_t           achPresetName[SF_PHDR_PRST_NAME_LEN];
   SF_WORD_t           wPreset;
   SF_WORD_t           wBank;
   SF_WORD_t           wPresetBagNdx;

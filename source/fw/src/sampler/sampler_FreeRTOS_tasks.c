@@ -37,8 +37,8 @@ static PATCH_DESCRIPTOR_t *patch_descriptor = NULL;
 static void prv_vKeyPlaybackTask( void *pvParameters );
 static void prv_vStopAllPlaybackTask( void *pvParameters );
 static void prv_vLoadInstrumentTask( void *pvParameters );
-static void prv_vLoadSF3Task( void *pvParameters );
-static void prv_vPrintSF3InfoTask( void *pvParameters );
+static void prv_vLoadSF2Task( void *pvParameters );
+static void prv_vPrintSF2InfoTask( void *pvParameters );
 static void prv_vRunMIDICommandTask( void *pvParameters );
 static void prv_vSerialMIDIListenerTask( void *pvParameters );
 
@@ -54,16 +54,16 @@ void vRegisterSamplerEngineTasks ( void ) {
                     NULL );                            /* Used to pass out the created task's handle. */
 
     xTaskCreate(
-                    prv_vLoadSF3Task,                  /* Function that implements the task. */
-                    LOAD_SF3_TASK_NAME,                /* Text name for the task. */
+                    prv_vLoadSF2Task,                  /* Function that implements the task. */
+                    LOAD_SF2_TASK_NAME,                /* Text name for the task. */
                     0x2000,                            /* Stack size in words, not bytes. */
                     ( void * ) patch_descriptor,       /* Parameter passed into the task. */
                     tskIDLE_PRIORITY,                  /* Priority at which the task is created. */
                     NULL );                            /* Used to pass out the created task's handle. */
 
     xTaskCreate(
-                    prv_vPrintSF3InfoTask,             /* Function that implements the task. */
-                    PRINT_SF3_INFO_TASK_NAME,          /* Text name for the task. */
+                    prv_vPrintSF2InfoTask,             /* Function that implements the task. */
+                    PRINT_SF2_INFO_TASK_NAME,          /* Text name for the task. */
                     0x2000,                            /* Stack size in words, not bytes. */
                     ( void * ) patch_descriptor,       /* Parameter passed into the task. */
                     tskIDLE_PRIORITY,                  /* Priority at which the task is created. */
@@ -297,7 +297,7 @@ static void prv_vLoadInstrumentTask( void *pvParameters ) {
 // This task loads the instrument using a .json file
 // The .json file contains all the information regarding
 // Key, velocity ranges, and associated sample
-static void prv_vLoadSF3Task( void *pvParameters ) {
+static void prv_vLoadSF2Task( void *pvParameters ) {
     BaseType_t          notification_received;
     const TickType_t    xBlockTime = 500;
     uint32_t            ulNotifiedValue;
@@ -315,17 +315,17 @@ static void prv_vLoadSF3Task( void *pvParameters ) {
 
         if ( notification_received == pdTRUE ) {
 
-            SAMPLER_PRINTF("Starting SF3 loader...\n\n\r");
+            SAMPLER_PRINTF("Starting SF2 loader...\n\n\r");
 
             if( ! xQueueReceive((QueueHandle_t) ulNotifiedValue, path_handler, xBlockTime) ) {
                 SAMPLER_PRINTF("Error receiving the Queue!\n\r");
             }
             else {
                 return_value = 0;
-                SAMPLER_PRINTF("Loading SF3 \"%s\"\n\r", path_handler->file_path);
+                SAMPLER_PRINTF("Loading SF2 \"%s\"\n\r", path_handler->file_path);
 
                 // Load the samples
-                patch_descriptor = ulLoadPatchFromSF3( path_handler->file_path );
+                patch_descriptor = ulLoadPatchFromSF2( path_handler->file_path );
 
                 if (patch_descriptor == NULL) {
                     SAMPLER_PRINTF_ERROR("Patch Loader returned patch_descriptor == NULL (0x%x)", patch_descriptor );
@@ -349,8 +349,8 @@ static void prv_vLoadSF3Task( void *pvParameters ) {
 }
 
 
-// This task loads an SF3 patch and prints its information
-static void prv_vPrintSF3InfoTask( void *pvParameters ) {
+// This task loads an SF2 patch and prints its information
+static void prv_vPrintSF2InfoTask( void *pvParameters ) {
     BaseType_t          notification_received;
     const TickType_t    xBlockTime = 500;
     uint32_t            ulNotifiedValue;
@@ -368,17 +368,17 @@ static void prv_vPrintSF3InfoTask( void *pvParameters ) {
 
         if ( notification_received == pdTRUE ) {
 
-            SAMPLER_PRINTF("Printing SF3 Info...\n\n\r");
+            SAMPLER_PRINTF("Printing SF2 Info...\n\n\r");
 
             if( ! xQueueReceive((QueueHandle_t) ulNotifiedValue, path_handler, xBlockTime) ) {
                 SAMPLER_PRINTF("Error receiving the Queue!\n\r");
             }
             else {
                 return_value = 0;
-                SAMPLER_PRINTF("Loading SF3 \"%s\"\n\r", path_handler->file_path);
+                SAMPLER_PRINTF("Loading SF2 \"%s\"\n\r", path_handler->file_path);
 
                 // Load the samples
-                vPrintSF3FileInfo( path_handler->file_path );
+                vPrintSF2FileInfo( path_handler->file_path );
 
                 xQueueSend(path_handler->return_handle, &return_value, 1000);
             }

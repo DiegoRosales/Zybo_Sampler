@@ -4,12 +4,12 @@
 void vRegisterPlayKeyCMD( void );
 void vRegisterLoadSineWaveCMD( void );
 void vRegisterPlaybackSineWaveCMD( void );
-void vRegisterPrintSF3InfoCMD( void );
+void vRegisterPrintSF2InfoCMD( void );
 void vRegisterStartMIDIListenerCMD( void );
 void vRegisterStopAllPlaybackCMD( void );
 void vRegisterMIDIKeyPlayASCIICMD( void );
 void vRegisterMIDIKeyPlayCMD( void );
-void vRegisterLoadSF3CMD( void );
+void vRegisterLoadSF2CMD( void );
 void vRegisterLoadInstrumentCMD( void );
 
 #endif
