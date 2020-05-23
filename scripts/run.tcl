@@ -109,7 +109,6 @@ if {$stage_error == 1} {
             app config -name ${app_project_name} -add include-path {${workspace_loc:/${ProjName}/src/common/ZyboSD}}
             app config -name ${app_project_name} -add include-path {${workspace_loc:/${ProjName}/src/common/nco}}
             app config -name ${app_project_name} -add include-path {${workspace_loc:/${ProjName}/src/common/jsmn}}
-            app config -name ${app_project_name} -add include-path {${workspace_loc:/${ProjName}/src/common/sampler/FreeRTOS_CLI_Apps/include}}
             app config -name ${app_project_name} -add include-path {${workspace_loc:/${ProjName}/src/common/sampler/include}}
 
             platform generate

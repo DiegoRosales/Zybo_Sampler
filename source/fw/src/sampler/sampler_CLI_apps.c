@@ -25,8 +25,17 @@
 #include "sampler_engine.h"
 #include "nco.h"
 
-// CLI Apps
-#include "SamplerCMDRegisterFunctions.h"
+// CLI Apps (each implemented on its own file)
+extern void vRegisterPlayKeyCMD( void );
+extern void vRegisterLoadSineWaveCMD( void );
+extern void vRegisterPlaybackSineWaveCMD( void );
+extern void vRegisterPrintSF2InfoCMD( void );
+extern void vRegisterStartMIDIListenerCMD( void );
+extern void vRegisterStopAllPlaybackCMD( void );
+extern void vRegisterMIDIKeyPlayASCIICMD( void );
+extern void vRegisterMIDIKeyPlayCMD( void );
+extern void vRegisterLoadSF2CMD( void );
+extern void vRegisterLoadInstrumentCMD( void );
 
 // This function registers all the CLI applications
 void vRegisterSamplerCLICommands( void ) {
