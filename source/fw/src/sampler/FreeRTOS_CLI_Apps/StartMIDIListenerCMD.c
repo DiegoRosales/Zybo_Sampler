@@ -70,7 +70,7 @@ static BaseType_t prv_xStartMIDIListenerCMD( char *pcWriteBuffer, size_t xWriteB
 	uint32_t return_value = 1;
 
     // Variables for the key playback task
-    TaskHandle_t     serial_midi_listener_task_handler = xTaskGetHandle( SERIAL_MIDI_LISTENER_TASK_NAME );
+    TaskHandle_t     serial_midi_listener_task_handler = xTaskGetHandle( SERIAL_MIDI_LISTENER_TASK_TASK_NAME );
 
     // Wake up the task and send the full MIDI command the parameters
     xTaskNotify( serial_midi_listener_task_handler,

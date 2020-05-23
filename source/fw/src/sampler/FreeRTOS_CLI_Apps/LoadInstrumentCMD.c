@@ -76,10 +76,10 @@ static BaseType_t prv_xLoadInstrumentCMD( char *pcWriteBuffer, size_t xWriteBuff
     BaseType_t   xParameterStringLength;
 
     // Variables for the instrument loader task
-    TaskHandle_t         task_handle = xTaskGetHandle( LOAD_INSTRUMENT_TASK_NAME );
-    file_path_handler_t  my_file_path_handler;
+    TaskHandle_t         task_handle  = xTaskGetHandle( LOAD_INSTRUMENT_TASK_NAME );
     uint32_t             return_value = 1;
     uint32_t             cwd_path_len = 0;
+    file_path_handler_t  my_file_path_handler;
 
     /* The file has not been opened yet.  Find the file name. */
     pcParameter = FreeRTOS_CLIGetParameter
