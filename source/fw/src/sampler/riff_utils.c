@@ -64,17 +64,17 @@ void vDecodeWAVEInformation( uint8_t *riff_buffer, size_t riff_buffer_size, SAMP
 
     // Step 1 - Check that the inputs are valid
     if( riff_buffer == NULL ) {
-        SAMPLER_PRINTF_ERROR("Error while extracting the RIFF information. Sample buffer = NULL");
+        RIFF_PRINTF_ERROR("Error while extracting the RIFF information. Sample buffer = NULL");
         return;
     }
 
     if( riff_buffer_size <= (sizeof( WAVE_FORMAT_t ) + sizeof( RIFF_BASE_CHUNK_t ) ) ) {
-        SAMPLER_PRINTF_ERROR("Error while extracting the RIFF information. Sample buffer size is too small. Sample size = %d", riff_buffer_size);
+        RIFF_PRINTF_ERROR("Error while extracting the RIFF information. Sample buffer size is too small. Sample size = %d", riff_buffer_size);
         return;
     }
 
     if( sample_information == NULL ) {
-        SAMPLER_PRINTF_ERROR("Error while extracting the RIFF information. Pointer to the riff information = NULL");
+        RIFF_PRINTF_ERROR("Error while extracting the RIFF information. Pointer to the riff information = NULL");
         return;
     }
 
@@ -86,7 +86,7 @@ void vDecodeWAVEInformation( uint8_t *riff_buffer, size_t riff_buffer_size, SAMP
 
     // Step 2 - Check that this is a RIFF file with proper format
     if( main_riff_chunk->BaseChunk.ChunkID != RIFF_ASCII_TOKEN ) {
-        SAMPLER_PRINTF_ERROR("Error while parsing the RIFF information. Buffer is not RIFF.");
+        RIFF_PRINTF_ERROR("Error while parsing the RIFF information. Buffer is not RIFF.");
         return;
     }
 
@@ -95,7 +95,7 @@ void vDecodeWAVEInformation( uint8_t *riff_buffer, size_t riff_buffer_size, SAMP
         memcpy( &wave_format_data, riff_buffer, sizeof( WAVE_FORMAT_t ) );
 
         if( wave_format_data.FormatDescriptor.BaseChunk.ChunkID != FMT_ASCII_TOKEN ) {
-            SAMPLER_PRINTF_ERROR("Error while parsing the RIFF information. Subc Chunk 1 is not \"fmt \".");
+            RIFF_PRINTF_ERROR("Error while parsing the RIFF information. Subc Chunk 1 is not \"fmt \".");
             return;
         }
 
@@ -115,15 +115,15 @@ void vDecodeWAVEInformation( uint8_t *riff_buffer, size_t riff_buffer_size, SAMP
         prv_vFindWAVEData( riff_buffer_idx, (riff_buffer + riff_buffer_size),  sample_information);
 
         if( sample_information->data_start_ptr == NULL ) {
-            SAMPLER_PRINTF_ERROR("Couldn't find the DATA chunk!");
+            RIFF_PRINTF_ERROR("Couldn't find the DATA chunk!");
             return;
         } else if ( sample_information->audio_data_size == 0 ) {
-            SAMPLER_PRINTF_ERROR("Audio Data Size = 0!");
+            RIFF_PRINTF_ERROR("Audio Data Size = 0!");
             return;
         }
 
     } else {
-        SAMPLER_PRINTF_ERROR("Error while parsing the RIFF information. Buffer format is not WAVE.");
+        RIFF_PRINTF_ERROR("Error while parsing the RIFF information. Buffer format is not WAVE.");
         return;
     }
 }
@@ -142,15 +142,15 @@ void vPrintSF2Info( uint8_t* sf2_buffer, size_t sf2_buffer_len ) {
     riff_descriptor_chunk = cmdGET_RIFF_DESCRIPTOR_CHUNK(sf2_buffer);
 
     if( riff_descriptor_chunk->BaseChunk.ChunkID != RIFF_ASCII_TOKEN ) {
-        SAMPLER_PRINTF_ERROR("Error while parsing the RIFF information. Buffer is not RIFF.");
+        RIFF_PRINTF_ERROR("Error while parsing the RIFF information. Buffer is not RIFF.");
         return;
     }
 
     if( riff_descriptor_chunk->FormType != SFBK_ASCII_TOKEN ) {
-        SAMPLER_PRINTF_ERROR("Error while parsing the SF2 information. Buffer is not SF2");
+        RIFF_PRINTF_ERROR("Error while parsing the SF2 information. Buffer is not SF2");
         return;
     } else {
-        SAMPLER_PRINTF_INFO("Buffer is SF2!");
+        RIFF_PRINTF_INFO("Buffer is SF2!");
     }
 
     // Go to the first section
@@ -162,7 +162,7 @@ void vPrintSF2Info( uint8_t* sf2_buffer, size_t sf2_buffer_len ) {
         curr_chunk = cmdGET_RIFF_BASE_CHUNK(current_buffer_ptr);
 
         if (curr_chunk->ChunkID == LIST_ASCII_TOKEN) {
-            SAMPLER_PRINTF_DEBUG("Current SF2 chunk is LIST at address 0x%x", current_buffer_ptr);
+            RIFF_PRINTF_DEBUG("Current SF2 chunk is LIST at address 0x%x", current_buffer_ptr);
 
             curr_list_chunk = cmdGET_RIFF_LIST_DESCRIPTOR_CHUNK(current_buffer_ptr);
 
@@ -170,33 +170,33 @@ void vPrintSF2Info( uint8_t* sf2_buffer, size_t sf2_buffer_len ) {
             switch (curr_list_chunk->ListType)
             {
                 case SDTA_ASCII_TOKEN:
-                    SAMPLER_PRINTF_DEBUG("Current LIST sub-chunk is sdta at address 0x%x", current_buffer_ptr);
+                    RIFF_PRINTF_DEBUG("Current LIST sub-chunk is sdta at address 0x%x", current_buffer_ptr);
                     current_sub_chunk_ptr = current_buffer_ptr + sizeof(RIFF_LIST_DESCRIPTOR_CHUNK_t);
                     current_sub_chunk_len = curr_list_chunk->BaseChunk.ChunkSize - sizeof(RIFF_BASE_CHUNK_t);
                     prv_vSF2DecodeSDTA(current_sub_chunk_ptr, current_sub_chunk_len, &sf_descriptor);
                     break;
 
                 case PDTA_ASCII_TOKEN:
-                    SAMPLER_PRINTF_DEBUG("Current LIST sub-chunk is pdta at address 0x%x", current_buffer_ptr);
+                    RIFF_PRINTF_DEBUG("Current LIST sub-chunk is pdta at address 0x%x", current_buffer_ptr);
                     current_sub_chunk_ptr = current_buffer_ptr + sizeof(RIFF_LIST_DESCRIPTOR_CHUNK_t);
                     current_sub_chunk_len = curr_list_chunk->BaseChunk.ChunkSize - sizeof(RIFF_BASE_CHUNK_t);
                     prv_vSF2DecodePDTA(current_sub_chunk_ptr, current_sub_chunk_len, &sf_descriptor);
                     break;
 
                 case INFO_ASCII_TOKEN:
-                    SAMPLER_PRINTF_DEBUG("Current LIST sub-chunk is INFO at address 0x%x", current_buffer_ptr);
+                    RIFF_PRINTF_DEBUG("Current LIST sub-chunk is INFO at address 0x%x", current_buffer_ptr);
                     current_sub_chunk_ptr = current_buffer_ptr + sizeof(RIFF_LIST_DESCRIPTOR_CHUNK_t);
                     current_sub_chunk_len = curr_list_chunk->BaseChunk.ChunkSize - sizeof(RIFF_BASE_CHUNK_t);
                     prv_vSF2DecodeINFO(current_sub_chunk_ptr, current_sub_chunk_len, &sf_descriptor);
                     break;
                 
                 default:
-                    SAMPLER_PRINTF_ERROR("I don't know what type of LIST sub-chunk this is! ChunkID = %x, Address = 0x%x", curr_chunk->ChunkID, current_buffer_ptr);
+                    RIFF_PRINTF_ERROR("I don't know what type of LIST sub-chunk this is! ChunkID = %x, Address = 0x%x", curr_chunk->ChunkID, current_buffer_ptr);
                     break;
             }
 
         } else {
-            SAMPLER_PRINTF_ERROR("I don't know what type of SF2 chunk this is! ChunkID = %x, Address = 0x%x", curr_chunk->ChunkID, current_buffer_ptr);
+            RIFF_PRINTF_ERROR("I don't know what type of SF2 chunk this is! ChunkID = %x, Address = 0x%x", curr_chunk->ChunkID, current_buffer_ptr);
             break;
         }
 
@@ -204,11 +204,11 @@ void vPrintSF2Info( uint8_t* sf2_buffer, size_t sf2_buffer_len ) {
         current_buffer_ptr += curr_chunk->ChunkSize + sizeof(RIFF_BASE_CHUNK_t);
     } while ( current_buffer_ptr < (sf2_buffer + sf2_buffer_len) );
 
-    SAMPLER_PRINTF_INFO("SF2 Decoding done!");
+    RIFF_PRINTF_INFO("SF2 Decoding done!");
 
     // Print presets
     if ( sf_descriptor.sf_pdata_list_descriptor.PHDR_CHUNK == NULL ) {
-        SAMPLER_PRINTF_ERROR("SF2 Doesn't have a preset header!");
+        RIFF_PRINTF_ERROR("SF2 Doesn't have a preset header!");
         return;
     }
 
@@ -216,7 +216,7 @@ void vPrintSF2Info( uint8_t* sf2_buffer, size_t sf2_buffer_len ) {
 
     // Print samples
     if ( sf_descriptor.sf_pdata_list_descriptor.SHDR_CHUNK == NULL ) {
-        SAMPLER_PRINTF_ERROR("SF2 Doesn't have a sample header!");
+        RIFF_PRINTF_ERROR("SF2 Doesn't have a sample header!");
         return;
     }
 
@@ -237,15 +237,15 @@ void prv_vPrintPHDR( SF_DESCRIPTOR_t * sf_descriptor ) {
     // First header
     curr_phdr_chunk = &sf_descriptor->sf_pdata_list_descriptor.PHDR_CHUNK->SF_PHDR_CHUNK_DATA;
 
-    SAMPLER_PRINTF_INFO("------------ DECODING %d PRESETS ------------", num_of_presets);
+    RIFF_PRINTF_INFO("------------ DECODING %d PRESETS ------------", num_of_presets);
     for( int i = 0; i < num_of_presets; i = i + 1 ) {
-        SAMPLER_PRINTF_INFO("Preset [%03d] --------------- %.20s", i, curr_phdr_chunk->achPresetName);
-        SAMPLER_PRINTF_INFO("  MIDI Preset Number = 0x%x ", curr_phdr_chunk->wPreset);
-        SAMPLER_PRINTF_INFO("  MIDI Bank Number   = 0x%x ", curr_phdr_chunk->wBank);
-        SAMPLER_PRINTF_INFO("  Preset Bag Index   = 0x%x ", curr_phdr_chunk->wPresetBagNdx);
-        SAMPLER_PRINTF_INFO("  Library            = 0x%x ", curr_phdr_chunk->dwLibrary);
-        SAMPLER_PRINTF_INFO("  Genre              = 0x%x ", curr_phdr_chunk->dwGenre);
-        SAMPLER_PRINTF_INFO("  Morphology         = 0x%x ", curr_phdr_chunk->dwMorphology);
+        RIFF_PRINTF_INFO("Preset [%03d] --------------- %.20s", i, curr_phdr_chunk->achPresetName);
+        RIFF_PRINTF_INFO("  MIDI Preset Number = 0x%x ", curr_phdr_chunk->wPreset);
+        RIFF_PRINTF_INFO("  MIDI Bank Number   = 0x%x ", curr_phdr_chunk->wBank);
+        RIFF_PRINTF_INFO("  Preset Bag Index   = 0x%x ", curr_phdr_chunk->wPresetBagNdx);
+        RIFF_PRINTF_INFO("  Library            = 0x%x ", curr_phdr_chunk->dwLibrary);
+        RIFF_PRINTF_INFO("  Genre              = 0x%x ", curr_phdr_chunk->dwGenre);
+        RIFF_PRINTF_INFO("  Morphology         = 0x%x ", curr_phdr_chunk->dwMorphology);
         curr_phdr_chunk += 1;
     }
 }
@@ -263,18 +263,18 @@ void prv_vPrintSHDR( SF_DESCRIPTOR_t * sf_descriptor ) {
     // First header
     curr_shdr_chunk = &sf_descriptor->sf_pdata_list_descriptor.SHDR_CHUNK->SF_SHDR_CHUNK_DATA;
 
-    SAMPLER_PRINTF_INFO("------------ DECODING %d SAMPLES ------------", num_of_samples);
+    RIFF_PRINTF_INFO("------------ DECODING %d SAMPLES ------------", num_of_samples);
     for( int i = 0; i < num_of_samples; i = i + 1 ) {
-        SAMPLER_PRINTF_INFO("Sample [%03d] --------------- %.20s", i, curr_shdr_chunk->achSampleName);
-        SAMPLER_PRINTF_INFO("  Sample Rate      = %d Hz", curr_shdr_chunk->dwSampleRate);
-        SAMPLER_PRINTF_INFO("  Original Pitch   = %d",   curr_shdr_chunk->byOriginalPitch);
-        SAMPLER_PRINTF_INFO("  Pitch Correction = %d",   curr_shdr_chunk->chPitchCorrection);
-        SAMPLER_PRINTF_INFO("  Start            = 0x%x", curr_shdr_chunk->dwStart);
-        SAMPLER_PRINTF_INFO("  End              = 0x%x", curr_shdr_chunk->dwEnd);
-        SAMPLER_PRINTF_INFO("  Start Loop       = 0x%x", curr_shdr_chunk->dwStartloop);
-        SAMPLER_PRINTF_INFO("  End Loop         = 0x%x", curr_shdr_chunk->dwEndloop);
-        SAMPLER_PRINTF_INFO("  Sample Link      = 0x%x", curr_shdr_chunk->wSampleLink);
-        SAMPLER_PRINTF_INFO("  Sample Type      = 0x%x", curr_shdr_chunk->sfSampleType);
+        RIFF_PRINTF_INFO("Sample [%03d] --------------- %.20s", i, curr_shdr_chunk->achSampleName);
+        RIFF_PRINTF_INFO("  Sample Rate      = %d Hz", curr_shdr_chunk->dwSampleRate);
+        RIFF_PRINTF_INFO("  Original Pitch   = %d",   curr_shdr_chunk->byOriginalPitch);
+        RIFF_PRINTF_INFO("  Pitch Correction = %d",   curr_shdr_chunk->chPitchCorrection);
+        RIFF_PRINTF_INFO("  Start            = 0x%x", curr_shdr_chunk->dwStart);
+        RIFF_PRINTF_INFO("  End              = 0x%x", curr_shdr_chunk->dwEnd);
+        RIFF_PRINTF_INFO("  Start Loop       = 0x%x", curr_shdr_chunk->dwStartloop);
+        RIFF_PRINTF_INFO("  End Loop         = 0x%x", curr_shdr_chunk->dwEndloop);
+        RIFF_PRINTF_INFO("  Sample Link      = 0x%x", curr_shdr_chunk->wSampleLink);
+        RIFF_PRINTF_INFO("  Sample Type      = 0x%x", curr_shdr_chunk->sfSampleType);
         curr_shdr_chunk += 1;
     }
 }
@@ -302,7 +302,7 @@ void prv_vSF2DecodeINFO( uint8_t * info_chunk_buffer, size_t info_chunk_buffer_l
 
     // Sanity check
     if ( sf_descriptor == NULL ) {
-        SAMPLER_PRINTF_ERROR("Error decoding SF2 Info - sf_descriptor == NULL");
+        RIFF_PRINTF_ERROR("Error decoding SF2 Info - sf_descriptor == NULL");
         return;
     }
 
@@ -331,72 +331,72 @@ void prv_vSF2DecodeINFO( uint8_t * info_chunk_buffer, size_t info_chunk_buffer_l
        switch (curr_chunk->ChunkID) {
         // IFIL
         case IFIL_ASCII_TOKEN:
-            SAMPLER_PRINTF_DEBUG("INFO sub-chunk is IFIL at address 0x%x", curr_buffer_pointer);
+            RIFF_PRINTF_DEBUG("INFO sub-chunk is IFIL at address 0x%x", curr_buffer_pointer);
             sf_info_descriptor->IFIL_CHUNK = (SF_IFIL_CHUNK_t *) curr_buffer_pointer;
             break;
 
         // ISNG
         case ISNG_ASCII_TOKEN:
-            SAMPLER_PRINTF_DEBUG("INFO sub-chunk is ISNG at address 0x%x", curr_buffer_pointer);
+            RIFF_PRINTF_DEBUG("INFO sub-chunk is ISNG at address 0x%x", curr_buffer_pointer);
             sf_info_descriptor->ISNG_CHUNK = (SF_ISNG_CHUNK_t *) curr_buffer_pointer;
             break;
 
         // INAM
         case INAM_ASCII_TOKEN:
-            SAMPLER_PRINTF_DEBUG("INFO sub-chunk is INAM at address 0x%x", curr_buffer_pointer);
+            RIFF_PRINTF_DEBUG("INFO sub-chunk is INAM at address 0x%x", curr_buffer_pointer);
             sf_info_descriptor->INAM_CHUNK = (SF_INAM_CHUNK_t *) curr_buffer_pointer;
             break;
 
         // IROM
         case IROM_ASCII_TOKEN:
-            SAMPLER_PRINTF_DEBUG("INFO sub-chunk is IROM at address 0x%x", curr_buffer_pointer);
+            RIFF_PRINTF_DEBUG("INFO sub-chunk is IROM at address 0x%x", curr_buffer_pointer);
             sf_info_descriptor->IROM_CHUNK = (SF_IROM_CHUNK_t *) curr_buffer_pointer;
             break;
 
         // IVER
         case IVER_ASCII_TOKEN:
-            SAMPLER_PRINTF_DEBUG("INFO sub-chunk is IVER at address 0x%x", curr_buffer_pointer);
+            RIFF_PRINTF_DEBUG("INFO sub-chunk is IVER at address 0x%x", curr_buffer_pointer);
             sf_info_descriptor->IVER_CHUNK = (SF_IVER_CHUNK_t *) curr_buffer_pointer;
             break;
 
         // ICRD
         case ICRD_ASCII_TOKEN:
-            SAMPLER_PRINTF_DEBUG("INFO sub-chunk is ICRD at address 0x%x", curr_buffer_pointer);
+            RIFF_PRINTF_DEBUG("INFO sub-chunk is ICRD at address 0x%x", curr_buffer_pointer);
             sf_info_descriptor->ICRD_CHUNK = (SF_ICRD_CHUNK_t *) curr_buffer_pointer;
             break;
 
         // IENG
         case IENG_ASCII_TOKEN:
-            SAMPLER_PRINTF_DEBUG("INFO sub-chunk is IENG at address 0x%x", curr_buffer_pointer);
+            RIFF_PRINTF_DEBUG("INFO sub-chunk is IENG at address 0x%x", curr_buffer_pointer);
             sf_info_descriptor->IENG_CHUNK = (SF_IENG_CHUNK_t *) curr_buffer_pointer;
             break;
 
         // IPRD
         case IPRD_ASCII_TOKEN:
-            SAMPLER_PRINTF_DEBUG("INFO sub-chunk is IPRD at address 0x%x", curr_buffer_pointer);
+            RIFF_PRINTF_DEBUG("INFO sub-chunk is IPRD at address 0x%x", curr_buffer_pointer);
             sf_info_descriptor->IPRD_CHUNK = (SF_IPRD_CHUNK_t *) curr_buffer_pointer;
             break;
 
         // ICOP
         case ICOP_ASCII_TOKEN:
-            SAMPLER_PRINTF_DEBUG("INFO sub-chunk is ICOP at address 0x%x", curr_buffer_pointer);
+            RIFF_PRINTF_DEBUG("INFO sub-chunk is ICOP at address 0x%x", curr_buffer_pointer);
             sf_info_descriptor->ICOP_CHUNK = (SF_ICOP_CHUNK_t *) curr_buffer_pointer;
             break;
 
         // ICMT
         case ICMT_ASCII_TOKEN:
-            SAMPLER_PRINTF_DEBUG("INFO sub-chunk is ICMT at address 0x%x", curr_buffer_pointer);
+            RIFF_PRINTF_DEBUG("INFO sub-chunk is ICMT at address 0x%x", curr_buffer_pointer);
             sf_info_descriptor->ICMT_CHUNK = (SF_ICMT_CHUNK_t *) curr_buffer_pointer;
             break;
 
         // ISFT
         case ISFT_ASCII_TOKEN:
-            SAMPLER_PRINTF_DEBUG("INFO sub-chunk is ISFT at address 0x%x", curr_buffer_pointer);
+            RIFF_PRINTF_DEBUG("INFO sub-chunk is ISFT at address 0x%x", curr_buffer_pointer);
             sf_info_descriptor->ISFT_CHUNK = (SF_ISFT_CHUNK_t *) curr_buffer_pointer;
             break;
         // Unknown
         default:
-            SAMPLER_PRINTF_WARNING("Unknown chunk inside INFO sub-chunk! ChunkID = %x, Address = 0x%x", curr_chunk->ChunkID, curr_buffer_pointer);
+            RIFF_PRINTF_WARNING("Unknown chunk inside INFO sub-chunk! ChunkID = %x, Address = 0x%x", curr_chunk->ChunkID, curr_buffer_pointer);
             break;
         }
 
@@ -423,7 +423,7 @@ void prv_vSF2DecodeSDTA( uint8_t * sdta_chunk_buffer, size_t sdta_chunk_buffer_l
 
     // Sanity check
     if ( sf_descriptor == NULL ) {
-        SAMPLER_PRINTF_ERROR("Error decoding SF2 SDTA - sf_descriptor == NULL");
+        RIFF_PRINTF_ERROR("Error decoding SF2 SDTA - sf_descriptor == NULL");
         return;
     }
 
@@ -442,19 +442,19 @@ void prv_vSF2DecodeSDTA( uint8_t * sdta_chunk_buffer, size_t sdta_chunk_buffer_l
        switch (curr_chunk->ChunkID) {
         // SM24
         case SM24_ASCII_TOKEN:
-            SAMPLER_PRINTF_DEBUG("SDTA sub-chunk is SM24 at address 0x%x", curr_buffer_pointer);
+            RIFF_PRINTF_DEBUG("SDTA sub-chunk is SM24 at address 0x%x", curr_buffer_pointer);
             sf_sdta_descriptor->SM24_CHUNK = (SF_SM24_CHUNK_t *) curr_buffer_pointer;
             break;
 
         // SMPL
         case SMPL_ASCII_TOKEN:
-            SAMPLER_PRINTF_DEBUG("SDTA sub-chunk is SMPL at address 0x%x", curr_buffer_pointer);
+            RIFF_PRINTF_DEBUG("SDTA sub-chunk is SMPL at address 0x%x", curr_buffer_pointer);
             sf_sdta_descriptor->SMPL_CHUNK = (SF_SMPL_CHUNK_t *) curr_buffer_pointer;
             break;
 
         // Unknown
         default:
-            SAMPLER_PRINTF_WARNING("Unknown chunk inside SDTA sub-chunk! ChunkID = %x, Address = 0x%x", curr_chunk->ChunkID, curr_buffer_pointer);
+            RIFF_PRINTF_WARNING("Unknown chunk inside SDTA sub-chunk! ChunkID = %x, Address = 0x%x", curr_chunk->ChunkID, curr_buffer_pointer);
             break;
        }
 
@@ -485,7 +485,7 @@ void prv_vSF2DecodeSDTA( uint8_t * sdta_chunk_buffer, size_t sdta_chunk_buffer_l
 void prv_vSF2DecodePDTA( uint8_t * pdta_chunk_buffer, size_t pdta_chunk_buffer_len, SF_DESCRIPTOR_t * sf_descriptor  ) {
     // Sanity check
     if ( sf_descriptor == NULL ) {
-        SAMPLER_PRINTF_ERROR("Error decoding SF2 PDTA - sf_descriptor == NULL");
+        RIFF_PRINTF_ERROR("Error decoding SF2 PDTA - sf_descriptor == NULL");
         return;
     }
 
@@ -511,61 +511,61 @@ void prv_vSF2DecodePDTA( uint8_t * pdta_chunk_buffer, size_t pdta_chunk_buffer_l
        switch (curr_chunk->ChunkID) {
         // PHDR
         case PHDR_ASCII_TOKEN:
-            SAMPLER_PRINTF_DEBUG("PDTA sub-chunk is PHDR at address 0x%x", curr_buffer_pointer);
+            RIFF_PRINTF_DEBUG("PDTA sub-chunk is PHDR at address 0x%x", curr_buffer_pointer);
             sf_pdta_descriptor->PHDR_CHUNK = (SF_PHDR_CHUNK_t *) curr_buffer_pointer;
             break;
 
         // PBAG
         case PBAG_ASCII_TOKEN:
-            SAMPLER_PRINTF_DEBUG("PDTA sub-chunk is PBAG at address 0x%x", curr_buffer_pointer);
+            RIFF_PRINTF_DEBUG("PDTA sub-chunk is PBAG at address 0x%x", curr_buffer_pointer);
             sf_pdta_descriptor->PBAG_CHUNK = (SF_PBAG_CHUNK_t *) curr_buffer_pointer;
             break;
 
         // PMOD
         case PMOD_ASCII_TOKEN:
-            SAMPLER_PRINTF_DEBUG("PDTA sub-chunk is PMOD at address 0x%x", curr_buffer_pointer);
+            RIFF_PRINTF_DEBUG("PDTA sub-chunk is PMOD at address 0x%x", curr_buffer_pointer);
             sf_pdta_descriptor->PMOD_CHUNK = (SF_PMOD_CHUNK_t *) curr_buffer_pointer;
             break;
 
         // PGEN
         case PGEN_ASCII_TOKEN:
-            SAMPLER_PRINTF_DEBUG("PDTA sub-chunk is PGEN at address 0x%x", curr_buffer_pointer);
+            RIFF_PRINTF_DEBUG("PDTA sub-chunk is PGEN at address 0x%x", curr_buffer_pointer);
             sf_pdta_descriptor->PGEN_CHUNK = (SF_PGEN_CHUNK_t *) curr_buffer_pointer;
             break;
 
         // INST
         case INST_ASCII_TOKEN:
-            SAMPLER_PRINTF_DEBUG("PDTA sub-chunk is INST at address 0x%x", curr_buffer_pointer);
+            RIFF_PRINTF_DEBUG("PDTA sub-chunk is INST at address 0x%x", curr_buffer_pointer);
             sf_pdta_descriptor->INST_CHUNK = (SF_INST_CHUNK_t *) curr_buffer_pointer;
             break;
 
         // IBAG
         case IBAG_ASCII_TOKEN:
-            SAMPLER_PRINTF_DEBUG("PDTA sub-chunk is IBAG at address 0x%x", curr_buffer_pointer);
+            RIFF_PRINTF_DEBUG("PDTA sub-chunk is IBAG at address 0x%x", curr_buffer_pointer);
             sf_pdta_descriptor->IBAG_CHUNK = (SF_IBAG_CHUNK_t *) curr_buffer_pointer;
             break;
 
         // IMOD
         case IMOD_ASCII_TOKEN:
-            SAMPLER_PRINTF_DEBUG("PDTA sub-chunk is IMOD at address 0x%x", curr_buffer_pointer);
+            RIFF_PRINTF_DEBUG("PDTA sub-chunk is IMOD at address 0x%x", curr_buffer_pointer);
             sf_pdta_descriptor->IMOD_CHUNK = (SF_IMOD_CHUNK_t *) curr_buffer_pointer;
             break;
 
         // IGEN
         case IGEN_ASCII_TOKEN:
-            SAMPLER_PRINTF_DEBUG("PDTA sub-chunk is IGEN at address 0x%x", curr_buffer_pointer);
+            RIFF_PRINTF_DEBUG("PDTA sub-chunk is IGEN at address 0x%x", curr_buffer_pointer);
             sf_pdta_descriptor->IGEN_CHUNK = (SF_IGEN_CHUNK_t *) curr_buffer_pointer;
             break;
 
         // SHDR
         case SHDR_ASCII_TOKEN:
-            SAMPLER_PRINTF_DEBUG("PDTA sub-chunk is SHDR at address 0x%x", curr_buffer_pointer);
+            RIFF_PRINTF_DEBUG("PDTA sub-chunk is SHDR at address 0x%x", curr_buffer_pointer);
             sf_pdta_descriptor->SHDR_CHUNK = (SF_SHDR_CHUNK_t *) curr_buffer_pointer;
             break;
 
         // Unknown
         default:
-            SAMPLER_PRINTF_WARNING("Unknown chunk inside SDTA sub-chunk! ChunkID = %x, Address = 0xx", curr_chunk->ChunkID, curr_buffer_pointer);
+            RIFF_PRINTF_WARNING("Unknown chunk inside SDTA sub-chunk! ChunkID = %x, Address = 0xx", curr_chunk->ChunkID, curr_buffer_pointer);
             break;
        }
 

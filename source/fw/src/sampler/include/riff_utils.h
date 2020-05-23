@@ -3,6 +3,44 @@
 
 #include "sampler_cfg.h"
 
+#ifndef RIFF_PRINTF
+    #define RIFF_PRINTF xil_printf
+#endif
+
+// Debug level
+#ifndef RIFF_DEBUG
+    #define RIFF_DEBUG 1
+#endif
+
+#if defined(RIFF_DEBUG) 
+  #if RIFF_DEBUG >= 3
+    #define RIFF_PRINTF_INFO(fmt, args...)    RIFF_PRINTF("[RIFF][INFO]    : %s:%d:%s(): " fmt "\n\r", __FILE__, __LINE__, __func__, ##args)
+    #define RIFF_PRINTF_WARNING(fmt, args...) RIFF_PRINTF("[RIFF][WARNING] : %s:%d:%s(): " fmt "\n\r", __FILE__, __LINE__, __func__, ##args)
+    #define RIFF_PRINTF_ERROR(fmt, args...)   RIFF_PRINTF("[RIFF][ERROR]   : %s:%d:%s(): " fmt "\n\r", __FILE__, __LINE__, __func__, ##args)
+    #define RIFF_PRINTF_DEBUG(fmt, args...)   RIFF_PRINTF("[RIFF][DEBUG]   : %s:%d:%s(): " fmt "\n\r", __FILE__, __LINE__, __func__, ##args)
+  #elif RIFF_DEBUG == 2
+    #define RIFF_PRINTF_INFO(fmt, args...)    RIFF_PRINTF("[RIFF][INFO]    : "             fmt "\n\r", ##args)
+    #define RIFF_PRINTF_WARNING(fmt, args...) RIFF_PRINTF("[RIFF][WARNING] : "             fmt "\n\r", ##args)
+    #define RIFF_PRINTF_ERROR(fmt, args...)   RIFF_PRINTF("[RIFF][ERROR]   : %s:%d:%s(): " fmt "\n\r", __FILE__, __LINE__, __func__, ##args)
+    #define RIFF_PRINTF_DEBUG(fmt, args...)   RIFF_PRINTF("[RIFF][DEBUG]   : %s:%d:%s(): " fmt "\n\r", __FILE__, __LINE__, __func__, ##args)
+  #elif RIFF_DEBUG == 1
+    #define RIFF_PRINTF_INFO(fmt, args...)    RIFF_PRINTF("[RIFF][INFO]    : " fmt "\n\r", ##args)
+    #define RIFF_PRINTF_WARNING(fmt, args...) RIFF_PRINTF("[RIFF][WARNING] : " fmt "\n\r", ##args)
+    #define RIFF_PRINTF_ERROR(fmt, args...)   RIFF_PRINTF("[RIFF][ERROR]   : " fmt "\n\r", ##args)
+    #define RIFF_PRINTF_DEBUG(fmt, args...)   RIFF_PRINTF("[RIFF][DEBUG]   : " fmt "\n\r", ##args)
+  #else
+    #define RIFF_PRINTF_INFO(fmt, args...)    RIFF_PRINTF("[RIFF][INFO]    : " fmt "\n\r", ##args)
+    #define RIFF_PRINTF_WARNING(fmt, args...) RIFF_PRINTF("[RIFF][WARNING] : " fmt "\n\r", ##args)
+    #define RIFF_PRINTF_ERROR(fmt, args...)   RIFF_PRINTF("[RIFF][ERROR]   : " fmt "\n\r", ##args)
+    #define RIFF_PRINTF_DEBUG(fmt, args...)   /* Nothing */
+  #endif
+#else
+    #define RIFF_PRINTF_INFO(fmt, args...)    RIFF_PRINTF("[INFO]    : " fmt "\n\r", ##args)
+    #define RIFF_PRINTF_WARNING(fmt, args...) RIFF_PRINTF("[WARNING] : " fmt "\n\r", ##args)
+    #define RIFF_PRINTF_ERROR(fmt, args...)   RIFF_PRINTF("[ERROR]   : " fmt "\n\r", ##args)
+    #define RIFF_PRINTF_DEBUG(fmt, args...)   /* Nothing */
+#endif
+
 // RIFF Tokens
 #define RIFF_ASCII_TOKEN   0x46464952 // ASCII String == "RIFF"
 #define WAVE_ASCII_TOKEN   0x45564157 // ASCII String == "WAVE"
