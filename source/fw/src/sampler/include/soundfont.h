@@ -53,6 +53,9 @@
 // PHDR
 #define SF_PHDR_DATA_LEN      38 // Each data segment is 38 bytes long
 #define SF_PHDR_PRST_NAME_LEN 20 // The preset name is 20 characters long
+// SHDR
+#define SF_SHDR_DATA_LEN      46 // Each data segment is 46 bytes long
+#define SF_SHDR_PRST_NAME_LEN 20 // The preset name is 20 characters long
 
 /////////////////////////////////////////
 // SoundFont Data types
@@ -529,7 +532,7 @@ typedef struct{
 // It is always a multiple of forty-six bytes in length, and contains one record for each sample plus a terminal record according
 // to the structure:
 typedef struct {
-  SF_CHAR_t         achSampleName[20];
+  SF_CHAR_t         achSampleName[SF_SHDR_PRST_NAME_LEN];
   SF_DWORD_t        dwStart;
   SF_DWORD_t        dwEnd;
   SF_DWORD_t        dwStartloop;

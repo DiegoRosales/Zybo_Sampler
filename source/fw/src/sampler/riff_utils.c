@@ -19,6 +19,7 @@
 
 // Static functions
 static void prv_vPrintPHDR( SF_DESCRIPTOR_t * sf_descriptor );
+static void prv_vPrintSHDR( SF_DESCRIPTOR_t * sf_descriptor );
 static void prv_vSF2DecodeINFO( uint8_t * info_chunk_buffer, size_t info_chunk_buffer_len, SF_DESCRIPTOR_t * sf_descriptor );
 static void prv_vSF2DecodeSDTA( uint8_t * sdta_chunk_buffer, size_t sdta_chunk_buffer_len, SF_DESCRIPTOR_t * sf_descriptor  );
 static void prv_vSF2DecodePDTA( uint8_t * pdta_chunk_buffer, size_t pdta_chunk_buffer_len, SF_DESCRIPTOR_t * sf_descriptor  );
@@ -213,8 +214,17 @@ void vPrintSF2Info( uint8_t* sf2_buffer, size_t sf2_buffer_len ) {
 
     prv_vPrintPHDR( &sf_descriptor );
 
+    // Print samples
+    if ( sf_descriptor.sf_pdata_list_descriptor.SHDR_CHUNK == NULL ) {
+        SAMPLER_PRINTF_ERROR("SF2 Doesn't have a sample header!");
+        return;
+    }
+
+    prv_vPrintSHDR( &sf_descriptor );
+
 }
 
+// Print the PHDR of all the presets
 void prv_vPrintPHDR( SF_DESCRIPTOR_t * sf_descriptor ) {
     size_t                   phdr_len        = 0;
     uint32_t                 num_of_presets  = 0;
@@ -222,11 +232,12 @@ void prv_vPrintPHDR( SF_DESCRIPTOR_t * sf_descriptor ) {
 
     // Get the length
     phdr_len       = sf_descriptor->sf_pdata_list_descriptor.PHDR_CHUNK->BaseChunk.ChunkSize;
-    num_of_presets = phdr_len/SF_PHDR_DATA_LEN;
+    num_of_presets = (phdr_len/SF_PHDR_DATA_LEN) - 1; // The last preset doesn't count
 
     // First header
     curr_phdr_chunk = &sf_descriptor->sf_pdata_list_descriptor.PHDR_CHUNK->SF_PHDR_CHUNK_DATA;
 
+    SAMPLER_PRINTF_INFO("------------ DECODING %d PRESETS ------------", num_of_presets);
     for( int i = 0; i < num_of_presets; i = i + 1 ) {
         SAMPLER_PRINTF_INFO("Preset [%03d] --------------- %.20s", i, curr_phdr_chunk->achPresetName);
         SAMPLER_PRINTF_INFO("  MIDI Preset Number = 0x%x ", curr_phdr_chunk->wPreset);
@@ -236,6 +247,35 @@ void prv_vPrintPHDR( SF_DESCRIPTOR_t * sf_descriptor ) {
         SAMPLER_PRINTF_INFO("  Genre              = 0x%x ", curr_phdr_chunk->dwGenre);
         SAMPLER_PRINTF_INFO("  Morphology         = 0x%x ", curr_phdr_chunk->dwMorphology);
         curr_phdr_chunk += 1;
+    }
+}
+
+// Print the SHDR (Sample Header) of all the samples
+void prv_vPrintSHDR( SF_DESCRIPTOR_t * sf_descriptor ) {
+    size_t                   shdr_len        = 0;
+    uint32_t                 num_of_samples  = 0;
+    SF_SHDR_CHUNK_DATA_t   * curr_shdr_chunk = NULL;
+
+    // Get the length
+    shdr_len       = sf_descriptor->sf_pdata_list_descriptor.SHDR_CHUNK->BaseChunk.ChunkSize;
+    num_of_samples = (shdr_len/SF_SHDR_DATA_LEN) - 1; // The last sample doesn't count
+
+    // First header
+    curr_shdr_chunk = &sf_descriptor->sf_pdata_list_descriptor.SHDR_CHUNK->SF_SHDR_CHUNK_DATA;
+
+    SAMPLER_PRINTF_INFO("------------ DECODING %d SAMPLES ------------", num_of_samples);
+    for( int i = 0; i < num_of_samples; i = i + 1 ) {
+        SAMPLER_PRINTF_INFO("Sample [%03d] --------------- %.20s", i, curr_shdr_chunk->achSampleName);
+        SAMPLER_PRINTF_INFO("  Sample Rate      = %d Hz", curr_shdr_chunk->dwSampleRate);
+        SAMPLER_PRINTF_INFO("  Original Pitch   = %d",   curr_shdr_chunk->byOriginalPitch);
+        SAMPLER_PRINTF_INFO("  Pitch Correction = %d",   curr_shdr_chunk->chPitchCorrection);
+        SAMPLER_PRINTF_INFO("  Start            = 0x%x", curr_shdr_chunk->dwStart);
+        SAMPLER_PRINTF_INFO("  End              = 0x%x", curr_shdr_chunk->dwEnd);
+        SAMPLER_PRINTF_INFO("  Start Loop       = 0x%x", curr_shdr_chunk->dwStartloop);
+        SAMPLER_PRINTF_INFO("  End Loop         = 0x%x", curr_shdr_chunk->dwEndloop);
+        SAMPLER_PRINTF_INFO("  Sample Link      = 0x%x", curr_shdr_chunk->wSampleLink);
+        SAMPLER_PRINTF_INFO("  Sample Type      = 0x%x", curr_shdr_chunk->sfSampleType);
+        curr_shdr_chunk += 1;
     }
 }
 
