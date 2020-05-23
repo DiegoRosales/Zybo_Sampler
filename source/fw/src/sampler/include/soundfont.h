@@ -198,7 +198,7 @@ typedef struct {
 typedef struct {
   RIFF_BASE_CHUNK_t BaseChunk;
   SF_IFIL_CHUNK_DATA_t SF_IFIL_CHUNK_DATA;
-} SF_IFIL_CHUNK_t;
+} __attribute__((packed)) SF_IFIL_CHUNK_t;
 
 // The isng sub-chunk is a mandatory sub-chunk identifying the wavetable sound engine for which the file was optimized. It
 // contains an ASCII string of 256 or fewer bytes including one or two terminators of value zero, so as to make the total byte
@@ -211,7 +211,7 @@ typedef struct {
 typedef struct {
   RIFF_BASE_CHUNK_t BaseChunk;
   SF_ISNG_CHUNK_DATA_t SF_ISNG_CHUNK_DATA;
-} SF_ISNG_CHUNK_t;
+} __attribute__((packed)) SF_ISNG_CHUNK_t;
 
 // The INAM sub-chunk is a mandatory sub-chunk providing the name of the SoundFont compatible bank. It contains an
 // ASCII string of 256 or fewer bytes including one or two terminators of value zero, so as to make the total byte count even.
@@ -224,7 +224,7 @@ typedef struct {
 typedef struct {
   RIFF_BASE_CHUNK_t BaseChunk;
   SF_INAM_CHUNK_DATA_t SF_INAM_CHUNK_DATA;
-} SF_INAM_CHUNK_t;
+} __attribute__((packed)) SF_INAM_CHUNK_t;
 
 // The irom sub-chunk is an optional sub-chunk identifying a particular wavetable sound data ROM to which any ROM
 // samples refer. It contains an ASCII string of 256 or fewer bytes including one or two terminators of value zero, so as to
@@ -237,7 +237,7 @@ typedef struct {
 typedef struct {
   RIFF_BASE_CHUNK_t BaseChunk;
   SF_IROM_CHUNK_DATA_t SF_IROM_CHUNK_DATA;
-} SF_IROM_CHUNK_t;
+} __attribute__((packed)) SF_IROM_CHUNK_t;
 
 // The iver sub-chunk is an optional sub-chunk identifying the particular wavetable sound data ROM revision to which any
 // ROM samples refer. It is always four bytes in length, and contains data according to the structure:
@@ -249,7 +249,7 @@ typedef struct {
 typedef struct {
   RIFF_BASE_CHUNK_t BaseChunk;
   SF_IVER_CHUNK_DATA_t SF_IVER_CHUNK_DATA;
-} SF_IVER_CHUNK_t;
+} __attribute__((packed)) SF_IVER_CHUNK_t;
 
 // The ICRD sub-chunk is an optional sub-chunk identifying the creation date of the SoundFont compatible bank. It contains
 // an ASCII string of 256 or fewer bytes including one or two terminators of value zero, so as to make the total byte count
@@ -262,7 +262,7 @@ typedef struct {
 typedef struct {
   RIFF_BASE_CHUNK_t BaseChunk;
   SF_ICRD_CHUNK_DATA_t SF_ICRD_CHUNK_DATA;
-} SF_ICRD_CHUNK_t;
+} __attribute__((packed)) SF_ICRD_CHUNK_t;
 
 // The IENG sub-chunk is an optional sub-chunk identifying the names of any sound designers or engineers responsible for
 // the SoundFont compatible bank. It contains an ASCII string of 256 or fewer bytes including one or two terminators of
@@ -275,7 +275,7 @@ typedef struct {
 typedef struct {
   RIFF_BASE_CHUNK_t BaseChunk;
   SF_IENG_CHUNK_DATA_t SF_IENG_CHUNK_DATA;
-} SF_IENG_CHUNK_t;
+} __attribute__((packed)) SF_IENG_CHUNK_t;
 
 // The IPRD sub-chunk is an optional sub-chunk identifying any specific product for which the SoundFont compatible bank is
 // intended. It contains an ASCII string of 256 or fewer bytes including one or two terminators of value zero, so as to make
@@ -288,7 +288,7 @@ typedef struct {
 typedef struct {
   RIFF_BASE_CHUNK_t BaseChunk;
   SF_IPRD_CHUNK_DATA_t SF_IPRD_CHUNK_DATA;
-} SF_IPRD_CHUNK_t;
+} __attribute__((packed)) SF_IPRD_CHUNK_t;
 
 // The ICOP sub-chunk is an optional sub-chunk containing any copyright assertion string associated with the SoundFont
 // compatible bank. It contains an ASCII string of 256 or fewer bytes including one or two terminators of value zero, so as to
@@ -301,7 +301,7 @@ typedef struct {
 typedef struct {
   RIFF_BASE_CHUNK_t BaseChunk;
   SF_ICOP_CHUNK_DATA_t SF_ICOP_CHUNK_DATA;
-} SF_ICOP_CHUNK_t;
+} __attribute__((packed)) SF_ICOP_CHUNK_t;
 
 // The ICMT sub-chunk is an optional sub-chunk containing any comments associated with the SoundFont compatible bank.
 // It contains an ASCII string of 65,536 or fewer bytes including one or two terminators of value zero, so as to make the total
@@ -314,7 +314,7 @@ typedef struct {
 typedef struct {
   RIFF_BASE_CHUNK_t BaseChunk;
   SF_ICMT_CHUNK_DATA_t SF_ICMT_CHUNK_DATA;
-} SF_ICMT_CHUNK_t;
+} __attribute__((packed)) SF_ICMT_CHUNK_t;
 
 // The ISFT sub-chunk is an optional sub-chunk identifying the SoundFont compatible tools used to create and most recently
 // modify the SoundFont compatible bank. It contains an ASCII string of 256 or fewer bytes including one or two terminators
@@ -327,7 +327,7 @@ typedef struct {
 typedef struct {
   RIFF_BASE_CHUNK_t BaseChunk;
   SF_ISFT_CHUNK_DATA_t SF_ISFT_CHUNK_DATA;
-} SF_ISFT_CHUNK_t;
+} __attribute__((packed)) SF_ISFT_CHUNK_t;
 
 // All Combined
 typedef struct {
@@ -361,14 +361,14 @@ typedef struct {
 typedef struct {
   RIFF_BASE_CHUNK_t BaseChunk;
   SF_SHORT_t        smpl;
-} SF_SMPL_CHUNK_t;
+} __attribute__((packed)) SF_SMPL_CHUNK_t;
 
 // The sm24 sub-chunk, if present, contains the least significant byte counterparts to each sample data point contained in the
 // smpl chunk. Note this means for every two bytes in the [smpl] sub-chunk there is a 1-byte counterpart in [sm24] sub-chunk.
 typedef struct {
   RIFF_BASE_CHUNK_t BaseChunk;
   SF_BYTE_t         sm24;
-} SF_SM24_CHUNK_t;
+} __attribute__((packed)) SF_SM24_CHUNK_t;
 
 // All Combined
 typedef struct {
@@ -408,7 +408,7 @@ typedef struct {
 typedef struct{
   RIFF_BASE_CHUNK_t    BaseChunk;
   SF_PHDR_CHUNK_DATA_t SF_PHDR_CHUNK_DATA;
-} SF_PHDR_CHUNK_t;
+} __attribute__((packed)) SF_PHDR_CHUNK_t;
 
 
 // The PBAG sub-chunk is a required sub-chunk listing all preset zones within the SoundFont compatible file. It is always a
@@ -422,7 +422,7 @@ typedef struct {
 typedef struct{
   RIFF_BASE_CHUNK_t    BaseChunk;
   SF_PBAG_CHUNK_DATA_t SF_PBAG_CHUNK_DATA;
-} SF_PBAG_CHUNK_t;
+} __attribute__((packed)) SF_PBAG_CHUNK_t;
 
 
 // The PMOD sub-chunk is a required sub-chunk listing all preset zone modulators within the SoundFont compatible file. It is
@@ -439,7 +439,7 @@ typedef struct {
 typedef struct{
   RIFF_BASE_CHUNK_t    BaseChunk;
   SF_PMOD_CHUNK_DATA_t SF_PMOD_CHUNK_DATA;
-} SF_PMOD_CHUNK_t;
+} __attribute__((packed)) SF_PMOD_CHUNK_t;
 
 
 // The PGEN chunk is a required chunk containing a list of preset zone generators for each preset zone within the SoundFont
@@ -453,7 +453,7 @@ typedef struct {
 typedef struct{
   RIFF_BASE_CHUNK_t    BaseChunk;
   SF_PGEN_CHUNK_DATA_t SF_PGEN_CHUNK_DATA;
-} SF_PGEN_CHUNK_t;
+} __attribute__((packed)) SF_PGEN_CHUNK_t;
 
 
 // The inst sub-chunk is a required sub-chunk listing all instruments within the SoundFont compatible file. It is always a
@@ -467,7 +467,7 @@ typedef struct {
 typedef struct{
   RIFF_BASE_CHUNK_t    BaseChunk;
   SF_INST_CHUNK_DATA_t SF_INST_CHUNK_DATA;
-} SF_INST_CHUNK_t;
+} __attribute__((packed)) SF_INST_CHUNK_t;
 
 
 // The IBAG sub-chunk is a required sub-chunk listing all instrument zones within the SoundFont compatible file. It is always
@@ -480,7 +480,7 @@ typedef struct {
 
 typedef struct{
   RIFF_BASE_CHUNK_t BaseChunk;
-} SF_IBAG_CHUNK_t;   
+} __attribute__((packed)) SF_IBAG_CHUNK_t;   
 
 // The IMOD sub-chunk is a required sub-chunk listing all instrument zone modulators within the SoundFont compatible file.
 // It is always a multiple of ten bytes in length, and contains zero or more modulators plus a terminal record according to the
@@ -496,7 +496,7 @@ typedef struct {
 typedef struct{
   RIFF_BASE_CHUNK_t    BaseChunk;
   SF_IMOD_CHUNK_DATA_t SF_IMOD_CHUNK_DATA;
-} SF_IMOD_CHUNK_t;
+} __attribute__((packed)) SF_IMOD_CHUNK_t;
 
 
 // The IGEN chunk is a required chunk containing a list of zone generators for each instrument zone within the SoundFont
@@ -510,7 +510,7 @@ typedef struct {
 typedef struct{
   RIFF_BASE_CHUNK_t    BaseChunk;
   SF_IGEN_CHUNK_DATA_t SF_IGEN_CHUNK_DATA;
-} SF_IGEN_CHUNK_t;
+} __attribute__((packed)) SF_IGEN_CHUNK_t;
 
 
 // The SHDR chunk is a required sub-chunk listing all samples within the smpl sub-chunk and any referenced ROM samples.
@@ -532,7 +532,7 @@ typedef struct {
 typedef struct{
   RIFF_BASE_CHUNK_t    BaseChunk;
   SF_SHDR_CHUNK_DATA_t SF_SHDR_CHUNK_DATA;
-} SF_SHDR_CHUNK_t;
+} __attribute__((packed)) SF_SHDR_CHUNK_t;
 
 
 // All combined
