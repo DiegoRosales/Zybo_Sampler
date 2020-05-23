@@ -18,10 +18,10 @@
 #include "riff_utils.h"
 
 // Static functions
+static void prv_vPrintPHDR( SF_DESCRIPTOR_t * sf_descriptor );
 static void prv_vSF3DecodeINFO( uint8_t * info_chunk_buffer, size_t info_chunk_buffer_len, SF_DESCRIPTOR_t * sf_descriptor );
 static void prv_vSF3DecodeSDTA( uint8_t * sdta_chunk_buffer, size_t sdta_chunk_buffer_len, SF_DESCRIPTOR_t * sf_descriptor  );
 static void prv_vSF3DecodePDTA( uint8_t * pdta_chunk_buffer, size_t pdta_chunk_buffer_len, SF_DESCRIPTOR_t * sf_descriptor  );
-
 // Find the audio data of a WAVE chunk
 static void prv_vFindWAVEData( uint8_t * buffer, uint8_t * buffer_end, SAMPLE_FORMAT_t *sample_information ) {
 
@@ -136,8 +136,6 @@ void vPrintSF3Info( uint8_t* sf3_buffer, size_t sf3_buffer_len ) {
     uint8_t                      * current_buffer_ptr    = NULL;
     uint8_t                      * current_sub_chunk_ptr = NULL;
     size_t                         current_sub_chunk_len = 0;
-    size_t                         phdr_len              = 0;
-    uint32_t                       num_of_presets        = 0;
     SF_DESCRIPTOR_t                sf_descriptor;
 
     riff_descriptor_chunk = cmdGET_RIFF_DESCRIPTOR_CHUNK(sf3_buffer);
@@ -213,23 +211,32 @@ void vPrintSF3Info( uint8_t* sf3_buffer, size_t sf3_buffer_len ) {
         return;
     }
 
-    SF_PHDR_CHUNK_DATA_t * curr_phdr_chunk = NULL;
-    SF_CHAR_t              preset_name[21];
+    prv_vPrintPHDR( &sf_descriptor );
 
-    phdr_len       = sf_descriptor.sf_pdata_list_descriptor.PHDR_CHUNK->BaseChunk.ChunkSize;
+}
+
+void prv_vPrintPHDR( SF_DESCRIPTOR_t * sf_descriptor ) {
+    size_t                   phdr_len        = 0;
+    uint32_t                 num_of_presets  = 0;
+    SF_PHDR_CHUNK_DATA_t   * curr_phdr_chunk = NULL;
+    SF_CHAR_t                preset_name[21];
+
+    // Get the length
+    phdr_len       = sf_descriptor->sf_pdata_list_descriptor.PHDR_CHUNK->BaseChunk.ChunkSize;
     num_of_presets = phdr_len/38;
 
-    memset(preset_name, 0x00, sizeof(SF_CHAR_t) * 21);
-
-    SAMPLER_PRINTF_INFO("Preset Header chunk starts at 0x%x", sf_descriptor.sf_pdata_list_descriptor.PHDR_CHUNK);
-    SAMPLER_PRINTF_INFO("There are %d number of presets in this SF3 file", num_of_presets);
-
     // First header
-    curr_phdr_chunk = &sf_descriptor.sf_pdata_list_descriptor.PHDR_CHUNK->SF_PHDR_CHUNK_DATA;
+    curr_phdr_chunk = &sf_descriptor->sf_pdata_list_descriptor.PHDR_CHUNK->SF_PHDR_CHUNK_DATA;
 
     for( int i = 0; i < num_of_presets; i = i + 1 ) {
         memcpy(preset_name, curr_phdr_chunk->achPresetName, sizeof(SF_CHAR_t)*20);
-        SAMPLER_PRINTF_INFO("Preset name at address 0x%x = %s",curr_phdr_chunk, preset_name);
+        SAMPLER_PRINTF_INFO("Preset [%03d] ---------- %s", i, preset_name);
+        SAMPLER_PRINTF_INFO("  MIDI Preset Number = 0x%x ", curr_phdr_chunk->wPreset);
+        SAMPLER_PRINTF_INFO("  MIDI Bank Number   = 0x%x ", curr_phdr_chunk->wBank);
+        SAMPLER_PRINTF_INFO("  Preset Bag Index   = 0x%x ", curr_phdr_chunk->wPresetBagNdx);
+        SAMPLER_PRINTF_INFO("  Library            = 0x%x ", curr_phdr_chunk->dwLibrary);
+        SAMPLER_PRINTF_INFO("  Genre              = 0x%x ", curr_phdr_chunk->dwGenre);
+        SAMPLER_PRINTF_INFO("  Morphology         = 0x%x ", curr_phdr_chunk->dwMorphology);
         curr_phdr_chunk += 1;
     }
 }

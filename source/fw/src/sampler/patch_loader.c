@@ -155,7 +155,6 @@ PATCH_DESCRIPTOR_t * ulLoadPatchFromSF3( const char * sf3_file_fullpath ) {
 
 // This function will print the information of a SoundFont3 file
 void vPrintSF3FileInfo( const char * sf3_file_fullpath ) {
-    PATCH_DESCRIPTOR_t * patch_descriptor = NULL;
     uint8_t            * local_sf3_patch_buffer;
     size_t               local_sf3_patch_buffer_len;
 
