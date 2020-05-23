@@ -53,6 +53,8 @@ static void prvUARTCommandConsoleTask( void *pvParameters )
     static char    cEscInitialByte;                       // This will hold the escape command initial byte
     static char    cEscFinalByte;                         // This will hold the escape command final byte
     static char    cLastInputString[ cmdMAX_INPUT_SIZE ]; // This will hold the last command in case the user presses ENTER without any input (i.e. repeats the last command)
+    static char    cTmpInputString[ cmdMAX_INPUT_SIZE ];  // This will hold a temporary input string
+    uint8_t        ucHistoryIndex      = 0;               // Idex pointer for cLastInputString
     uint8_t        ucInputIndex        = 0;               // Idex pointer for cInputString
     uint8_t        ucParamBytesIndex   = 0;               // Idex pointer for cInputString
     uint8_t        ucInterBytesIndex   = 0;               // Idex pointer for cInputString
@@ -147,6 +149,8 @@ static void prvUARTCommandConsoleTask( void *pvParameters )
 				strcpy( cLastInputString, cInputString );
 				ucInputIndex = 0;
 				memset( cInputString, 0x00, cmdMAX_INPUT_SIZE );
+				// Reset history
+				ucHistoryIndex = 0;
 
 				printEndOfOutputMessage: vSerialPutString( xPort, ( signed char * ) pcEndOfOutputMessage, ( unsigned short ) strlen( pcEndOfOutputMessage ) );
 			}
@@ -169,12 +173,12 @@ static void prvUARTCommandConsoleTask( void *pvParameters )
 							}
 
 							// Save the current console pointer
-							vSerialPutString( xPort, ( signed char * ) cmdANSI_ESC_SAVE_CURSOR, strlen(cmdANSI_ESC_SAVE_CURSOR) );
+							cmdSAVE_CURSOR(xPort);
 							// Print the new shifted string
 							vSerialPutString( xPort, ( signed char * ) &cInputString[ucInputIndex], ( ucCurrInputStrinLen - ucInputIndex ) );
 							xSerialPutChar( xPort, ' ', portMAX_DELAY );
 							// Restore the console pointer
-							vSerialPutString( xPort, ( signed char * ) cmdANSI_ESC_RESTORE_CURSOR, strlen(cmdANSI_ESC_RESTORE_CURSOR) );
+							cmdRESTORE_CURSOR(xPort);
 						} else {
 							ucInputIndex--;
 							cInputString[ ucInputIndex ] = '\0';
@@ -187,13 +191,15 @@ static void prvUARTCommandConsoleTask( void *pvParameters )
 						for(uint8_t i = ucInputIndex; i < ucCurrInputStrinLen; i++) {
 							cInputString[ i ] = cInputString[ i + 1];
 						}
-						vSerialPutString( xPort, ( signed char * ) cmdANSI_ESC_SAVE_CURSOR, strlen(cmdANSI_ESC_SAVE_CURSOR) );
+						cmdSAVE_CURSOR(xPort);
 						vSerialPutString( xPort, ( signed char * ) &cInputString[ucInputIndex], ( ucCurrInputStrinLen - ucInputIndex ) );
 						xSerialPutChar( xPort, ' ', portMAX_DELAY );
-						vSerialPutString( xPort, ( signed char * ) cmdANSI_ESC_RESTORE_CURSOR, strlen(cmdANSI_ESC_RESTORE_CURSOR) );
+						cmdRESTORE_CURSOR(xPort);
 					}
 				}
-				else if ( cmdIS_ESCAPE(cRxedChar) )
+				// Start processing the Escape Character
+				// 3 Parts: 1) Recieve the esc char. 2) Get the first byte. 3) Get subsequent bytes until the end and execute the command
+				else if ( cmdIS_ESCAPE(cRxedChar) ) // Part 1 - Recieve the esc char.
 				{
 					// Initialize the escape sequences
 					ucReceivingEsc = 1;
@@ -204,7 +210,8 @@ static void prvUARTCommandConsoleTask( void *pvParameters )
 					ucParamBytesIndex = 0;
  					ucInterBytesIndex = 0;
 				}
-				else if (ucReceivingEsc == 1) {
+				else if (ucReceivingEsc == 1) // Part 2 - Get the first byte.
+				{
 					// Get the first byte
 					if (cRxedChar >= 0x40 && cRxedChar <= 0x5f) {
 						cEscInitialByte = cRxedChar;
@@ -213,9 +220,9 @@ static void prvUARTCommandConsoleTask( void *pvParameters )
 						ucReceivingEsc = 0;
 					}
 				}
-				else if (ucReceivingEsc == 2)
+				else if (ucReceivingEsc == 2) // Part 3 - Get subsequent bytes until the end and execute the command
 				{
-					if (cEscInitialByte == '[') { // Control Sequence Introducer
+					if (cEscInitialByte == cmdASCII_CTRL_SEQ_INTRODUCER) { // Check for Control Sequence Introducer
 						// Get the subsequent bytes
 						if( cRxedChar >=  0x30 && cRxedChar <= 0x3f) {        // Parameter bytes
 							cEscParamBytes[ ucParamBytesIndex ] = cRxedChar;
@@ -228,22 +235,76 @@ static void prvUARTCommandConsoleTask( void *pvParameters )
 							ucReceivingEsc = 0;
 						}
 
+						// Execute the command
 						if ( ucReceivingEsc == 0 ) {
-							if ( cEscFinalByte == 'A' ) {
-								xSerialPutChar( xPort, 'U', portMAX_DELAY );
-							} else if ( cEscFinalByte == 'B' ) {
-								xSerialPutChar( xPort, 'D', portMAX_DELAY );
-							} else if ( cEscFinalByte == 'C' ) {
+							if ( cEscFinalByte == 'A' && ucHistoryIndex < 1 ) // Up arrow
+							{
+								// Save the current string
+								memset( cTmpInputString, 0x00, sizeof(char)*cmdMAX_INPUT_SIZE );
+								strcpy( cTmpInputString, cInputString );
+								// Copy the previous string to the current one
+								memset( cInputString, 0x00, sizeof(char)*cmdMAX_INPUT_SIZE );
+								strcpy( cInputString, cLastInputString );
+
+								// Clear the current line
+								if ( ucInputIndex > 0 ) {
+									// Move cursor all the way to the beginning
+									cmdMOVE_CURSOR_LEFT(xPort, ucInputIndex)
+									// Delete the line
+									cmdERASE_LINE_FROM_CURSOR(xPort);
+									// Print the new line
+								}
+
+								// Print the previous command
+								vSerialPutString(xPort, (signed char *) cInputString, strlen(cInputString));
+
+								// Get the current cursor position
+								ucInputIndex        = strlen(cInputString);
+								ucCurrInputStrinLen = strlen(cInputString);
+
+								// Set the history pointer // TODO: Add more than 1
+								ucHistoryIndex = 1;
+							} // End Up arrow
+							else if ( cEscFinalByte == 'B' && ucHistoryIndex > 0 ) // Down arrow
+							{
+								// Restore from the cTmpInputString
+								memset( cInputString, 0x00, sizeof(char)*cmdMAX_INPUT_SIZE );
+								strcpy( cInputString, cTmpInputString );
+
+								// Clear the current line
+								if ( ucInputIndex > 0 ) {
+									// Move cursor all the way to the beginning
+									cmdMOVE_CURSOR_LEFT(xPort, ucInputIndex)
+									// Delete the line
+									cmdERASE_LINE_FROM_CURSOR(xPort);
+									// Print the new line
+								}
+
+								// Print the saved command
+								vSerialPutString(xPort, (signed char *) cInputString, strlen(cInputString));
+								
+								// Get the current cursor position
+								ucInputIndex        = strlen(cInputString);
+								ucCurrInputStrinLen = strlen(cInputString);
+								// Decrease the history pointer // TODO: Add more than 1
+								ucHistoryIndex -= 1;
+							} // End Down arrow
+							else if ( cEscFinalByte == 'C' ) // Right arrow
+							{
 								if ( ucInputIndex < ucCurrInputStrinLen ) {
-									vSerialPutString( xPort, ( signed char * ) cmdANSI_ESC_RIGHT, ( unsigned short ) strlen( cmdANSI_ESC_RIGHT ) );
+									cmdMOVE_CURSOR_RIGHT(xPort, 1)
 									ucInputIndex++;
 								}
-							} else if ( cEscFinalByte == 'D' ) {
+							} // End Right arrow
+							else if ( cEscFinalByte == 'D' ) // Left Arrow
+							{
 								if ( ucInputIndex > 0 ) {
-									vSerialPutString( xPort, ( signed char * ) cmdANSI_ESC_LEFT, ( unsigned short ) strlen( cmdANSI_ESC_LEFT ) );
+									cmdMOVE_CURSOR_LEFT(xPort, 1)
 									ucInputIndex--;
 								}
-							} else if ( cEscFinalByte == '~' ) { // VT Sequence
+							} // End Left Arrow
+							else if ( cEscFinalByte == '~' )  // VT Sequence
+							{
 								if (ucParamBytesIndex == 0) goto giveMutexSemaphore; // Must have a parameter
 
 								if ( cEscParamBytes[0] == '3' ) { // Delete
@@ -251,13 +312,13 @@ static void prvUARTCommandConsoleTask( void *pvParameters )
 										for(uint8_t i = ucInputIndex; i < ucCurrInputStrinLen; i++) {
 											cInputString[ i ] = cInputString[ i + 1];
 										}
-										vSerialPutString( xPort, ( signed char * ) cmdANSI_ESC_SAVE_CURSOR, strlen(cmdANSI_ESC_SAVE_CURSOR) );
+										cmdSAVE_CURSOR(xPort);
 										vSerialPutString( xPort, ( signed char * ) &cInputString[ucInputIndex], ( ucCurrInputStrinLen - ucInputIndex ) );
 										xSerialPutChar( xPort, ' ', portMAX_DELAY );
-										vSerialPutString( xPort, ( signed char * ) cmdANSI_ESC_RESTORE_CURSOR, strlen(cmdANSI_ESC_RESTORE_CURSOR) );
+										cmdRESTORE_CURSOR(xPort);
 									}
 								}
-							}
+							} // End VT Sequence
 						}
 					}
 				}
