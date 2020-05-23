@@ -74,61 +74,61 @@ PATCH_DESCRIPTOR_t * ulLoadPatchFromJSON( const char * json_file_dirname, const 
     PATCH_DESCRIPTOR_t *patch_descriptor = NULL;
     uint32_t error = 0;
 
-    SAMPLER_PRINTF_DEBUG("This is a test");
+    PATCH_LOADER_PRINTF_DEBUG("This is a test");
 
     // Step 1 - Open the json file containing the instrument information
-    SAMPLER_PRINTF_INFO("Step 1 - Load the JSON File");
+    PATCH_LOADER_PRINTF_INFO("Step 1 - Load the JSON File");
     xLoadFileToMemory( json_file_fullpath, json_patch_information_buffer, (size_t) MAX_INST_FILE_SIZE );
 
     // Step 2 - Initialize the instrument information
-    SAMPLER_PRINTF_INFO("Step 2 - Initializing the instrument information");
+    PATCH_LOADER_PRINTF_INFO("Step 2 - Initializing the instrument information");
 
     if ( patch_descriptor == NULL ){
         patch_descriptor = prv_xInitPatchDescriptor();
         // Check if the initialization succeeded
         if ( patch_descriptor == NULL ){
-            SAMPLER_PRINTF_ERROR("Instrument information could not be initialized!!");
+            PATCH_LOADER_PRINTF_ERROR("Instrument information could not be initialized!!");
             return NULL;
         } else {
-            SAMPLER_PRINTF_INFO("Patch descriptor initialized on address 0x%x", patch_descriptor);
+            PATCH_LOADER_PRINTF_INFO("Patch descriptor initialized on address 0x%x", patch_descriptor);
         }
     } else {
-        SAMPLER_PRINTF_INFO("Instrument information was already initialized at 0x%x", patch_descriptor);
+        PATCH_LOADER_PRINTF_INFO("Instrument information was already initialized at 0x%x", patch_descriptor);
         patch_descriptor->instrument_loaded = 0; // Unset in case it was already loaded
     }
 
-    SAMPLER_PRINTF_INFO("Step 2 - Done!");
+    PATCH_LOADER_PRINTF_INFO("Step 2 - Done!");
 
     // Step 3 - Decode the JSON file using JSMN
-    SAMPLER_PRINTF_INFO("Step 3 - Decoding the patch information...");
+    PATCH_LOADER_PRINTF_INFO("Step 3 - Decoding the patch information...");
     error = prv_ulDecodeJSON_PatchInfo( json_patch_information_buffer, patch_descriptor );
     if ( error ) {
-        SAMPLER_PRINTF_ERROR("There was a problem when decoding the JSON Patch information!!");
+        PATCH_LOADER_PRINTF_ERROR("There was a problem when decoding the JSON Patch information!!");
         return NULL;
     }
-    SAMPLER_PRINTF_INFO("Step 3 - Done!");
+    PATCH_LOADER_PRINTF_INFO("Step 3 - Done!");
 
     // Step 4 - Load all the samples into memory
     // Initialize the variables
-    SAMPLER_PRINTF_INFO("Step 4 - Loading samples into memory...");
+    PATCH_LOADER_PRINTF_INFO("Step 4 - Loading samples into memory...");
     error = prv_ulLoadSamplesFromDescriptor( patch_descriptor, json_file_dirname );
     if ( error ) {
-        SAMPLER_PRINTF_ERROR("There was a problem when loading the samples into memory!!");
+        PATCH_LOADER_PRINTF_ERROR("There was a problem when loading the samples into memory!!");
         return NULL;
     }
     patch_descriptor->instrument_loaded = 1;
-    SAMPLER_PRINTF_INFO("Step 4 - Done!");
+    PATCH_LOADER_PRINTF_INFO("Step 4 - Done!");
 
     if(patch_descriptor == NULL) {
-        SAMPLER_PRINTF_ERROR("Somehow the patch descriptor lost its information. patch_descriptor == NULL");
+        PATCH_LOADER_PRINTF_ERROR("Somehow the patch descriptor lost its information. patch_descriptor == NULL");
         return NULL;
     } else {
-        SAMPLER_PRINTF_INFO("patch_descriptor == 0x%x", patch_descriptor);
+        PATCH_LOADER_PRINTF_INFO("patch_descriptor == 0x%x", patch_descriptor);
     }
 
-    SAMPLER_PRINTF("------------\n\r");
-    SAMPLER_PRINTF("Instrument Succesfully Loaded!\n\r");
-    SAMPLER_PRINTF("------------\n\r\n\r");
+    PATCH_LOADER_PRINTF("------------\n\r");
+    PATCH_LOADER_PRINTF("Instrument Succesfully Loaded!\n\r");
+    PATCH_LOADER_PRINTF("------------\n\r\n\r");
 
     return patch_descriptor;
 }
@@ -139,11 +139,11 @@ PATCH_DESCRIPTOR_t * ulLoadPatchFromSF2( const char * sf2_file_fullpath ) {
     size_t              sf2_patch_buffer_len;
 
     // Step 1 - Open the json file containing the instrument information
-    SAMPLER_PRINTF_INFO("Step 1 - Load the SF2 File");
+    PATCH_LOADER_PRINTF_INFO("Step 1 - Load the SF2 File");
     sf2_patch_buffer_len = xLoadFileToMemory_malloc( sf2_file_fullpath, &sf2_patch_buffer, MAX_SF2_FILE_SIZE, 0 );
 
     if ( sf2_patch_buffer_len == 0 || sf2_patch_buffer == NULL ) {
-        SAMPLER_PRINTF_ERROR("Error while loading the SF2 file!");
+        PATCH_LOADER_PRINTF_ERROR("Error while loading the SF2 file!");
         return NULL;
     }
 
@@ -159,11 +159,11 @@ void vPrintSF2FileInfo( const char * sf2_file_fullpath ) {
     size_t               local_sf2_patch_buffer_len;
 
     // Step 1 - Open the json file containing the instrument information
-    SAMPLER_PRINTF_INFO("Step 1 - Load the SF2 File");
+    PATCH_LOADER_PRINTF_INFO("Step 1 - Load the SF2 File");
     local_sf2_patch_buffer_len = xLoadFileToMemory_malloc( sf2_file_fullpath, &local_sf2_patch_buffer, MAX_SF2_FILE_SIZE, 0 );
 
     if ( local_sf2_patch_buffer_len == 0 || local_sf2_patch_buffer == NULL ) {
-        SAMPLER_PRINTF_ERROR("Error while loading the SF2 file!");
+        PATCH_LOADER_PRINTF_ERROR("Error while loading the SF2 file!");
         return;
     }
 
@@ -195,10 +195,10 @@ PATCH_DESCRIPTOR_t * prv_xInitPatchDescriptor() {
 
     PATCH_DESCRIPTOR_t * patch_descriptor = sampler_malloc( sizeof(PATCH_DESCRIPTOR_t) );
     if ( patch_descriptor == NULL ) {
-        SAMPLER_PRINTF_ERROR("Memory allocation for the instrument info failed. Requested size = %d bytes", sizeof(PATCH_DESCRIPTOR_t));
+        PATCH_LOADER_PRINTF_ERROR("Memory allocation for the instrument info failed. Requested size = %d bytes", sizeof(PATCH_DESCRIPTOR_t));
         return NULL;
     } else {
-        SAMPLER_PRINTF_INFO("Memory allocation for the instrument info succeeded. Memory location: 0x%x", patch_descriptor );
+        PATCH_LOADER_PRINTF_INFO("Memory allocation for the instrument info succeeded. Memory location: 0x%x", patch_descriptor );
 
         // Initialize the structure
         memset( patch_descriptor, 0x00 , sizeof(PATCH_DESCRIPTOR_t) );
@@ -214,7 +214,7 @@ KEY_VOICE_INFORMATION_t *prv_xInitVoiceInformation() {
 
     // Sanity check
     if( voice_information == NULL ){
-        SAMPLER_PRINTF_ERROR("Memory allocation for the Voice Information failed!");
+        PATCH_LOADER_PRINTF_ERROR("Memory allocation for the Voice Information failed!");
         return NULL;
     }
 
@@ -230,7 +230,7 @@ KEY_INFORMATION_t * prv_xInitKeyInformation( ) {
 
     // Sanity check
     if( key_information == NULL ){
-        SAMPLER_PRINTF_ERROR("[ERROR] - Memory allocation for the Key Information failed!");
+        PATCH_LOADER_PRINTF_ERROR("[ERROR] - Memory allocation for the Key Information failed!");
         return NULL;
     }
 
@@ -253,7 +253,7 @@ uint32_t prv_ulDecodeJSON_PatchInfo( uint8_t *json_patch_information_buffer, PAT
 
     // Sanity check
     if( patch_descriptor == NULL ) {
-        SAMPLER_PRINTF_ERROR("JSON Decoder failed. patch_descriptor == NULL");
+        PATCH_LOADER_PRINTF_ERROR("JSON Decoder failed. patch_descriptor == NULL");
         return 1;
     }
 
@@ -269,11 +269,11 @@ uint32_t prv_ulDecodeJSON_PatchInfo( uint8_t *json_patch_information_buffer, PAT
 
     // Step 3 - Check for errors
     if ( parser_result < 0 ) {
-        SAMPLER_PRINTF_ERROR("There was a problem decoding the instrument information. Error code = %d", parser_result);
+        PATCH_LOADER_PRINTF_ERROR("There was a problem decoding the instrument information. Error code = %d", parser_result);
         return 1;
     }
     else {
-        SAMPLER_PRINTF_INFO("Instrument information parsing was succesful!");
+        PATCH_LOADER_PRINTF_INFO("Instrument information parsing was succesful!");
     }
 
     // Step 4 - Extract the information
@@ -281,7 +281,7 @@ uint32_t prv_ulDecodeJSON_PatchInfo( uint8_t *json_patch_information_buffer, PAT
     for ( int i = 0; i < parser_result ; i++ ) {
         if ( l_json_equal( (const char *) json_patch_information_buffer, &tokens[i], INSTRUMENT_NAME_TOKEN_STR ) ) {
             l_json_get_string((const char *) json_patch_information_buffer, &tokens[i + 1], (char *) patch_descriptor->instrument_name );
-            SAMPLER_PRINTF_INFO("Instrument Name: %s", patch_descriptor->instrument_name );
+            PATCH_LOADER_PRINTF_INFO("Instrument Name: %s", patch_descriptor->instrument_name );
             break;
         }
     }
@@ -291,7 +291,7 @@ uint32_t prv_ulDecodeJSON_PatchInfo( uint8_t *json_patch_information_buffer, PAT
         if ( l_json_equal( (const char *) json_patch_information_buffer, &tokens[i], INSTRUMENT_SAMPLES_TOKEN_STR ) ) {
             number_of_samples        = (uint32_t) tokens[i + 1].size;
             sample_start_token_index = i + 2;
-            SAMPLER_PRINTF_INFO("Number of samples: %d", number_of_samples );
+            PATCH_LOADER_PRINTF_INFO("Number of samples: %d", number_of_samples );
             prv_ulDecodeJSON_SamplePaths( sample_start_token_index, number_of_samples, tokens, json_patch_information_buffer, patch_descriptor );
             break;
         }
@@ -338,14 +338,14 @@ uint32_t prv_ulDecodeJSON_SamplePaths( uint32_t sample_start_token_index, uint32
             for( int j = key_info_index; j < ( key_info_index + (NUM_OF_SAMPLE_JSON_MEMBERS * 2) ); j += 2 ) {
                 if( l_json_equal( (const char *)json_patch_information_buffer, &tokens[j], SAMPLE_VEL_MIN_TOKEN_STR ) ) {
                     current_voice->velocity_min = prv_ulStr2Int( (char *)(json_patch_information_buffer + tokens[j + 1].start), ( tokens[j + 1].end - tokens[j + 1].start ) );
-                    //SAMPLER_PRINTF_DEBUG("KEY[%d]: velocity_min = %d", midi_note, patch_descriptor->key_information[midi_note].key_voice_information[0].velocity_min);
+                    //PATCH_LOADER_PRINTF_DEBUG("KEY[%d]: velocity_min = %d", midi_note, patch_descriptor->key_information[midi_note].key_voice_information[0].velocity_min);
                 } else if( l_json_equal( (const char *)json_patch_information_buffer, &tokens[j], SAMPLE_VEL_MAX_TOKEN_STR ) ) {
                     current_voice->velocity_max = prv_ulStr2Int( (char *)(json_patch_information_buffer + tokens[j + 1].start), ( tokens[j + 1].end - tokens[j + 1].start ) );
-                    //SAMPLER_PRINTF_DEBUG("KEY[%d]: velocity_max = %d", midi_note, patch_descriptor->key_information[midi_note].key_voice_information[0].velocity_max);
+                    //PATCH_LOADER_PRINTF_DEBUG("KEY[%d]: velocity_max = %d", midi_note, patch_descriptor->key_information[midi_note].key_voice_information[0].velocity_max);
                 } else if( l_json_equal( (const char *)json_patch_information_buffer, &tokens[j], SAMPLE_PATH_TOKEN_STR ) ) {
                     current_voice->sample_present = 1;
                     l_json_get_string( (const char *)json_patch_information_buffer, &tokens[j + 1], (char *) current_voice->sample_path );
-                    SAMPLER_PRINTF_DEBUG("KEY[%d]: sample_path = %s", midi_note, current_voice->sample_path);
+                    PATCH_LOADER_PRINTF_DEBUG("KEY[%d]: sample_path = %s", midi_note, current_voice->sample_path);
                 }
             }
         }
@@ -394,7 +394,7 @@ uint32_t prv_ulLoadSamplesFromDescriptor( PATCH_DESCRIPTOR_t *patch_descriptor, 
 
     // Sanity check
     if (patch_descriptor == NULL) {
-        SAMPLER_PRINTF_ERROR("Sample loader failed. patch_descriptor == NULL");
+        PATCH_LOADER_PRINTF_ERROR("Sample loader failed. patch_descriptor == NULL");
         return 1;
     }
 
@@ -427,10 +427,10 @@ uint32_t prv_ulLoadSamplesFromDescriptor( PATCH_DESCRIPTOR_t *patch_descriptor, 
             strcat( full_path, json_file_root_dir);
             strcat( full_path, "/");
             strcat( full_path, (const char *) current_voice->sample_path);
-            #if SAMPLER_DEBUG < 1
-                SAMPLER_PRINTF(".");
+            #if PATCH_LOADER_DEBUG < 1
+                PATCH_LOADER_PRINTF(".");
             #else
-                SAMPLER_PRINTF_DEBUG("[%d][%d] Loading Sample \"%s\"", key, vel_range, current_voice->sample_path );
+                PATCH_LOADER_PRINTF_DEBUG("[%d][%d] Loading Sample \"%s\"", key, vel_range, current_voice->sample_path );
             #endif
 
             // Load the RIFF File into memory
@@ -442,7 +442,7 @@ uint32_t prv_ulLoadSamplesFromDescriptor( PATCH_DESCRIPTOR_t *patch_descriptor, 
                                                             sizeof(uint32_t) // Overhead to allow realignment
                                                         );
             if ( riff_buffer == NULL || riff_buffer_size == 0 ) {
-                SAMPLER_PRINTF_ERROR("Failed loading the RIFF file into memory");
+                PATCH_LOADER_PRINTF_ERROR("Failed loading the RIFF file into memory");
                 return 1;                          
             }
             
@@ -454,7 +454,7 @@ uint32_t prv_ulLoadSamplesFromDescriptor( PATCH_DESCRIPTOR_t *patch_descriptor, 
 
             // Check for errors
             if ( (current_sample_format->audio_data_size == 0) || (current_sample_format->data_start_ptr == NULL)) {
-                SAMPLER_PRINTF_ERROR("Failed decoding the RIFF audio data");
+                PATCH_LOADER_PRINTF_ERROR("Failed decoding the RIFF audio data");
                 return error;
             }
 
@@ -463,7 +463,7 @@ uint32_t prv_ulLoadSamplesFromDescriptor( PATCH_DESCRIPTOR_t *patch_descriptor, 
                 error = prv_ulRealignAudioData( current_voice );
 
                 if ( error != 0 ) {
-                    SAMPLER_PRINTF_ERROR("Failed realigning the RIFF audio data");
+                    PATCH_LOADER_PRINTF_ERROR("Failed realigning the RIFF audio data");
                     return error;
                 }
 
@@ -474,9 +474,9 @@ uint32_t prv_ulLoadSamplesFromDescriptor( PATCH_DESCRIPTOR_t *patch_descriptor, 
         }
     }
 
-    SAMPLER_PRINTF("\n\r---\n\r");
-    SAMPLER_PRINTF_INFO("Loaded %d keys", patch_descriptor->total_keys);
-    SAMPLER_PRINTF_INFO("Total Memory Used = %d bytes", patch_descriptor->total_size);
+    PATCH_LOADER_PRINTF("\n\r---\n\r");
+    PATCH_LOADER_PRINTF_INFO("Loaded %d keys", patch_descriptor->total_keys);
+    PATCH_LOADER_PRINTF_INFO("Total Memory Used = %d bytes", patch_descriptor->total_size);
 
     return 0;
 }
@@ -501,7 +501,7 @@ uint32_t prv_ulRealignAudioData( KEY_VOICE_INFORMATION_t *voice_information ) {
 
     // Fail if there's not enugh space for malloc
     if ( aligned_buffer_ptr == NULL ) {
-        SAMPLER_PRINTF_ERROR("Malloc for the temporary realignment buffer failed! Requested size = %d bytes", voice_information->sample_format.audio_data_size);
+        PATCH_LOADER_PRINTF_ERROR("Malloc for the temporary realignment buffer failed! Requested size = %d bytes", voice_information->sample_format.audio_data_size);
         return 1;
     }
 

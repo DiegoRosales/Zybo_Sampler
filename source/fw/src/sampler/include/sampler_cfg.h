@@ -7,8 +7,9 @@
 #define ENABLE_SAMPLE_REALIGN 0
 // Debug level
 #ifndef SAMPLER_DEBUG
-  #define SAMPLER_DEBUG 1
-  #define RIFF_DEBUG    0
+  #define SAMPLER_DEBUG      0
+  #define RIFF_DEBUG         0
+  #define PATCH_LOADER_DEBUG 0
 #endif
 
 #ifdef ENABLE_FREERTOS_MALLOC
