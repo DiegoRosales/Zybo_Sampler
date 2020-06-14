@@ -38,15 +38,6 @@ module sampler_dma_top #(
     parameter integer C_AXI_LITE_SLAVE_DATA_WIDTH = 32,
     parameter integer C_AXI_LITE_SLAVE_ADDR_WIDTH = 16,
 
-    // Parameters of Axi Slave Bus Interface S_AXI_INTR
-    parameter integer C_S_AXI_INTR_DATA_WIDTH = 32,
-    parameter integer C_S_AXI_INTR_ADDR_WIDTH = 5,
-    parameter integer C_NUM_OF_INTR           = 1,
-    parameter         C_INTR_SENSITIVITY      = 32'hFFFFFFFF,
-    parameter         C_INTR_ACTIVE_STATE     = 32'hFFFFFFFF,
-    parameter integer C_IRQ_SENSITIVITY       = 1,
-    parameter integer C_IRQ_ACTIVE_STATE      = 1,
-
     // Debug
     parameter FETCHER_ENABLE_DEBUG       = 1,
     parameter DMA_REQUESTER_ENABLE_DEBUG = 1,
