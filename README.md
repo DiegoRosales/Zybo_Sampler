@@ -119,6 +119,11 @@ This stage will import the generated sources from the integration stage and will
 ### 5) Firmware workspace generation
 This stage will create a Vitis workspace and configure the BSP and the Project application. Note that you will still need to open the Vitis GUI to compile the firmware and program the board
 
+## Optional stages
+
+### Lint
+This stage only performs a simple compile to check for syntax errors. To run this stage you need to have passed at least stage 3)
+
 # Build instructions
 To build the project, you need to run one script using Vivado: `run.tcl`.
 
@@ -128,7 +133,7 @@ To build the project, you need to run one script using Vivado: `run.tcl`.
 >> vivado -mode batch -source scripts/run.tcl -tclargs -cfg cfg/zybo_sampler.cfg
 
 ## Run only specific stages
-# Stages: PACK | INTEG | GEN_XILINX_IP | IMPL | BUILD_WS
+# Stages: PACK | INTEG | GEN_XILINX_IP | IMPL | BUILD_WS | LINT (optional)
 >> vivado -mode batch -source scripts/run.tcl -tclargs -cfg cfg/zybo_sampler.cfg -stages "<STAGE1>+<STAGE2>+..."
 # Example
 >> vivado -mode batch -source scripts/run.tcl -tclargs -cfg cfg/zybo_sampler.cfg -stages "INTEG+IMPL"

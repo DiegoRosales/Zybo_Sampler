@@ -78,7 +78,7 @@ foreach core_root_dir $project_cores {
 ## 4) Synthesis
 ## 5) Place and Route
 #########################################
-set stages { PACK INTEG GEN_XILINX_IP IMPL EXPORT_WS BUILD_WS }
+set stages { PACK INTEG GEN_XILINX_IP IMPL LINT EXPORT_WS BUILD_WS }
 
 if {$parsed_args(stages) != ""} {
     set stage_error [process_stages -stage_list $stages -input_stages $parsed_args(stages) -input_stage_args $parsed_args(stage_args)]
@@ -150,7 +150,7 @@ if {$stage_error == 1} {
         }
 
         ## Run synthesis and place and route
-        if {$STAGE_IMPL} {
+        if {$STAGE_IMPL || $STAGE_LINT} {
             set_param general.maxThreads 8
 
             ## Create the project
@@ -208,29 +208,34 @@ if {$stage_error == 1} {
             ## Create the synthesis run
             create_run synthesis -constrset constraints -flow {Vivado Synthesis 2019}
 
-            ## Create the place and route run
-            create_run place_and_route -parent_run synthesis -constrset constraints -flow {Vivado Implementation 2019}
+            if {$STAGE_IMPL} {
+                ## Create the place and route run
+                create_run place_and_route -parent_run synthesis -constrset constraints -flow {Vivado Implementation 2019}
 
-            ## Launch Synthesis
-            puts "Starting Synthesis"
-            launch_runs synthesis -jobs 8
-            wait_on_run -run synthesis
-            puts "Synthesis Done!"
-            ## Launch Place and route
-            puts "Starting Place and Route"
-            launch_runs place_and_route -jobs 8
-            wait_on_run -run place_and_route
-            puts "Place and Route Done!"
+                ## Launch Synthesis
+                puts "Starting Synthesis"
+                launch_runs synthesis -jobs 8
+                wait_on_run -run synthesis
+                puts "Synthesis Done!"
+                ## Launch Place and route
+                puts "Starting Place and Route"
+                launch_runs place_and_route -jobs 8
+                wait_on_run -run place_and_route
+                puts "Place and Route Done!"
 
-            ## Open the place and route run
-            current_run [get_runs place_and_route]
-            open_run place_and_route
+                ## Open the place and route run
+                current_run [get_runs place_and_route]
+                open_run place_and_route
 
-            ## Export the HW Platform for the Vitis Workspace
-            write_hw_platform -fixed -force  -include_bit -file ${workspace_project_path}/${platform_project_name}.xsa
-            if {[get_cells -quiet -filter {REF_NAME =~ dbg_hub}] != {}} {
-                puts "Writing debug probes"
-                write_debug_probes -force ${workspace_project_path}/${platform_project_name}.ltx
+                ## Export the HW Platform for the Vitis Workspace
+                write_hw_platform -fixed -force  -include_bit -file ${workspace_project_path}/${platform_project_name}.xsa
+                if {[get_cells -quiet -filter {REF_NAME =~ dbg_hub}] != {}} {
+                    puts "Writing debug probes"
+                    write_debug_probes -force ${workspace_project_path}/${platform_project_name}.ltx
+                }
+            } elseif {$STAGE_LINT} {
+                ## Only do elaboration
+                synth_design -rtl -name lint
             }
 
             if {$parsed_args(debug) == 0} {
