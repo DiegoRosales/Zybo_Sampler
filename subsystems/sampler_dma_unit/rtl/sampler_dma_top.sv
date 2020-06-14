@@ -31,8 +31,8 @@ module sampler_dma_top #(
     parameter integer C_AXI_DMA_MASTER_BUSER_WIDTH     = 0,
 
     // Parameters of Axi Master Bus Interface AXI_STREAM_MASTER
-    parameter integer C_AXI_STREAM_MASTER_TDATA_WIDTH = 64,
-    parameter integer C_AXI_STREAM_MASTER_START_COUNT = 64,
+    parameter integer C_AXI_STREAM_TDATA_WIDTH = 32,
+    parameter integer C_AXI_STREAM_TUSER_WIDTH = 32,
 
     // Parameters of Axi Slave Bus Interface AXI_LITE_SLAVE
     parameter integer C_AXI_LITE_SLAVE_DATA_WIDTH = 32,
@@ -99,12 +99,11 @@ module sampler_dma_top #(
     ///////////////////////////////////////////////////////////
     // Ports of Axi Master Bus Interface AXI_STREAM_MASTER
     ///////////////////////////////////////////////////////////
-    input  wire                                             axi_stream_master_aresetn,
-    output wire [C_AXI_STREAM_MASTER_TDATA_WIDTH-1 : 0]     axi_stream_master_tdata,
-    input  wire                                             axi_stream_master_tready,
-    output wire                                             axi_stream_master_tvalid,
-    output wire                                             axi_stream_master_tlast,
-    output wire [(C_AXI_STREAM_MASTER_TDATA_WIDTH/8)-1 : 0] axi_stream_master_tstrb,
+    output wire [C_AXI_STREAM_TDATA_WIDTH-1 : 0]        axi_stream_master_tdata,
+    input  wire                                         axi_stream_master_tready,
+    output wire                                         axi_stream_master_tvalid,
+    output wire                                         axi_stream_master_tlast,
+    output wire [C_AXI_STREAM_TUSER_WIDTH-1 : 0]        axi_stream_master_tuser,
 
     ///////////////////////////////////////////////////////////
     // Ports of Axi Slave Bus Interface AXI_LITE_SLAVE
@@ -143,6 +142,12 @@ wire [ OPT_MEM_ADDR_BITS  - 1 : 0 ]          reg_wr_addr;
 wire [ OPT_MEM_ADDR_BITS  - 1 : 0 ]          reg_rd_addr;
 wire                                         reg_wr_en;
 
+// Interface between the AXI bridge and the receiver
+wire [C_AXI_STREAM_TDATA_WIDTH-1 : 0]  dma_receiver_axi_stream_slave_tdata;
+wire                                   dma_receiver_axi_stream_slave_tready;
+wire                                   dma_receiver_axi_stream_slave_tvalid;
+wire                                   dma_receiver_axi_stream_slave_tlast;
+wire [C_AXI_STREAM_TUSER_WIDTH-1 : 0]  dma_receiver_axi_stream_slave_tuser;
 
 // Control Registers
 (* keep = "true" *) wire start;
@@ -182,18 +187,6 @@ wire                                         reg_wr_en;
 (* keep = "true" *) wire            dma_sample_req_valid;
 (* keep = "true" *) wire            dma_sample_req_done;
 
-// FIFO
-wire [ C_AXI_DMA_MASTER_ADDR_WIDTH : 0 ] fifo_data_out;
-wire                                     fifo_data_available;
-wire                                     fifo_data_read;
-
-// Assignments
-assign fifo_data_read           = axi_stream_master_tready;
-assign axi_stream_master_tvalid = fifo_data_available;
-assign axi_stream_master_tdata  = {16'h0, fifo_data_out[31:16], 16'h0, fifo_data_out[15:0]}; // 16 bit audio support at the moment
-assign axi_stream_master_tlast  = 1'b0;
-assign axi_stream_master_tstrb  = 1'b0;
-
     axi_dma_bridge # (
         // AXI Parameters
         .C_M_TARGET_SLAVE_BASE_ADDR( C_AXI_DMA_MASTER_TARGET_SLAVE_BASE_ADDR ),
@@ -205,18 +198,23 @@ assign axi_stream_master_tstrb  = 1'b0;
         .C_M_AXI_ARUSER_WIDTH      ( C_AXI_DMA_MASTER_ARUSER_WIDTH           ),
         .C_M_AXI_WUSER_WIDTH       ( C_AXI_DMA_MASTER_WUSER_WIDTH            ),
         .C_M_AXI_RUSER_WIDTH       ( C_AXI_DMA_MASTER_RUSER_WIDTH            ),
-        .C_M_AXI_BUSER_WIDTH       ( C_AXI_DMA_MASTER_BUSER_WIDTH            )
+        .C_M_AXI_BUSER_WIDTH       ( C_AXI_DMA_MASTER_BUSER_WIDTH            ),
+        // AXI Stream Parameters
+        .C_AXI_STREAM_TDATA_WIDTH  ( C_AXI_STREAM_TDATA_WIDTH                ),
+        .C_AXI_STREAM_TUSER_WIDTH  ( C_AXI_STREAM_TUSER_WIDTH                )
     ) axi_dma_bridge (
 		////////////////////////////////////////////////////
 		// Interface to the user logic
 		////////////////////////////////////////////////////
 
 		// Interface between the AXI bridge and the receiver //
-	    .axi_sample_data           ( axi_sample_data           ),
-	    .axi_sample_id             ( axi_sample_id             ),
-	    .axi_sample_valid          ( axi_sample_valid          ),
-	    .axi_sample_data_last      ( axi_sample_data_last      ),
-	    .axi_sample_receiver_ready ( axi_sample_receiver_ready ),
+        // Output AXI Stream interface
+        .axi_stream_master_tdata  ( dma_receiver_axi_stream_slave_tdata  ),
+        .axi_stream_master_tready ( dma_receiver_axi_stream_slave_tready ),
+        .axi_stream_master_tvalid ( dma_receiver_axi_stream_slave_tvalid ),
+        .axi_stream_master_tlast  ( dma_receiver_axi_stream_slave_tlast  ),
+        .axi_stream_master_tuser  ( dma_receiver_axi_stream_slave_tuser  ),
+
 
 		// Interface between the AXI bridge and the requester //
 		.dma_sample_req_addr  ( dma_sample_req_addr  ),
@@ -395,7 +393,7 @@ assign axi_stream_master_tstrb  = 1'b0;
         .last_request_sent    ( last_request_sent    ),
         .last_request_id      ( last_request_id      ),
 
-        // Information fethcer interface //
+        // Information fetcher interface //
         .sample_addr         ( sample_addr         ),
         .sample_id           ( sample_id           ),
         .sample_valid        ( sample_valid        ),
@@ -406,13 +404,16 @@ assign axi_stream_master_tstrb  = 1'b0;
     );
 
     sample_dma_receiver # (
-        .ENABLE_DEBUG ( DMA_RECEIVER_ENABLE_DEBUG )
+        .ENABLE_DEBUG             ( DMA_RECEIVER_ENABLE_DEBUG ),
+        .C_AXI_STREAM_TDATA_WIDTH ( C_AXI_STREAM_TDATA_WIDTH  ),
+        .C_AXI_STREAM_TUSER_WIDTH ( C_AXI_STREAM_TUSER_WIDTH  )
     )
     sample_dma_receiver (
         .clk     ( axi_clk                ),
         .reset_n ( axi_lite_slave_aresetn ),
-
-        .stop ( stop ),
+        
+        // Stop bit
+        .stop    ( stop ),
 
         // DMA Requester interface //
         .all_samples_received ( all_samples_received ),
@@ -420,17 +421,18 @@ assign axi_stream_master_tstrb  = 1'b0;
         .last_request_id      ( last_request_id      ),
         .all_samples_invalid  ( all_samples_invalid  ),
 
-        // AXI Bridge Interface //
-	    .axi_sample_data           ( axi_sample_data           ),
-	    .axi_sample_id             ( axi_sample_id             ),
-	    .axi_sample_valid          ( axi_sample_valid          ),
-	    .axi_sample_data_last      ( axi_sample_data_last      ),
-	    .axi_sample_receiver_ready ( axi_sample_receiver_ready ),
+        // Input AXI Stream interface from the AXI Bridge
+        .axi_stream_slave_tdata  ( dma_receiver_axi_stream_slave_tdata  ),
+        .axi_stream_slave_tvalid ( dma_receiver_axi_stream_slave_tvalid ),
+        .axi_stream_slave_tlast  ( dma_receiver_axi_stream_slave_tlast  ),
+        .axi_stream_slave_tuser  ( dma_receiver_axi_stream_slave_tuser  ),
+        .axi_stream_slave_tready ( dma_receiver_axi_stream_slave_tready ),
 
-        // Output FIFO interface //
-        .sample_data           ( fifo_data_out       ),
-        .sample_data_available ( fifo_data_available ),
-        .sample_data_read      ( fifo_data_read      )
-
+        // Output AXI Stream interface
+        .axi_stream_master_tdata  ( axi_stream_master_tdata  ),
+        .axi_stream_master_tvalid ( axi_stream_master_tvalid ),
+        .axi_stream_master_tlast  ( axi_stream_master_tlast  ),
+        .axi_stream_master_tuser  ( axi_stream_master_tuser  ),
+        .axi_stream_master_tready ( axi_stream_master_tready )
     );
 endmodule

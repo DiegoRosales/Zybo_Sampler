@@ -15,7 +15,8 @@
 	module axi_dma_bridge #
 	(
 		// Users to add parameters here
-
+    parameter integer C_AXI_STREAM_TDATA_WIDTH = 32,
+    parameter integer C_AXI_STREAM_TUSER_WIDTH = 32,
 		// User parameters ends
 		// Do not modify the parameters beyond this line
 
@@ -46,11 +47,13 @@
 		////////////////////////////////////////////////////
 
 		// Interface between the AXI bridge and the receiver //
-	    output wire [ 31 : 0 ] axi_sample_data,
-	    output wire [ 5 : 0 ]  axi_sample_id,
-	    output wire            axi_sample_valid,
-	    output wire            axi_sample_data_last,
-	    input  wire            axi_sample_receiver_ready,
+    // Output AXI Stream interface
+    output wire [C_AXI_STREAM_TDATA_WIDTH-1 : 0]  axi_stream_master_tdata,
+    input  wire                                   axi_stream_master_tready,
+    output wire                                   axi_stream_master_tvalid,
+    output wire                                   axi_stream_master_tlast,
+    output wire [C_AXI_STREAM_TUSER_WIDTH-1 : 0]  axi_stream_master_tuser,
+
 
 		// Interface between the AXI bridge and the requester //
 		input  wire [ 31 : 0 ] dma_sample_req_addr,
@@ -258,11 +261,11 @@ reg [ C_M_AXI_ID_WIDTH - 1 : 0 ] dma_req_id_reg;  // Request ID
 //////////////////////////////////////////////////////////
 // Outputs
 //////////////////////////////////////////////////////////
-assign axi_sample_data           = M_AXI_RDATA;
-assign axi_sample_id             = M_AXI_RID[ 5 : 0 ];
-assign axi_sample_valid          = M_AXI_RVALID;
-assign axi_sample_data_last      = M_AXI_RLAST;
-assign M_AXI_RREADY              = axi_sample_receiver_ready;
+assign axi_stream_master_tdata           = M_AXI_RDATA;
+assign axi_stream_master_tuser[5:0]      = M_AXI_RID[ 5 : 0 ];
+assign axi_stream_master_tvalid          = M_AXI_RVALID;
+assign axi_stream_master_tlast           = M_AXI_RLAST;
+assign M_AXI_RREADY                      = axi_stream_master_tready;
 
 //////////////////////////////////////////////////////////
 // Logic

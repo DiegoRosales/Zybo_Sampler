@@ -83,12 +83,29 @@ set core_config [list \
                     CONFIG.FETCHER_ENABLE_DEBUG       0  \
                     CONFIG.DMA_REQUESTER_ENABLE_DEBUG 0  \
                     CONFIG.DMA_RECEIVER_ENABLE_DEBUG  0  \
+                    CONFIG.C_AXI_STREAM_TDATA_WIDTH   32 \
+                    CONFIG.C_AXI_STREAM_TUSER_WIDTH   8  \
                 ]
                 
 integ_utils::create_core_instance -inst_name sampler_dma \
                                   -vendor    zybo_sampler \
                                   -library   user \
                                   -name      sampler_dma_top \
+                                  -version   1.0 \
+                                  -hierarchy $sampler_hier \
+                                  -config    $core_config
+
+## Instantiate the Sampler Mixer
+set core_config [list \
+                    CONFIG.ENABLE_SAMPLER_MIXER_DEBUG 0  \
+                    CONFIG.C_AXI_STREAM_TDATA_WIDTH   32 \
+                    CONFIG.C_AXI_STREAM_TUSER_WIDTH   8  \
+                ]
+                
+integ_utils::create_core_instance -inst_name sampler_mixer \
+                                  -vendor    zybo_sampler \
+                                  -library   user \
+                                  -name      sampler_mixer \
                                   -version   1.0 \
                                   -hierarchy $sampler_hier \
                                   -config    $core_config
@@ -225,9 +242,12 @@ integ_utils::connect -from_instance ${zynq_cpu_hier}/intr_concat_zynq      -from
 
 
 ### Internal AXI Sampler Connections ###
-# AXI Stream
-integ_utils::connect -from_instance ${sampler_hier}/codec_controller -from_interface axis_interface_slave \
-                     -to_instance   ${sampler_hier}/sampler_dma      -to_interface   axis_interface_master
+# DMA Controller --> Sampler Mixer
+integ_utils::connect -from_instance ${sampler_hier}/sampler_dma           -from_interface axis_interface_master \
+                     -to_instance   ${sampler_hier}/sampler_mixer         -to_interface   axis_interface_slave
+# Sampler Mixer --> CODEC Controller
+integ_utils::connect -from_instance ${sampler_hier}/sampler_mixer         -from_interface axis_interface_master \
+                     -to_instance   ${sampler_hier}/codec_controller      -to_interface   axis_interface_slave
 
 
 ### Internal AXI Zynq Connections ###
@@ -245,19 +265,20 @@ integ_utils::connect -from_instance ${zynq_cpu_hier}/intr_concat_zynq      -from
 
 
 ### Clocking ###
-set clock_destinations [list \
-  ${sampler_hier}/sampler_dma             axi_clk \
-  ${sampler_hier}/codec_controller        axi_clk \
-  ${zynq_cpu_hier}/axi_smartconnect_zynq  aclk \
-  ${zynq_cpu_hier}/axi_interconnect_zynq  ACLK \
-  ${zynq_cpu_hier}/axi_interconnect_zynq  M00_ACLK \
-  ${zynq_cpu_hier}/axi_interconnect_zynq  M01_ACLK \
-  ${zynq_cpu_hier}/axi_interconnect_zynq  M02_ACLK \
-  ${zynq_cpu_hier}/axi_interconnect_zynq  S00_ACLK \
-  ${zynq_cpu_hier}/zynq                   M_AXI_GP0_ACLK \
-  ${zynq_cpu_hier}/zynq                   S_AXI_HP0_ACLK \
+set clock_destinations [list                               \
+  ${sampler_hier}/sampler_dma             axi_clk          \
+  ${sampler_hier}/codec_controller        axi_clk          \
+  ${sampler_hier}/sampler_mixer           clk              \
+  ${zynq_cpu_hier}/axi_smartconnect_zynq  aclk             \
+  ${zynq_cpu_hier}/axi_interconnect_zynq  ACLK             \
+  ${zynq_cpu_hier}/axi_interconnect_zynq  M00_ACLK         \
+  ${zynq_cpu_hier}/axi_interconnect_zynq  M01_ACLK         \
+  ${zynq_cpu_hier}/axi_interconnect_zynq  M02_ACLK         \
+  ${zynq_cpu_hier}/axi_interconnect_zynq  S00_ACLK         \
+  ${zynq_cpu_hier}/zynq                   M_AXI_GP0_ACLK   \
+  ${zynq_cpu_hier}/zynq                   S_AXI_HP0_ACLK   \
   ${zynq_cpu_hier}/cpu_reset_gen          slowest_sync_clk \
-  axi_gpio_0                              s_axi_aclk
+  axi_gpio_0                              s_axi_aclk       \
 ]
 
 foreach {dest_instance dest_port} $clock_destinations {
@@ -267,17 +288,18 @@ foreach {dest_instance dest_port} $clock_destinations {
 
 ### Reset ###
 ## Peripheral Reset
-set peripheral_reset_destinations [list \
-  ${zynq_cpu_hier}/axi_interconnect_zynq  M00_ARESETN \
-  ${zynq_cpu_hier}/axi_interconnect_zynq  M01_ARESETN \
-  ${zynq_cpu_hier}/axi_interconnect_zynq  M02_ARESETN \
-  ${zynq_cpu_hier}/axi_interconnect_zynq  S00_ARESETN \
-  ${sampler_hier}/codec_controller        s00_axi_aresetn \
-  ${sampler_hier}/codec_controller        axis_aresetn \
-  ${sampler_hier}/sampler_dma             axi_dma_master_aresetn \
-  ${sampler_hier}/sampler_dma             axi_lite_slave_aresetn \
+set peripheral_reset_destinations [list                             \
+  ${zynq_cpu_hier}/axi_interconnect_zynq  M00_ARESETN               \
+  ${zynq_cpu_hier}/axi_interconnect_zynq  M01_ARESETN               \
+  ${zynq_cpu_hier}/axi_interconnect_zynq  M02_ARESETN               \
+  ${zynq_cpu_hier}/axi_interconnect_zynq  S00_ARESETN               \
+  ${sampler_hier}/codec_controller        s00_axi_aresetn           \
+  ${sampler_hier}/codec_controller        axis_aresetn              \
+  ${sampler_hier}/sampler_mixer           reset_n                   \
+  ${sampler_hier}/sampler_dma             axi_dma_master_aresetn    \
+  ${sampler_hier}/sampler_dma             axi_lite_slave_aresetn    \
   ${sampler_hier}/sampler_dma             axi_stream_master_aresetn \
-  axi_gpio_0                              s_axi_aresetn \
+  axi_gpio_0                              s_axi_aresetn             \
 ]
 
 foreach {dest_instance dest_port} $peripheral_reset_destinations {

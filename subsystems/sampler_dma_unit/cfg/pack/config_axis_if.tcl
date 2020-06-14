@@ -28,16 +28,5 @@ pack_utils::map_interface_port $interface_name                         \
                                -rtl_port_name       "${interface_prefix}_tlast"
 
 pack_utils::map_interface_port $interface_name                         \
-                               -interface_port_name "TSTRB"         \
-                               -rtl_port_name       "${interface_prefix}_tstrb"
-
-## AXI Reset
-set rst_name        ${interface_prefix}_aresetn
-set rst_description "AXI4 Reset"
-set rst_polarity    "ACTIVE_LOW"
-pack_utils::create_xilinx_reset_interface $rst_name \
-                                          -rtl_port_name $rst_name \
-                                          -description   $rst_description \
-                                          -display_name  $rst_name \
-                                          -polarity      $rst_polarity \
-                                          -mode          slave
+                               -interface_port_name "TUSER"         \
+                               -rtl_port_name       "${interface_prefix}_tuser"

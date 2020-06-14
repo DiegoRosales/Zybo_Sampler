@@ -14,6 +14,8 @@
 // Rev 0.1 - Init                                        //
 ///////////////////////////////////////////////////////////
 
+`default_nettype none
+
 module codec_unit_top #(
   parameter C_S00_AXI_DATA_WIDTH = 32,
   parameter C_S00_AXI_ADDR_WIDTH = 8
@@ -87,7 +89,7 @@ module codec_unit_top #(
   // Slave Interface Signals (DMA -> CODEC) //
   output wire          s_axis_tready,  // Ready
   input  wire          s_axis_tvalid,  // Data Valid (WR)
-  input  wire [63 : 0] s_axis_tdata,   // Data
+  input  wire [32 : 0] s_axis_tdata,   // Data
 
   // Master Interface Signals (CODEC -> DMA) //
   input  wire          m_axis_tready,  // Ready (RD)
@@ -162,9 +164,14 @@ wire [31:0] DOWNSTREAM_axis_wr_data_count;
 wire [31:0] UPSTREAM_axis_rd_data_count;
 wire [31:0] DOWNSTREAM_axis_rd_data_count;
 wire [31:0] UPSTREAM_axis_wr_data_count;
+wire [63:0] s_axis_tdata_int;
+wire init_done;
+wire init_error;
 
 assign codec_init_done  = init_done | init_error;
 assign controller_reset = sw_reset | reset;
+
+assign s_axis_tdata_int = {16'h0000, s_axis_tdata[31:16], 16'h0000, s_axis_tdata[15:0]};
 
 assign led_status = heartbeat;
 
@@ -248,9 +255,9 @@ audio_unit_top audio_unit_top (
   .axis_aresetn  ( axis_aresetn  ), // input wire s_axis_aresetn
 
   // Slave Interface Signals (DMA -> CODEC) //
-  .s_axis_tready ( s_axis_tready ), // Ready
-  .s_axis_tvalid ( s_axis_tvalid ), // Data Valid (WR)
-  .s_axis_tdata  ( s_axis_tdata  ), // Data
+  .s_axis_tready ( s_axis_tready    ), // Ready
+  .s_axis_tvalid ( s_axis_tvalid    ), // Data Valid (WR)
+  .s_axis_tdata  ( s_axis_tdata_int ), // Data
 
   // Master Interface Signals (CODEC -> DMA) //
   .m_axis_tready ( m_axis_tready ), // Ready (RD)
@@ -339,3 +346,5 @@ register_unit #(
 );
 
 endmodule
+
+`default_nettype wire
