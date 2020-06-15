@@ -203,11 +203,16 @@ always_ff @(posedge clk, negedge reset_n) begin
         last_received_id_reg  <= last_received_id_reg;
 
         // Get the sample ID of the last request
-        if ( last_request_sent ) begin
+        if ( fsm_curr_st_FSM_ST_IDLE ) begin
+            last_request_id_reg   <= 'h0;
+            last_request_sent_reg <= 1'b0;
+            last_received_id_reg  <= 'h0;
+        end
+        else if ( last_request_sent ) begin
             last_request_id_reg   <= last_request_id;
             last_request_sent_reg <= 1'b1;
         end
-        else if ( fsm_curr_st_FSM_ST_IDLE || fsm_curr_st_FSM_ST_WAIT_FOR_FIFO_EMPTY ) begin
+        else if ( fsm_curr_st_FSM_ST_WAIT_FOR_FIFO_EMPTY ) begin
             last_request_sent_reg <= 1'b0;
         end
 

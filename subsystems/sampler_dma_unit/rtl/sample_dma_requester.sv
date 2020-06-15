@@ -193,7 +193,7 @@ always_ff @(posedge clk, negedge reset_n) begin
     else begin
         last_request_id_reg <= last_request_id_reg;
 
-        if ( fsm_curr_st_FSM_ST_WAIT_FOR_VALID_INFO && sample_valid && ~sample_overflow ) begin
+        if ( fsm_curr_st_FSM_ST_ANALYZE_INFO && sample_valid && ~sample_overflow ) begin
             last_request_id_reg <= sample_id;
         end
         else begin

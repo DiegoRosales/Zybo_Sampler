@@ -110,35 +110,31 @@ void prv_vReleaseSlot( uint16_t slot ) {
             sampler_voices[ i ].slot_is_last        = 0;
             sampler_voices[ i ].voice_is_active     = 0;
         }
-        last_voice_slot                            = 0;
-        number_of_active_slots                     = 0;
-        return;
+        last_voice_slot        = 0;
+        number_of_active_slots = 0;
+    } else {
+        // If there are more voices playing
+        // Get the previous slot
+        previous_slot = sampler_voices[ slot ].previous_voice_slot;
+        next_slot     = sampler_voices[ slot ].next_voice_slot;
+
+        // The nest slot of the previous slot is now the next slot of the current slot
+        sampler_voices[ previous_slot ].next_voice_slot = next_slot;
+        sampler_voices[ next_slot ].previous_voice_slot = previous_slot; // The previous slot of the first item is the last item
+
+        // If the current slot was the last of the chain, now the previous one is the last of the chain
+        if( sampler_voices[ slot ].slot_is_last ) {
+            sampler_voices[ previous_slot ].slot_is_last = 1;
+            last_voice_slot = previous_slot;
+        }
+
+        // Clear the slot
+        sampler_voices[ slot ].previous_voice_slot = 0;
+        sampler_voices[ slot ].next_voice_slot     = 0;
+        sampler_voices[ slot ].slot_is_last        = 0;
+        sampler_voices[ slot ].voice_is_active     = 0;
+        number_of_active_slots                     = number_of_active_slots - 1;
     }
-
-    // If there are more voices playing
-
-    // Get the previous slot
-    previous_slot = sampler_voices[ slot ].previous_voice_slot;
-    next_slot     = sampler_voices[ slot ].next_voice_slot;
-
-    // The nest slot of the previous slot is now the next slot of the current slot
-    sampler_voices[ previous_slot ].next_voice_slot = next_slot;
-    sampler_voices[ next_slot ].previous_voice_slot = previous_slot; // The previous slot of the first item is the last item
-
-    // If the current slot was the last of the chain, now the previous one is the last of the chain
-    if( sampler_voices[ slot ].slot_is_last ) {
-        sampler_voices[ previous_slot ].slot_is_last = 1;
-        last_voice_slot = previous_slot;
-    }
-
-    // Clear the slot
-    sampler_voices[ slot ].previous_voice_slot = 0;
-    sampler_voices[ slot ].next_voice_slot     = 0;
-    sampler_voices[ slot ].slot_is_last        = 0;
-    sampler_voices[ slot ].voice_is_active     = 0;
-    number_of_active_slots                     = number_of_active_slots - 1;
-
-    return;
 
 }
 
@@ -220,6 +216,9 @@ uint32_t ulStopVoicePlayback( uint32_t voice_slot ) {
     SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_start_addr.value  = 0;
     SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_end_addr.value    = 0;
     SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_control.value     = 0;
+    SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_next_sample.value = 0;
+
+    Xil_DCacheFlush();
 
     // Release the voice slot
     prv_vReleaseSlot( voice_slot );
