@@ -771,6 +771,7 @@ proc generate {os_handle} {
 	puts $config_file "#define INCLUDE_eTaskGetState                1"
 	puts $config_file "#define INCLUDE_xTimerPendFunctionCall       1"
 	puts $config_file "#define INCLUDE_pcTaskGetTaskName            1"
+	puts $config_file "#define INCLUDE_xTaskGetHandle               1"
 	set flag_mb64 ""
 	if {$proctype == "microblaze"} {
 		set sw_proc_handle [hsi::get_sw_processor]
