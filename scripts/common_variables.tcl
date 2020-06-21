@@ -7,7 +7,7 @@ set vivado_install_path        $::env(XILINX_VIVADO)
 set vivado_interface_path      ${vivado_install_path}/data/ip/interfaces
 
 ## Project Path Variables
-set results_dir                "${project_root}/results"
+set results_dir                "${project_root}/$results_dirname"
 set xilinx_ip_tcl_path         "${results_dir}/${gen_xilinx_ip_tcl_dirname}"
 set xilinx_ip_xci_path         "${results_dir}/${gen_xilinx_ip_xci_dirname}"
 set project_impl_path          "${results_dir}/${project_name}"

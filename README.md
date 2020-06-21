@@ -105,10 +105,10 @@ Before you build, you need to setup the environment. To do that, you need to run
 The build process goes through the following stages
 
 ### 1) Pack
-This stage will package the individual cores using the Vivado IP Packaging tool so that they can be easily integrated into the final build
+This stage will package the individual cores using the Vivado IP Packaging tool so that they can be easily integrated into the final build. You only need to re-run this stage when performing changes to the top-level IO or parameters of the individual subsystems
 
 ### 2) Integration
-This stage will import all the packaged cores and will perform all the connections necessary to build the final design
+This stage will import all the packaged cores and, using the integration script, generate the top-level RTL files for synthesis. You only need to re-run this stage when changing the connections or the parameters of the individual subsystems
 
 ### 3) Xilinx IP Synthesis
 This stage will individually synthesize all Xilinx IPs to save time on the final implementation. Note that this stage is only strictly necessary when you haven't created the Xilinx IPs from the TCL scripts. Xilinx IPs instantiated in the integration stage can also be synthesized in the implementation stage
