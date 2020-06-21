@@ -163,6 +163,7 @@ uint32_t ulStartVoicePlayback( uint32_t sample_addr, uint32_t sample_size ) {
     SAMPLER_DMA_REGISTER_ACCESS->sampler_dma[voice_slot].dma_end_addr.value   = sample_addr + sample_size;
 
     // Set the control register
+    temp_ctrl_reg.value         = 0; // Initialize
     temp_ctrl_reg.field.dma_len = number_of_samples;
     temp_ctrl_reg.field.valid   = 1;
     temp_ctrl_reg.field.last    = (uint32_t) sampler_voices[voice_slot].slot_is_last;
