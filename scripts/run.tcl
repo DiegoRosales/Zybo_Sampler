@@ -97,6 +97,11 @@ if {$stage_error == 1} {
             app create -name ${app_project_name} -hw ${workspace_project_path}/${platform_project_name}.xsa -proc {ps7_cortexa9_0} -os freertos10_xilinx_sampler -lang C -template {Empty Application}
             driver -peripheral ps7_sd_0 -name sdps -ver 3.8
 
+            ## Configure FreeRTOS BSP
+            bsp config num_thread_local_storage_pointers 4
+            bsp config max_task_name_len                 50        ;# Task names can be 50 haracters long
+            bsp config total_heap_size                   268435456 ;# 256Mib
+
             file link -symbolic ${workspace_project_path}/${app_project_name}/src/common ${project_root}/source/fw/src/
             file link -symbolic ${workspace_project_path}/${app_project_name}/src/codec_controller ${project_root}/subsystems/codec_unit/fw/
             file link -symbolic ${workspace_project_path}/${app_project_name}/src/sampler_dma ${project_root}/subsystems/sampler_dma_unit/fw/
@@ -219,7 +224,7 @@ if {$stage_error == 1} {
                 puts "Synthesis Done!"
                 ## Launch Place and route
                 puts "Starting Place and Route"
-                launch_runs place_and_route -jobs 8
+                launch_runs place_and_route -to_step write_bitstream -jobs 8
                 wait_on_run -run place_and_route
                 puts "Place and Route Done!"
 

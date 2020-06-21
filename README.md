@@ -87,16 +87,16 @@ You can find more about the board over at https://reference.digilentinc.com/refe
 ---
 # Setup instructions
 ## Tools Required
- - Xilinx Vivado 2019.2
- - Xilinx Vitis 2019.2
+ - Xilinx Vivado 2020.1
+ - Xilinx Vitis 2020.1
 
 Before you build, you need to setup the environment. To do that, you need to run the Vivado and Vitis (previously Xilinx SDK) setup scripts like this
 ```bash
 ## From the Windows CMD shell
 # Vivado
-[CMD]>> call D:\Xilinx\Vivado\2019.2\settings64.bat
+[CMD]>> call D:\Xilinx\Vivado\2020.1\settings64.bat
 # Xilinx Vitis (previously Xilinx SDK)
-[CMD]>> call D:\Xilinx\Vitis\2019.2\settings64.bat
+[CMD]>> call D:\Xilinx\Vitis\2020.1\settings64.bat
 ## From the Linux Bash shell (TODO)
 ...
 ```
