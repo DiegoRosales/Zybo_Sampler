@@ -16,3 +16,20 @@ set synthesis_file_list {
     ${core_root}/rtl/controller_unit/i2c_core/verilog-i2c/rtl/i2c_master_wbs_8.v
     ${core_root}/rtl/controller_unit/i2c_core/verilog-i2c/rtl/axis_fifo.v
 }
+
+## Simulation files
+set uvm_simulation_file_list {
+    ${core_root}/verif/codec_unit_top_tb.sv
+}
+
+## Simulation include files
+set uvm_simulation_env_file_list {
+    ${core_root}/verif/env/codec_unit_top_pkg.svh
+    ${core_root}/verif/env/codec_unit_top_testlib.svh
+}
+
+## Simulation testcases
+set uvm_simulation_tc_file_list {
+    ${core_root}/verif/tc/codec_unit_top_base_test.sv
+    ${core_root}/verif/tc/codec_unit_top_testcase_1.sv
+}
