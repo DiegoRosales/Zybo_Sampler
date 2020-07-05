@@ -12,13 +12,53 @@ set_property board_part digilentinc.com:zybo:part0:1.0 [current_project]
 # Core files
 source $filelists_path/core_file_lists.f
 foreach core_info $core_file_lists {
+    set synthesis_file_list          ""
+    set uvm_simulation_file_list     ""
+    set uvm_simulation_env_file_list ""
+    set uvm_simulation_tc_file_list  ""
+    
+
     lassign $core_info core_name core_root core_filelist
     set libname "${core_name}_lib"
     # Source the filelist
     source $core_filelist
 
-    foreach synth_file ${synthesis_file_list} {
-        read_verilog -library $libname -sv [subst $synth_file]
+    ## Add synthesis file lists
+    if {$synthesis_file_list != ""} {
+      foreach synth_file ${synthesis_file_list} {
+          read_verilog -library $libname -sv [subst $synth_file]
+      }
+    }
+
+    ## Add the simulation files
+    if {$uvm_simulation_file_list != ""} {
+      set fileset uvm_simulation
+      if {[get_filesets -quiet $fileset] == {}} {
+        create_fileset -simset $fileset
+      }
+      foreach sim_file ${uvm_simulation_file_list} {
+          set sim_file [subst $sim_file]
+          add_files -fileset $fileset -norecurse $sim_file
+          set_property library $libname [get_files  $sim_file]
+      }
+
+      if {$uvm_simulation_env_file_list != ""} {
+        foreach sim_file ${uvm_simulation_env_file_list} {
+            set sim_file [subst $sim_file]
+            add_files -fileset $fileset -norecurse $sim_file
+            set_property library   $libname         [get_files  $sim_file]
+            set_property file_type {Verilog Header} [get_files  $sim_file]
+        }
+      }
+
+      if {$uvm_simulation_tc_file_list != ""} {
+        foreach sim_file ${uvm_simulation_tc_file_list} {
+            set sim_file [subst $sim_file]
+            add_files -fileset $fileset -norecurse $sim_file
+            set_property library   $libname         [get_files  $sim_file]
+            set_property file_type {Verilog Header} [get_files  $sim_file]
+        }
+      }
     }
 }
 

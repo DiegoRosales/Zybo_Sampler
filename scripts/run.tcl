@@ -53,7 +53,7 @@ puts "Tool = $tool"
 ## 4) Synthesis
 ## 5) Place and Route
 #########################################
-set stages { PACK INTEG GEN_XILINX_IP IMPL LINT EXPORT_WS BUILD_WS }
+set stages { PACK INTEG GEN_XILINX_IP IMPL LINT EXPORT_WS BUILD_WS SIM }
 
 if {$parsed_args(stages) != ""} {
     set stage_error [process_stages -stage_list $stages -input_stages $parsed_args(stages) -input_stage_args $parsed_args(stage_args)]
@@ -104,6 +104,10 @@ if {$stage_error == 1} {
         ## Lint
         if {$STAGE_LINT} {
             source $build_stages_path/stage_lint.tcl
+        }
+
+        if {$STAGE_SIM} {
+            source $build_stages_path/stage_run_simulation.tcl
         }
 
         ## If the BUILD_WS stage is passed, then execute this script using xsct

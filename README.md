@@ -80,7 +80,7 @@ You can find more about the board over at https://reference.digilentinc.com/refe
 
 [**NOT STARTED**] Enable MIDI over USB
 
-[**NOT STARTED**] Enable a UVM Testbench
+[**IN PROGRESS**] Enable a UVM Testbench
 
 [**NOT STARTED**] Automate register generation
 
@@ -124,6 +124,9 @@ This stage will create a Vitis workspace and configure the BSP and the Project a
 ### Lint
 This stage only performs a simple compile to check for syntax errors. To run this stage you need to have passed at least stage 3)
 
+### Simulation (WIP)
+This stage is still work in progress. This stage will run the UVM testcase of a given testbench. To run this stage you need to have passed at least stage 3)
+
 # Build instructions
 To build the project, you need to run one script using Vivado: `run.tcl`.
 
@@ -140,6 +143,8 @@ To build the project, you need to run one script using Vivado: `run.tcl`.
 
 ## Run with stage arguments
 >> vivado -mode batch -source scripts/run.tcl -tclargs -cfg cfg/zybo_sampler.cfg -stages "<STAGE1>+<STAGE2>+..." --stage_args "<STAGE1>_ARG1=1" "<STAGE2>_ARG2=MyValue" --
+# Example
+>> vivado -mode tcl -source scripts/run.tcl -tclargs -cfg cfg/zybo_sampler.cfg -stages "SIM" --stage_args "SIM_TB=codec_unit_top_tb" "SIM_TC=codec_unit_top_testcase_1" --
 ```
 
 ### Firmware build
@@ -152,6 +157,14 @@ To build the project, you need to run one script using Vivado: `run.tcl`.
 >> xsct scripts/run.tcl -tclargs -cfg cfg/zybo_sampler.cfg -stages "BUILD_WS"
 ```
 
+### UVM Simulation
+```bash
+# To run the UVM simulation, you need to use a Vivado version equal or greater than 2019.2 -- That's when they added support for UVM
+# You need to provide the Testbench name and the Testcase name using "SIM_TB=<testbench>" and "SIM_TC=<testcase>"
+# Right now the testbench and testcases are dummy placeholders
+# Example
+>> vivado -mode tcl -source scripts/run.tcl -tclargs -cfg cfg/zybo_sampler.cfg -stages "SIM" --stage_args "SIM_TB=codec_unit_top_tb" "SIM_TC=codec_unit_top_testcase_1" --
+```
 
 # Runtime instructions
 Right now the project has very (**VERY**) limited functionality, but here's what you can do
