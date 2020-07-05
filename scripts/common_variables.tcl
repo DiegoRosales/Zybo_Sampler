@@ -29,3 +29,6 @@ set processor              "ps7_cortexa9_0"
 set platform_project_name  "${project_name}_platform"
 set app_project_name       "${project_name}_app"
 set fw_source_path          ${project_root}/source/common/fw/
+
+## Build Stages
+set build_stages_path ${script_dir}/build_stages
