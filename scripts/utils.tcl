@@ -517,7 +517,7 @@ proc extract_core_file_info {args} {
     }
 
     # Write all the Xilinx IPs that are going to be generated from TCL scripts
-    write_filelist -filelist [join $xilinx_ip_list_all] -list_name "xilinx_ip_list_all" -description "Xilinx IPs to be generated from TCL scripts" -output $parsed_args(filelists_path)/xilinx_ip_list_all.f
+    write_filelist -filelist [join $xilinx_ip_list_all] -list_name "xilinx_ip_tcl"      -description "Xilinx IPs to be generated from TCL scripts" -output $parsed_args(filelists_path)/xilinx_ip_tcl.f
     # Write all the core filelist files
     write_filelist -filelist $core_file_lists           -list_name "core_file_lists"    -description "Core Filelists"                              -output $parsed_args(filelists_path)/core_file_lists.f
     # Write all the core pack scripts

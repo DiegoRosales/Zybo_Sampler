@@ -47,27 +47,7 @@ set core_file_lists  {}
 set core_pack_scripts {}
 
 ## Extract information from the cores' config files
-set xilinx_ip_list_all ""
-foreach core_root_dir $project_cores {
-    ## Source all the core variables
-    set core_root [file normalize $core_root_dir]
-
-    source ${core_root}/cfg/core.cfg
-
-    if {$core_filelist != ""} {
-        lappend core_file_lists   [list ${core_name} ${core_root} ${core_filelist}]
-    }
-
-    if {$core_pack_script != ""} {
-        lappend core_pack_scripts [list ${core_name} ${core_root} ${core_pack_script}]
-    }
-
-    ## Get the Xilinx IP TCL filelist
-    if {$core_xilinx_ip_tcl_filelist != ""} {
-        source $core_xilinx_ip_tcl_filelist
-        lappend xilinx_ip_list_all [subst $xilinx_ip_list]
-    }
-}
+extract_core_file_info -project_cores $project_cores -filelists_path $filelists_path
 
 #########################################
 ## Stages
@@ -102,19 +82,21 @@ if {$stage_error == 1} {
             bsp config max_task_name_len                 50        ;# Task names can be 50 haracters long
             bsp config total_heap_size                   268435456 ;# 256Mib
 
-            file link -symbolic ${workspace_project_path}/${app_project_name}/src/common ${project_root}/source/fw/src/
-            file link -symbolic ${workspace_project_path}/${app_project_name}/src/codec_controller ${project_root}/subsystems/codec_unit/fw/
-            file link -symbolic ${workspace_project_path}/${app_project_name}/src/sampler_dma ${project_root}/subsystems/sampler_dma_unit/fw/
+            source $filelists_path/fw_incdirs.f
+            source $filelists_path/fw_softlinks.f
 
-            app config -name ${app_project_name} -add include-path {${workspace_loc:/${ProjName}/src/codec_controller/include}}
-            app config -name ${app_project_name} -add include-path {${workspace_loc:/${ProjName}/src/sampler_dma/include}}
-            app config -name ${app_project_name} -add include-path {${workspace_loc:/${ProjName}/src/common/FreeRTOS-Plus-CLI}}
-            app config -name ${app_project_name} -add include-path {${workspace_loc:/${ProjName}/src/common/FreeRTOS-Plus-FAT/include}}
-            app config -name ${app_project_name} -add include-path {${workspace_loc:/${ProjName}/src/common/ZyboCLI}}
-            app config -name ${app_project_name} -add include-path {${workspace_loc:/${ProjName}/src/common/ZyboSD}}
-            app config -name ${app_project_name} -add include-path {${workspace_loc:/${ProjName}/src/common/nco}}
-            app config -name ${app_project_name} -add include-path {${workspace_loc:/${ProjName}/src/common/jsmn}}
-            app config -name ${app_project_name} -add include-path {${workspace_loc:/${ProjName}/src/common/sampler/include}}
+            ## Create the softlinks
+            foreach softlink $fw_softlinks {
+                lassign $softlink softlink_target softlink_source
+                file link -symbolic ${workspace_project_path}/${app_project_name}/src/${softlink_target} ${softlink_source}
+            }
+
+            ## Add the include directories
+            foreach incdir $fw_incdirs {
+                set base_dir {${workspace_loc:/${ProjName}/src}}
+                set full_incdir ${base_dir}/${incdir}
+                app config -name ${app_project_name} -add include-path $full_incdir
+            }
 
             platform generate
         }
@@ -125,6 +107,7 @@ if {$stage_error == 1} {
     if {$tool == "vivado"} {
         # Package
         if {$STAGE_PACK} {
+            source $filelists_path/core_pack_scripts.f
             foreach core $core_pack_scripts {
                 lassign $core core_name core_root pack_script
                 puts "Packaging Core $core_name with script $pack_script"
@@ -137,21 +120,28 @@ if {$stage_error == 1} {
             set    integ_script [file normalize ${project_integ_script}]
             puts   "Integrating project using script $integ_script"
             source $integ_script
+            if {[file exists ${integ_project_dir}/integ_gen_rtl_filelist.f]} {
+                file copy -force ${integ_project_dir}/integ_gen_rtl_filelist.f ${filelists_path}/integ_gen_rtl_filelist.f
+            }
+            if {[file exists ${integ_project_dir}/integ_gen_xci_filelist.f]} {
+                file copy -force ${integ_project_dir}/integ_gen_xci_filelist.f ${filelists_path}/integ_gen_xci_filelist.f
+            }
         }
 
 
         ## Generate Xilinx IPs
         set generated_xilinx_ips ""
         if {$STAGE_GEN_XILINX_IP} {
+            source $filelists_path/xilinx_ip_tcl.f
             # IPs from the integration phase
-            if {[file exists ${integ_project_dir}/gen_xci_filelist.f]} {
-                source ${integ_project_dir}/gen_xci_filelist.f
-                lappend generated_xilinx_ips [generate_xilinx_ips_xci -ip_list $gen_xci_filelist -part_number $ZYBO_FPGA_PART_NUMBER -board_part ${ZYBO_BOARD_PART_NUMBER} -dest_dir ${xilinx_ip_xci_path}]
+            if {[file exists ${filelists_path}/integ_gen_xci_filelist.f]} {
+                source ${filelists_path}/integ_gen_xci_filelist.f
+                lappend generated_xilinx_ips [generate_xilinx_ips_xci -ip_list $integ_gen_xci_filelist -part_number $ZYBO_FPGA_PART_NUMBER -board_part ${ZYBO_BOARD_PART_NUMBER} -dest_dir ${xilinx_ip_xci_path}]
             }
 
             # IPs from TCL scripts
-            lappend generated_xilinx_ips [generate_xilinx_ips_tcl -ip_list [join $xilinx_ip_list_all]  -part_number $ZYBO_FPGA_PART_NUMBER -dest_dir $xilinx_ip_tcl_path]
-            write_filelist -filelist [join $generated_xilinx_ips] -list_name "gen_xci_filelist" -description "Generated XCI Files" -output $results_dir/gen_xci_filelist.f
+            lappend generated_xilinx_ips [generate_xilinx_ips_tcl -ip_list [join $xilinx_ip_tcl]  -part_number $ZYBO_FPGA_PART_NUMBER -dest_dir $xilinx_ip_tcl_path]
+            write_filelist -filelist [join $generated_xilinx_ips] -list_name "all_gen_xci_filelist" -description "Generated XCI Files" -output $filelists_path/all_gen_xci_filelist.f
         }
 
         ## Run synthesis and place and route
@@ -166,6 +156,7 @@ if {$stage_error == 1} {
 
             ## Add the files to the design
             # Core files
+            source $filelists_path/core_file_lists.f
             foreach core_info $core_file_lists {
                 lassign $core_info core_name core_root core_filelist
                 set libname "${core_name}_lib"
@@ -178,15 +169,15 @@ if {$stage_error == 1} {
             }
 
             # Add generated RTL files
-            if {[file exists ${integ_project_dir}/gen_rtl_filelist.f]} {
-                source ${integ_project_dir}/gen_rtl_filelist.f
-                read_verilog -library gen_rtl_lib -sv $gen_rtl_filelist
+            if {[file exists ${filelists_path}/integ_gen_rtl_filelist.f]} {
+                source ${filelists_path}/integ_gen_rtl_filelist.f
+                read_verilog -library gen_rtl_lib -sv $integ_gen_rtl_filelist
             }
 
             # Add generated XCI Files from the integration stage
-            if {[file exists $results_dir/gen_xci_filelist.f]} {
-                source $results_dir/gen_xci_filelist.f
-                read_ip $gen_xci_filelist
+            if {[file exists $filelists_path/all_gen_xci_filelist.f]} {
+                source $filelists_path/all_gen_xci_filelist.f
+                read_ip $all_gen_xci_filelist
             }
 
             ## Add Constraints
@@ -234,6 +225,8 @@ if {$stage_error == 1} {
 
                 ## Export the HW Platform for the Vitis Workspace
                 write_hw_platform -fixed -force  -include_bit -file ${workspace_project_path}/${platform_project_name}.xsa
+
+                ## Export the debug probes in case an ILA has been instantiated
                 if {[get_cells -quiet -filter {REF_NAME =~ dbg_hub}] != {}} {
                     puts "Writing debug probes"
                     write_debug_probes -force ${workspace_project_path}/${platform_project_name}.ltx

@@ -12,6 +12,7 @@ set xilinx_ip_tcl_path         "${results_dir}/${gen_xilinx_ip_tcl_dirname}"
 set xilinx_ip_xci_path         "${results_dir}/${gen_xilinx_ip_xci_dirname}"
 set project_impl_path          "${results_dir}/${project_name}"
 set workspace_project_path     "${results_dir}/${workspace_project_name}"
+set filelists_path             "${results_dir}/filelists"
 
 ## Packaged cores variables
 set packaged_cores_dirname "${results_dir}/packaged_cores"
@@ -27,4 +28,4 @@ set block_design_hdf  ${block_design_name}_wrapper.hdf
 set processor              "ps7_cortexa9_0"
 set platform_project_name  "${project_name}_platform"
 set app_project_name       "${project_name}_app"
-set fw_source_path          ${project_root}/source/fw/
+set fw_source_path          ${project_root}/source/common/fw/

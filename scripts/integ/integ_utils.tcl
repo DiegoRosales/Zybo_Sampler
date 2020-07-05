@@ -368,8 +368,8 @@ proc integ_utils::finalize {args} {
 
   ## Generate RTL Filelist
   set wrapper_rtl_file  $integ_utils::bd_dir/$integ_utils::bd_name/synth/$integ_utils::bd_name.v
-  set rtl_filelist_name $integ_utils::project_dir/gen_rtl_filelist.f
-  set xci_filelist_name $integ_utils::project_dir/gen_xci_filelist.f
+  set rtl_filelist_name $integ_utils::project_dir/integ_gen_rtl_filelist.f
+  set xci_filelist_name $integ_utils::project_dir/integ_gen_xci_filelist.f
 
   set rtl_filelist     {}
   set xci_filelist     {}
@@ -391,48 +391,13 @@ proc integ_utils::finalize {args} {
       set syn_files  [glob $core_synth/*]
       lappend rtl_filelist $syn_files
     }
-
   }
 
-  ## RTL Filelist
-  ## set gen_rtl_fillist [list \
-  ##   file1 \
-  ##   file2 \
-  ## ]
-  ##
-  set handle           [open $rtl_filelist_name w+]
-  puts $handle "################################"
-  puts $handle "## THIS FILE WAS GENERATED FROM"
-  puts $handle "## [file normalize [info script]]"
-  puts $handle "################################"
-  puts $handle ""
-  puts $handle "## Generated RTL"
-  puts $handle "set gen_rtl_filelist \[list \\"
-  foreach syn_file $rtl_filelist {
-    puts $handle "  $syn_file \\"
-  }
-  puts $handle "  $wrapper_rtl_file \\"
-  puts $handle "\]"
-  close $handle
+  # Add the top-level RTL
+  lappend rtl_filelist $wrapper_rtl_file
 
-  ## XCI Filelist
-  ## set gen_rtl_xci_filelist [list \
-  ##   file1 \
-  ##   file2 \
-  ## ]
-  set handle [open $xci_filelist_name w+]
-  puts $handle "################################"
-  puts $handle "## THIS FILE WAS GENERATED FROM"
-  puts $handle "## [file normalize [info script]]"
-  puts $handle "################################"
-  puts $handle ""
-  puts $handle "## Generated XCI"
-  puts $handle "set gen_xci_filelist \[list \\"
-  foreach xci_file $xci_filelist {
-    puts $handle "  $xci_file \\"
-  }
-  puts  $handle "\]"
-  close $handle
+  write_filelist -filelist $rtl_filelist -list_name "integ_gen_rtl_filelist" -description "Generated RTL Files from the Integration Script" -output $rtl_filelist_name
+  write_filelist -filelist $xci_filelist -list_name "integ_gen_xci_filelist" -description "Generated XCI Files from the Integration Script" -output $xci_filelist_name
 
   puts "keep_open = $integ_utils::keep_open"
   if {$integ_utils::keep_open} {
