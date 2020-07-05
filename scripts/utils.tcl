@@ -410,6 +410,7 @@ proc process_stages {args} {
     }
 }
 
+## Writes filelists
 proc write_filelist {args} {
     array set my_arglist {
         "filelist"    {"store"         ""       "required"   0}
@@ -427,18 +428,103 @@ proc write_filelist {args} {
 
     ####################################
     set handle   [open $parsed_args(output) w+]
-    puts $handle "################################"
-    puts $handle "## THIS FILE WAS GENERATED FROM"
-    puts $handle "## [file normalize [info script]]"
-    puts $handle "################################"
+    puts $handle "########################################################################################"
+    puts $handle "## THIS FILE WAS GENERATED FROM   : [file normalize [info script]]"
+    puts $handle "## USING PROC                     : [lindex [info level 1] 0]"
+    puts $handle "## AT TIME                        : [clock format [clock seconds] -format %Y/%m/%d-%H:%M:%S]"
+    puts $handle "########################################################################################"
     puts $handle ""
     puts $handle "## $parsed_args(description)"
     puts $handle "set $parsed_args(list_name) \{"
     foreach elem $parsed_args(filelist) {
-        puts $handle "  $elem"
+        if {$elem == {}} {
+            continue
+        } elseif {[llength $elem] == 1} {
+            puts $handle "  $elem"
+        } else {
+            puts $handle "  {$elem}"
+        }
     }
     puts $handle "\}"
     close $handle
+
+    return 0
+}
+
+## Extracts the core file information
+proc extract_core_file_info {args} {
+    array set my_arglist {
+        "project_cores"    {"store"         ""       "required"   0}
+        "filelists_path"   {"store"         ""       "required"   0}
+    }
+
+    set status [arg_parser my_arglist parsed_args args]
+
+    set xilinx_ip_list_all ""
+    set fw_incdirs         ""
+    set fw_softlinks       ""
+    ## Get all the files necessary for building
+    foreach core_root_dir $parsed_args(project_cores) {
+        ## Source all the core variables
+        set core_root [file normalize $core_root_dir]
+
+        ## These variables should be defined in the core.cfg file
+        set core_filelist               ""
+        set core_pack_script            ""
+        set core_xilinx_ip_tcl_filelist ""
+        set core_fw_incdirs             ""
+
+        source ${core_root}/cfg/core.cfg
+
+        ## Get the RTL filelists
+        if {$core_filelist != ""} {
+            lappend core_file_lists   [list ${core_name} ${core_root} ${core_filelist}]
+        }
+
+        ## Get the package script
+        if {$core_pack_script != ""} {
+            lappend core_pack_scripts [list ${core_name} ${core_root} ${core_pack_script}]
+        }
+
+        ## Get the Xilinx IP TCL filelist
+        if {$core_xilinx_ip_tcl_filelist != ""} {
+            source $core_xilinx_ip_tcl_filelist
+            lappend xilinx_ip_list_all [subst $xilinx_ip_list]
+        }
+
+        ## Get the FW directories
+        if {$core_fw_incdirs != ""} {
+            source $core_fw_incdirs
+            if {[info exists fwdir]} {
+                foreach elem $fwdir {
+                    ## Get the softlink target directories
+                    lappend fw_softlinks [subst $elem]
+
+                    ## Foreach softlink target directory, include dirs may be defined
+                    set softlink_target_name [lindex $elem 0]
+                    if {[info exists ${softlink_target_name}_incdir]} {
+                        foreach incdir [set ${softlink_target_name}_incdir] {
+                            lappend fw_incdirs "${softlink_target_name}/$incdir"
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if {![info exists $parsed_args(filelists_path)]} {
+        file mkdir $parsed_args(filelists_path)
+    }
+
+    # Write all the Xilinx IPs that are going to be generated from TCL scripts
+    write_filelist -filelist [join $xilinx_ip_list_all] -list_name "xilinx_ip_list_all" -description "Xilinx IPs to be generated from TCL scripts" -output $parsed_args(filelists_path)/xilinx_ip_list_all.f
+    # Write all the core filelist files
+    write_filelist -filelist $core_file_lists           -list_name "core_file_lists"    -description "Core Filelists"                              -output $parsed_args(filelists_path)/core_file_lists.f
+    # Write all the core pack scripts
+    write_filelist -filelist $core_pack_scripts         -list_name "core_pack_scripts"  -description "Core package scripts"                        -output $parsed_args(filelists_path)/core_pack_scripts.f
+    # Write all the FW directories
+    write_filelist -filelist [join $fw_incdirs]         -list_name "fw_incdirs"         -description "Firmware include directories"                -output $parsed_args(filelists_path)/fw_incdirs.f
+    write_filelist -filelist $fw_softlinks              -list_name "fw_softlinks"       -description "Firmware softlink directories"               -output $parsed_args(filelists_path)/fw_softlinks.f
 
     return 0
 }
