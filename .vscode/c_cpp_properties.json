@@ -12,7 +12,7 @@
             "${workspaceFolder}/results/zybo_sampler_vitis_ws/zybo_sampler_platform/export/zybo_sampler_platform/sw/**",
             "${workspaceFolder}/subsystems/sampler_dma_unit/fw/**",
             "${workspaceFolder}/subsystems/codec_unit/fw/**",
-            "${workspaceFolder}/source/fw/src/**"
+            "${workspaceFolder}/source/common/fw/src/**"
         ]
     },
     "configurations": [
