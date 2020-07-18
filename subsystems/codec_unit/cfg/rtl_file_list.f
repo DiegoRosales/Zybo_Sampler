@@ -20,16 +20,18 @@ set synthesis_file_list {
 ## Simulation files
 set uvm_simulation_file_list {
     ${core_root}/verif/codec_unit_top_tb.sv
+    ${core_root}/verif/env/codec_unit_top_env.sv
 }
 
 ## Simulation include files
 set uvm_simulation_env_file_list {
     ${core_root}/verif/env/codec_unit_top_pkg.svh
-    ${core_root}/verif/env/codec_unit_top_testlib.svh
+    ${core_root}/verif/env/codec_unit_top_base_test_env.svh
 }
 
 ## Simulation testcases
 set uvm_simulation_tc_file_list {
+    ${core_root}/verif/tc/codec_unit_top_testlib.svh
     ${core_root}/verif/tc/codec_unit_top_base_test.sv
     ${core_root}/verif/tc/codec_unit_top_testcase_1.sv
 }

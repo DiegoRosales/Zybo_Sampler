@@ -1,7 +1,6 @@
 // Testbench
 
 `include "uvm_macros.svh"
-`include "codec_unit_top_pkg.svh"
 
 `default_nettype none
 module codec_unit_top_tb ();
@@ -17,12 +16,11 @@ module codec_unit_top_tb ();
   localparam C_S00_AXI_DATA_WIDTH = 32;
   localparam C_S00_AXI_ADDR_WIDTH = 8;
 
+  // Interfaces
+  i2s_if i2s_if0();
+
   logic                                  board_clk;
   logic                                  reset;
-  logic                                  ac_bclk;
-  logic                                  ac_pblrc;
-  logic                                  ac_recdat;
-  logic                                  ac_reclrc;
   logic                                  axi_clk;
   logic                                  s00_axi_aresetn;
   logic [C_S00_AXI_ADDR_WIDTH-1 : 0]     s00_axi_awaddr;
@@ -45,8 +43,18 @@ module codec_unit_top_tb ();
 
   initial begin
     board_clk = 0;
-    reset     = 0;
     forever #4 board_clk = ~board_clk;
+  end
+
+  initial begin
+    reset = 1'b0;
+    #20 reset = 1'b1;
+  end
+
+  // Connect the interfaces with the driver
+  // uvm_test_top is the base test
+  initial begin
+    uvm_config_db#(virtual i2s_if)::set(uvm_root::get(), "uvm_test_top.test_env.i2s_agent*", "i2s_vif", i2s_if0);
   end
 
 
@@ -60,7 +68,7 @@ module codec_unit_top_tb ();
     ///////////////////////////////////////////////
     /////////////// CLOCK AND RESET /////////////// 
     .board_clk  ( board_clk ), // 125MHz
-    .reset  ( reset ),
+    .reset      ( reset     ),
 
     // Misc
     .led_status  ( ),
@@ -68,16 +76,16 @@ module codec_unit_top_tb ();
     /////////////////////////////////////////////////
     ///////////// CODEC SIGNALS (Audio) ///////////// 
     // Clocks
-    .ac_mclk  ( ), // Master Clock
-    .ac_bclk  ( ac_bclk ), // I2S Serial Clock
+    .ac_mclk    ( i2s_if0.ac_mclk   ), // Master Clock
+    .ac_bclk    ( i2s_if0.ac_bclk   ), // I2S Serial Clock
     // Playback
-    .ac_pblrc  ( ac_pblrc ), // I2S Playback Channel Clock (Left/Right)
-    .ac_pbdat  ( ), // I2S Playback Data
+    .ac_pblrc   ( i2s_if0.ac_pblrc  ), // I2S Playback Channel Clock (Left/Right)
+    .ac_pbdat   ( i2s_if0.ac_pbdat  ), // I2S Playback Data
     // Record
-    .ac_recdat  ( ac_recdat ), // I2S Recorded Data
-    .ac_reclrc  ( ac_reclrc ), // I2S Recorded Channel Clock (Left/Right)
+    .ac_recdat  ( i2s_if0.ac_recdat ), // I2S Recorded Data
+    .ac_reclrc  ( i2s_if0.ac_reclrc ), // I2S Recorded Channel Clock (Left/Right)
     // Misc
-    .ac_muten  ( ), // Digital Enable (Active Low)
+    .ac_muten   ( i2s_if0.ac_muten  ), // Digital Enable (Active Low)
 
     /////////////////////////////////////////////////
     //////////// CODEC SIGNALS (Control) //////////// 
@@ -94,25 +102,25 @@ module codec_unit_top_tb ();
     ///////////// AXI4-Lite Signals //////////////
     // Ports of Axi Slave Bus Interface S00_AXI
     .s00_axi_aresetn  ( s00_axi_aresetn ),
-    .s00_axi_awaddr  ( s00_axi_awaddr ),
-    .s00_axi_awprot  ( s00_axi_awprot ),
+    .s00_axi_awaddr   ( s00_axi_awaddr  ),
+    .s00_axi_awprot   ( s00_axi_awprot  ),
     .s00_axi_awvalid  ( s00_axi_awvalid ),
-    .s00_axi_awready  ( ),
-    .s00_axi_wdata  ( s00_axi_wdata ),
-    .s00_axi_wstrb  ( s00_axi_wstrb ),
-    .s00_axi_wvalid  ( s00_axi_wvalid ),
-    .s00_axi_wready  ( ),
-    .s00_axi_bresp  ( ),
-    .s00_axi_bvalid  ( ),
-    .s00_axi_bready  ( s00_axi_bready ),
-    .s00_axi_araddr  ( s00_axi_araddr ),
-    .s00_axi_arprot  ( s00_axi_arprot ),
+    .s00_axi_awready  (                 ),
+    .s00_axi_wdata    ( s00_axi_wdata   ),
+    .s00_axi_wstrb    ( s00_axi_wstrb   ),
+    .s00_axi_wvalid   ( s00_axi_wvalid  ),
+    .s00_axi_wready   (                 ),
+    .s00_axi_bresp    (                 ),
+    .s00_axi_bvalid   (                 ),
+    .s00_axi_bready   ( s00_axi_bready  ),
+    .s00_axi_araddr   ( s00_axi_araddr  ),
+    .s00_axi_arprot   ( s00_axi_arprot  ),
     .s00_axi_arvalid  ( s00_axi_arvalid ),
-    .s00_axi_arready  ( ),
-    .s00_axi_rdata  ( ),
-    .s00_axi_rresp  ( ),
-    .s00_axi_rvalid  ( ),
-    .s00_axi_rready  ( s00_axi_rready ),
+    .s00_axi_arready  (                 ),
+    .s00_axi_rdata    (                 ),
+    .s00_axi_rresp    (                 ),
+    .s00_axi_rvalid   (                 ),
+    .s00_axi_rready   ( s00_axi_rready  ),
 
 
     ////////////////////////////////////////////////
