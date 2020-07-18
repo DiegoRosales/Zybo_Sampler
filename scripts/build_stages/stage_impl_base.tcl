@@ -19,7 +19,8 @@ foreach core_info $core_file_lists {
     
 
     lassign $core_info core_name core_root core_filelist
-    set libname "${core_name}_lib"
+    set libname     "${core_name}_lib"
+    set sim_libname "uvm_simulation_lib"
     # Source the filelist
     source $core_filelist
 
@@ -31,33 +32,37 @@ foreach core_info $core_file_lists {
     }
 
     ## Add the simulation files
+    set fileset uvm_simulation
+    if {[get_filesets -quiet $fileset] == {}} {
+      create_fileset -simset $fileset
+    }
+    ## Main files
     if {$uvm_simulation_file_list != ""} {
-      set fileset uvm_simulation
-      if {[get_filesets -quiet $fileset] == {}} {
-        create_fileset -simset $fileset
-      }
       foreach sim_file ${uvm_simulation_file_list} {
           set sim_file [subst $sim_file]
           add_files -fileset $fileset -norecurse $sim_file
-          set_property library $libname [get_files  $sim_file]
+          set_property file_type {SystemVerilog} [get_files  $sim_file]
+          set_property library $sim_libname [get_files  $sim_file]
       }
+    }
 
-      if {$uvm_simulation_env_file_list != ""} {
-        foreach sim_file ${uvm_simulation_env_file_list} {
-            set sim_file [subst $sim_file]
-            add_files -fileset $fileset -norecurse $sim_file
-            set_property library   $libname         [get_files  $sim_file]
-            set_property file_type {Verilog Header} [get_files  $sim_file]
-        }
+    ## Include files
+    if {$uvm_simulation_env_file_list != ""} {
+      foreach sim_file ${uvm_simulation_env_file_list} {
+          set sim_file [subst $sim_file]
+          add_files -fileset $fileset -norecurse $sim_file
+          set_property library   $sim_libname         [get_files  $sim_file]
+          set_property file_type {Verilog Header} [get_files  $sim_file]
       }
+    }
 
-      if {$uvm_simulation_tc_file_list != ""} {
-        foreach sim_file ${uvm_simulation_tc_file_list} {
-            set sim_file [subst $sim_file]
-            add_files -fileset $fileset -norecurse $sim_file
-            set_property library   $libname         [get_files  $sim_file]
-            set_property file_type {Verilog Header} [get_files  $sim_file]
-        }
+    ## Testcases
+    if {$uvm_simulation_tc_file_list != ""} {
+      foreach sim_file ${uvm_simulation_tc_file_list} {
+          set sim_file [subst $sim_file]
+          add_files -fileset $fileset -norecurse $sim_file
+          set_property library   $sim_libname         [get_files  $sim_file]
+          set_property file_type {Verilog Header} [get_files  $sim_file]
       }
     }
 }
