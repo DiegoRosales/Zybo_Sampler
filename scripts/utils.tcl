@@ -473,6 +473,7 @@ proc extract_core_file_info {args} {
         set core_pack_script            ""
         set core_xilinx_ip_tcl_filelist ""
         set core_fw_incdirs             ""
+        set core_registers              ""
 
         source ${core_root}/cfg/core.cfg
 
@@ -490,6 +491,11 @@ proc extract_core_file_info {args} {
         if {$core_xilinx_ip_tcl_filelist != ""} {
             source $core_xilinx_ip_tcl_filelist
             lappend xilinx_ip_list_all [subst $xilinx_ip_list]
+        }
+
+        ## Get the register maps
+        if {$core_registers != ""} {
+            lappend core_reg_maps [list ${core_name} ${core_root} ${core_registers}]
         }
 
         ## Get the FW directories
@@ -522,6 +528,8 @@ proc extract_core_file_info {args} {
     write_filelist -filelist $core_file_lists           -list_name "core_file_lists"    -description "Core Filelists"                              -output $parsed_args(filelists_path)/core_file_lists.f
     # Write all the core pack scripts
     write_filelist -filelist $core_pack_scripts         -list_name "core_pack_scripts"  -description "Core package scripts"                        -output $parsed_args(filelists_path)/core_pack_scripts.f
+    # Write all the core register maps
+    write_filelist -filelist $core_reg_maps             -list_name "core_reg_maps"      -description "Core register maps"                          -output $parsed_args(filelists_path)/core_reg_maps.f
     # Write all the FW directories
     write_filelist -filelist [join $fw_incdirs]         -list_name "fw_incdirs"         -description "Firmware include directories"                -output $parsed_args(filelists_path)/fw_incdirs.f
     write_filelist -filelist $fw_softlinks              -list_name "fw_softlinks"       -description "Firmware softlink directories"               -output $parsed_args(filelists_path)/fw_softlinks.f
