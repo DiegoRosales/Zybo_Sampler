@@ -17,10 +17,11 @@ module codec_unit_top_tb ();
   localparam C_S00_AXI_ADDR_WIDTH = 8;
 
   // Interfaces
-  i2s_if i2s_if0();
+  i2s_if i2s_if0(.ac_mclk(ac_mclk));
 
   logic                                  board_clk;
   logic                                  reset;
+  logic                                  ac_mclk;
   logic                                  axi_clk;
   logic                                  s00_axi_aresetn;
   logic [C_S00_AXI_ADDR_WIDTH-1 : 0]     s00_axi_awaddr;
@@ -76,7 +77,7 @@ module codec_unit_top_tb ();
     /////////////////////////////////////////////////
     ///////////// CODEC SIGNALS (Audio) ///////////// 
     // Clocks
-    .ac_mclk    ( i2s_if0.ac_mclk   ), // Master Clock
+    .ac_mclk    ( ac_mclk           ), // Master Clock
     .ac_bclk    ( i2s_if0.ac_bclk   ), // I2S Serial Clock
     // Playback
     .ac_pblrc   ( i2s_if0.ac_pblrc  ), // I2S Playback Channel Clock (Left/Right)

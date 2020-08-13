@@ -37,7 +37,7 @@ class i2s_vip_driver extends uvm_driver #(i2s_vip_transfer);
   protected task drive_clock();
     `uvm_info(get_full_name(), "Driving ac_bclk", UVM_LOW)
     virtual_if.ac_bclk = 1'b0;
-    forever #20 virtual_if.ac_mclk = ~virtual_if.ac_mclk;
+    forever #20.8 virtual_if.ac_bclk = ~virtual_if.ac_bclk;
   endtask
 
 endclass : i2s_vip_driver
