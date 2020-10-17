@@ -22,3 +22,8 @@ set uvm_simulation_env_file_list {
     ${core_root}/verif/i2s_vip/i2s_vip_pkg.svh
     ${core_root}/verif/i2s_vip/i2s_if.svh
 }
+
+## Simulation include dirs
+set uvm_simulation_env_incdir_list {
+    ${core_root}/gen
+}

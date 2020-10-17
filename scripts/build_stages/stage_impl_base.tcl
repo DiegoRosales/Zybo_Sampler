@@ -11,12 +11,13 @@ set_property board_part digilentinc.com:zybo:part0:1.0 [current_project]
 ## Add the files to the design
 # Core files
 source $filelists_path/core_file_lists.f
+set all_include_dirs ""
 foreach core_info $core_file_lists {
-    set synthesis_file_list          ""
-    set uvm_simulation_file_list     ""
-    set uvm_simulation_env_file_list ""
-    set uvm_simulation_tc_file_list  ""
-    
+    set synthesis_file_list            ""
+    set uvm_simulation_file_list       ""
+    set uvm_simulation_env_file_list   ""
+    set uvm_simulation_tc_file_list    ""
+    set uvm_simulation_env_incdir_list ""
 
     lassign $core_info core_name core_root core_filelist
     set libname     "${core_name}_lib"
@@ -51,8 +52,15 @@ foreach core_info $core_file_lists {
       foreach sim_file ${uvm_simulation_env_file_list} {
           set sim_file [subst $sim_file]
           add_files -fileset $fileset -norecurse $sim_file
-          set_property library   $sim_libname         [get_files  $sim_file]
+          set_property library   $sim_libname     [get_files  $sim_file]
           set_property file_type {Verilog Header} [get_files  $sim_file]
+      }
+    }
+
+    ## Include directories
+    if {$uvm_simulation_env_incdir_list != ""} {
+      foreach incdir ${uvm_simulation_env_incdir_list} {
+          append all_include_dirs "[subst $incdir] "
       }
     }
 

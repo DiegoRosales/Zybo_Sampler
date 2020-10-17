@@ -10,7 +10,7 @@ set ADDRESS_READ_SIGNAL  "read_addr"
 set ADDRESS_WRITE_SIGNAL "write_addr"
 
 ## Assemble all the registers
-set codec_registers_regmap [list \
+set codec_register_block [list \
   $codec_i2c_ctrl_reg                0 \
   $codec_i2c_addr_reg                1 \
   $codec_i2c_wr_data_reg             2 \
@@ -24,6 +24,6 @@ set codec_registers_regmap [list \
   $upstream_axis_wr_data_count_reg   10 \
 ]
 
-set registers [list \
-  "codec_registers" $codec_registers_regmap
+set reg_blocks [list \
+  "codec_registers" $codec_register_block
 ]

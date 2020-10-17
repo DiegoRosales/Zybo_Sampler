@@ -8,7 +8,6 @@ set script_dir [file normalize [file dirname [info script]]]
 source ${script_dir}/utils.tcl
 source ${script_dir}/pack/pack_utils.tcl
 source ${script_dir}/pack/pack_utils_if_templates.tcl
-source ${script_dir}/reg_gen/reg_gen.tcl
 source ${script_dir}/integ/integ_utils.tcl
 
 array set my_arglist {
@@ -108,14 +107,14 @@ if {$stage_error == 1} {
             source $build_stages_path/stage_lint.tcl
         }
 
-        ## Simulation
-        if {$STAGE_SIM} {
-            source $build_stages_path/stage_run_simulation.tcl
-        }
-
         ## Register Generation
         if {$STAGE_REG_GEN} {
             source $build_stages_path/stage_reg_gen.tcl
+        }
+
+        ## Simulation
+        if {$STAGE_SIM} {
+            source $build_stages_path/stage_run_simulation.tcl
         }
 
         ## If the BUILD_WS stage is passed, then execute this script using xsct

@@ -67,8 +67,8 @@ set codec_i2c_addr_reg {
       rtl_name    "codec_i2c_addr"
       description "I2C Write Address"
       type        "REG_SW_RW_HW_RO"
-      msb         "31"
-      lsb         "0"
+      msb         31
+      lsb         0
     }
   }
 }
@@ -83,8 +83,8 @@ set codec_i2c_wr_data_reg {
       rtl_name    "codec_i2c_wr_data"
       description "I2C Write Data"
       type        "REG_SW_RW_HW_RO"
-      msb         "31"
-      lsb         "0"
+      msb         31
+      lsb         0
     }
   }
 }
@@ -99,8 +99,8 @@ set codec_i2c_rd_data_reg {
       rtl_name    "codec_i2c_rd_data"
       description "I2C Read Data"
       type        "REG_HW_RW_SW_RO"
-      msb         "31"
-      lsb         "0"
+      msb         31
+      lsb         0
     }
   }
 }
@@ -115,8 +115,8 @@ set misc_data_0_reg {
       rtl_name    "misc_data_0"
       description "misc_data_0"
       type        "REG_HW_RW_SW_RO"
-      msb         "31"
-      lsb         "0"
+      msb         31
+      lsb         0
     }
   }
 }
@@ -131,8 +131,8 @@ set misc_data_1_reg {
       rtl_name    "misc_data_1"
       description "misc_data_1"
       type        "REG_HW_RW_SW_RO"
-      msb         "31"
-      lsb         "0"
+      msb         31
+      lsb         0
     }
   }
 }
@@ -147,8 +147,8 @@ set misc_data_2_reg {
       rtl_name    "misc_data_2"
       description "misc_data_2"
       type        "REG_SW_RW_HW_RO"
-      msb         "31"
-      lsb         "0"
+      msb         31
+      lsb         0
     }
   }
 }
@@ -163,8 +163,8 @@ set downstream_axis_wr_data_count_reg {
       rtl_name    "DOWNSTREAM_axis_wr_data_count_reg"
       description "DOWNSTREAM_axis_wr_data_count_reg"
       type        "REG_HW_RW_SW_RO"
-      msb         "31"
-      lsb         "0"
+      msb         31
+      lsb         0
     }
   }
 }
@@ -178,8 +178,8 @@ set upstream_axis_rd_data_count_reg {
       rtl_name    "UPSTREAM_axis_rd_data_count_reg_reg"
       description "UPSTREAM_axis_rd_data_count_reg_reg"
       type        "REG_HW_RW_SW_RO"
-      msb         "31"
-      lsb         "0"
+      msb         31
+      lsb         0
     }
   }
 }
@@ -193,8 +193,8 @@ set downstream_axis_rd_data_count_reg {
       rtl_name    "DOWNSTREAM_axis_rd_data_count_reg_reg"
       description "DOWNSTREAM_axis_rd_data_count_reg_reg"
       type        "REG_HW_RW_SW_RO"
-      msb         "31"
-      lsb         "0"
+      msb         31
+      lsb         0
     }
   }
 }
@@ -208,8 +208,8 @@ set upstream_axis_wr_data_count_reg {
       rtl_name    "UPSTREAM_axis_wr_data_count_reg_reg"
       description "UPSTREAM_axis_wr_data_count_reg_reg"
       type        "REG_HW_RW_SW_RO"
-      msb         "31"
-      lsb         "0"
+      msb         31
+      lsb         0
     }
   }
 }

@@ -35,3 +35,8 @@ set uvm_simulation_tc_file_list {
     ${core_root}/verif/tc/codec_unit_top_base_test.sv
     ${core_root}/verif/tc/codec_unit_top_testcase_1.sv
 }
+
+## Simulation include dirs
+set uvm_simulation_env_incdir_list {
+    ${core_root}/gen
+}

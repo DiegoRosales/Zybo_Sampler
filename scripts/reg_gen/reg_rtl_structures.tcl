@@ -7,14 +7,14 @@ set generic_register_template {
 }
 
 ## Generata a register that is set by SW and cleared by HW
-proc gen_REG_SW_WR1_HW_CLR {REG ADDR} {
+proc gen_REG_SW_WR1_HW_CLR {REG ADDR SIG_PARAMS} {
   global generic_register_template
-  global CLK
-  global RST
-  global WE_SIGNAL
-  global WRITE_DATA_SIGNAL
-  global READ_DATA_SIGNAL
-  global ADDRESS_WRITE_SIGNAL
+  set CLK                  [dict get $SIG_PARAMS CLK]
+  set RST                  [dict get $SIG_PARAMS RST]
+  set WE_SIGNAL            [dict get $SIG_PARAMS WE_SIGNAL]
+  set WRITE_DATA_SIGNAL    [dict get $SIG_PARAMS WRITE_DATA_SIGNAL]
+  set READ_DATA_SIGNAL     [dict get $SIG_PARAMS READ_DATA_SIGNAL]
+  set ADDRESS_WRITE_SIGNAL [dict get $SIG_PARAMS ADDRESS_WRITE_SIGNAL]
 
   set output_str      ""
   set output_signals  ""
@@ -52,14 +52,14 @@ proc gen_REG_SW_WR1_HW_CLR {REG ADDR} {
 }
 
 ## Generata a register that is set by HW and cleared by SW
-proc gen_REG_HW_WR1_SW_CLR {REG ADDR} {
+proc gen_REG_HW_WR1_SW_CLR {REG ADDR SIG_PARAMS} {
   global generic_register_template
-  global CLK
-  global RST
-  global WE_SIGNAL
-  global WRITE_DATA_SIGNAL
-  global READ_DATA_SIGNAL
-  global ADDRESS_WRITE_SIGNAL
+  set CLK                  [dict get $SIG_PARAMS CLK]
+  set RST                  [dict get $SIG_PARAMS RST]
+  set WE_SIGNAL            [dict get $SIG_PARAMS WE_SIGNAL]
+  set WRITE_DATA_SIGNAL    [dict get $SIG_PARAMS WRITE_DATA_SIGNAL]
+  set READ_DATA_SIGNAL     [dict get $SIG_PARAMS READ_DATA_SIGNAL]
+  set ADDRESS_WRITE_SIGNAL [dict get $SIG_PARAMS ADDRESS_WRITE_SIGNAL]
   
   set output_str      ""
   set output_signals  ""
@@ -97,14 +97,14 @@ proc gen_REG_HW_WR1_SW_CLR {REG ADDR} {
 }
 
 ## Generata a register that can be set by SW, but only read by HW
-proc gen_REG_SW_RW_HW_RO {REG ADDR} {
+proc gen_REG_SW_RW_HW_RO {REG ADDR SIG_PARAMS} {
   global generic_register_template
-  global CLK
-  global RST
-  global WE_SIGNAL
-  global WRITE_DATA_SIGNAL
-  global READ_DATA_SIGNAL
-  global ADDRESS_WRITE_SIGNAL
+  set CLK                  [dict get $SIG_PARAMS CLK]
+  set RST                  [dict get $SIG_PARAMS RST]
+  set WE_SIGNAL            [dict get $SIG_PARAMS WE_SIGNAL]
+  set WRITE_DATA_SIGNAL    [dict get $SIG_PARAMS WRITE_DATA_SIGNAL]
+  set READ_DATA_SIGNAL     [dict get $SIG_PARAMS READ_DATA_SIGNAL]
+  set ADDRESS_WRITE_SIGNAL [dict get $SIG_PARAMS ADDRESS_WRITE_SIGNAL]
 
   set output_str      ""
   set output_signals  ""
@@ -141,14 +141,14 @@ proc gen_REG_SW_RW_HW_RO {REG ADDR} {
 }
 
 ## Generata a register that can be set by HW, but only read by SW
-proc gen_REG_HW_RW_SW_RO {REG ADDR} {
+proc gen_REG_HW_RW_SW_RO {REG ADDR SIG_PARAMS} {
   global generic_register_template
-  global CLK
-  global RST
-  global WE_SIGNAL
-  global WRITE_DATA_SIGNAL
-  global READ_DATA_SIGNAL
-  global ADDRESS_WRITE_SIGNAL
+  set CLK                  [dict get $SIG_PARAMS CLK]
+  set RST                  [dict get $SIG_PARAMS RST]
+  set WE_SIGNAL            [dict get $SIG_PARAMS WE_SIGNAL]
+  set WRITE_DATA_SIGNAL    [dict get $SIG_PARAMS WRITE_DATA_SIGNAL]
+  set READ_DATA_SIGNAL     [dict get $SIG_PARAMS READ_DATA_SIGNAL]
+  set ADDRESS_WRITE_SIGNAL [dict get $SIG_PARAMS ADDRESS_WRITE_SIGNAL]
 
   set output_str      ""
   set output_signals  ""
@@ -189,9 +189,9 @@ proc gen_REG_HW_RW_SW_RO {REG ADDR} {
 ###########################################
 
 ## Generate Read mux
-proc generate_read_mux {MUX_DATA} {
-  global ADDRESS_READ_SIGNAL
-  global READ_DATA_SIGNAL
+proc generate_read_mux {MUX_DATA SIG_PARAMS} {
+  set ADDRESS_READ_SIGNAL [dict get $SIG_PARAMS ADDRESS_READ_SIGNAL]
+  set READ_DATA_SIGNAL    [dict get $SIG_PARAMS READ_DATA_SIGNAL]
 
   set    output_str "  // Readback mux\n"
   append output_str "  always_comb begin\n"
@@ -238,14 +238,14 @@ proc generate_top_io {INPUTS OUTPUTS} {
   return $output_str 
 }
 
-proc generate_reg_module {MODULE_NAME TOP_IO BODY READ_MUX} {
-  global CLK
-  global RST
-  global WE_SIGNAL
-  global WRITE_DATA_SIGNAL
-  global READ_DATA_SIGNAL
-  global ADDRESS_READ_SIGNAL
-  global ADDRESS_WRITE_SIGNAL
+proc generate_reg_module {MODULE_NAME TOP_IO BODY READ_MUX SIG_PARAMS} {
+  set CLK                  [dict get $SIG_PARAMS CLK]
+  set RST                  [dict get $SIG_PARAMS RST]
+  set WE_SIGNAL            [dict get $SIG_PARAMS WE_SIGNAL]
+  set WRITE_DATA_SIGNAL    [dict get $SIG_PARAMS WRITE_DATA_SIGNAL]
+  set READ_DATA_SIGNAL     [dict get $SIG_PARAMS READ_DATA_SIGNAL]
+  set ADDRESS_READ_SIGNAL  [dict get $SIG_PARAMS ADDRESS_READ_SIGNAL]
+  set ADDRESS_WRITE_SIGNAL [dict get $SIG_PARAMS ADDRESS_WRITE_SIGNAL]
 
   set output_str ""
   append output_str "// Register module generated automatically\n"
@@ -281,4 +281,60 @@ proc generate_reg_module {MODULE_NAME TOP_IO BODY READ_MUX} {
 
   return $output_str
 
+}
+
+## Generate RTL Register files
+proc generate_rtl_registers {module_name register_blocks output_directory sig_params} {
+  if {$module_name == ""} {
+    puts "ERROR: No module name specified!"
+    return
+  }
+  puts "------------------------------------"
+  puts "Generating registers for $module_name"
+  puts "------------------------------------"
+
+  set inputs   [list]
+  set outputs  [list]
+  set mux_data [list]
+  set reg_body ""
+
+  foreach {reg addr} $register_blocks {
+    global $reg
+    array  set new_reg [array get $reg]
+    set    reg_name    [dict get $reg name]
+    set    reg_fields  [dict get $reg fields]
+    puts   "Reg = $reg_name | Addr = $addr"
+
+    set readback [list]
+
+    append reg_body "  /////////////////////////\n"
+    append reg_body "  //  Register $reg_name\n"
+    append reg_body "  //  Address  [format "'h%0x" $addr]\n"
+    append reg_body "  /////////////////////////\n\n"
+
+    ## Generate all the register fields
+    foreach {name field} $reg_fields {
+      set     reg_generator "gen_[dict get $field type]"
+      lassign [$reg_generator $field [format "'h%0x" $addr] $sig_params] curr_body curr_inputs curr_outputs curr_readback curr_write
+      append  reg_body $curr_body
+      append  reg_body "\n\n"
+      lappend inputs   [list $name $curr_inputs]
+      lappend outputs  [list $name $curr_outputs]
+      lappend readback $curr_readback
+    }
+
+    lappend mux_data $readback $addr $reg_name
+  }
+
+  set reg_top_io   [generate_top_io     $inputs $outputs]
+  set reg_read_mux [generate_read_mux   $mux_data        $sig_params]
+  set reg_module   [generate_reg_module $module_name     $reg_top_io $reg_body $reg_read_mux $sig_params]
+
+  ## Write to output
+  if {![file exists $output_directory]} {
+    file mkdir $output_directory
+  }
+  set fp [open "${output_directory}/${module_name}.sv" w]
+  puts $fp $reg_module
+  close $fp
 }

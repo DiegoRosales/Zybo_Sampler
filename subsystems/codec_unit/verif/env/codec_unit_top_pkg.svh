@@ -8,5 +8,6 @@ package codec_unit_top_pkg;
   import i2s_vip_pkg::*;
 
   `include "codec_unit_top_base_test_env.svh"
+  `include "codec_registers_uvm_reg_model.sv"
 
 endpackage
