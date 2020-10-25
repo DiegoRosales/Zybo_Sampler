@@ -1,0 +1,6 @@
+/////////////////////////////////////
+// AXI4-Lite BFM Environment
+/////////////////////////////////////
+
+`include "axi4_lite_if.sv"
+`include "axi4_lite_bfm_pkg.svh"
