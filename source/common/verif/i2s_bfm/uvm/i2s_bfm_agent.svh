@@ -1,11 +1,11 @@
 // I2S Verification IP UVM Agent
 
-class i2s_vip_agent extends uvm_agent;
+class i2s_bfm_agent extends uvm_agent;
 
-  `uvm_component_utils(i2s_vip_agent)
+  `uvm_component_utils(i2s_bfm_agent)
 
-  i2s_vip_driver    driver;
-  i2s_vip_sequencer sequencer;
+  i2s_bfm_driver    driver;
+  i2s_bfm_sequencer sequencer;
 
   function new(string name, uvm_component parent);
     super.new(name, parent);
@@ -21,8 +21,8 @@ class i2s_vip_agent extends uvm_agent;
       `uvm_info(get_full_name(), "I2S Verification IP Agent is active!", UVM_LOW)
 
       // Build the driver
-      driver    = i2s_vip_driver::type_id::create("driver", this);
-      sequencer = i2s_vip_sequencer::type_id::create("sequencer", this);
+      driver    = i2s_bfm_driver::type_id::create("driver", this);
+      sequencer = i2s_bfm_sequencer::type_id::create("sequencer", this);
     end
     `uvm_info(get_full_name(), "Building I2S Verification IP UVM Agent Done!", UVM_LOW)
   endfunction

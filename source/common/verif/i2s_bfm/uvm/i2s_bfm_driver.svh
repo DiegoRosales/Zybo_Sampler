@@ -1,17 +1,17 @@
 // I2S UVM Driver
-// The driver receives a transfer of type i2s_vip_transfer
+// The driver receives a transfer of type i2s_bfm_transfer
 
-class i2s_vip_driver extends uvm_driver #(i2s_vip_transfer);
+class i2s_bfm_driver extends uvm_driver #(i2s_bfm_transfer);
 
   // I2S Virtual Interface
   i2s_vif          virtual_if;
   int              configured_if;
-  i2s_vip_transfer transfer;
+  i2s_bfm_transfer transfer;
 
-  `uvm_component_utils(i2s_vip_driver)
+  `uvm_component_utils(i2s_bfm_driver)
  
   // Constructor
-  function new (string name="i2s_vip_driver", uvm_component parent);
+  function new (string name="i2s_bfm_driver", uvm_component parent);
     super.new(name, parent);
   endfunction : new
 
@@ -40,4 +40,4 @@ class i2s_vip_driver extends uvm_driver #(i2s_vip_transfer);
     forever #20.8 virtual_if.ac_bclk = ~virtual_if.ac_bclk;
   endtask
 
-endclass : i2s_vip_driver
+endclass : i2s_bfm_driver
