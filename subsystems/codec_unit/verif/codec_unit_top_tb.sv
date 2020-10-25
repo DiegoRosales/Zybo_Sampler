@@ -17,7 +17,8 @@ module codec_unit_top_tb ();
   localparam C_S00_AXI_ADDR_WIDTH = 8;
 
   // Interfaces
-  i2s_if i2s_if0(.ac_mclk(ac_mclk));
+  clock_and_reset_if clock_and_reset_if0();
+  i2s_if             i2s_if0(.ac_mclk(ac_mclk));
 
   logic                                  board_clk;
   logic                                  reset;
@@ -42,20 +43,14 @@ module codec_unit_top_tb ();
   logic                                  i2c_scl;
   logic                                  i2c_sda;
 
-  initial begin
-    board_clk = 0;
-    forever #4 board_clk = ~board_clk;
-  end
-
-  initial begin
-    reset = 1'b0;
-    #20 reset = 1'b1;
-  end
+  assign board_clk = clock_and_reset_if0.clock;
+  assign reset     = clock_and_reset_if0.reset;
 
   // Connect the interfaces with the driver
   // uvm_test_top is the base test
   initial begin
-    uvm_config_db#(virtual i2s_if)::set(uvm_root::get(), "uvm_test_top.test_env.i2s_agent*", "i2s_vif", i2s_if0);
+    uvm_config_db#(virtual i2s_if)::            set(uvm_root::get(), "uvm_test_top.test_env.i2s_agent*",             "i2s_vif",    i2s_if0);
+    uvm_config_db#(virtual clock_and_reset_if)::set(uvm_root::get(), "uvm_test_top.test_env.clock_and_reset_agent*", "virtual_if", clock_and_reset_if0);
   end
 
 
