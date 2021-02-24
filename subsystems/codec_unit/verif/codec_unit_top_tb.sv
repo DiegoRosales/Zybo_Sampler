@@ -10,7 +10,7 @@ module codec_unit_top_tb ();
 
   `include "codec_unit_top_testlib.svh"
 
-  codec_unit_top_base_test my_base_test;
+  codec_unit_top_base_test base_test; // Contains the TB environment
 
 
   localparam C_S00_AXI_DATA_WIDTH = 32;
@@ -19,6 +19,7 @@ module codec_unit_top_tb ();
   // Interfaces
   clock_and_reset_if clock_and_reset_if0();
   i2s_if             i2s_if0(.ac_mclk(ac_mclk));
+  axi4_lite_if       axi4_bfm_if0(.clock(axi_clk), .reset_n(reset));
 
   logic                                  board_clk;
   logic                                  reset;
@@ -49,8 +50,9 @@ module codec_unit_top_tb ();
   // Connect the interfaces with the driver
   // uvm_test_top is the base test
   initial begin
-    uvm_config_db#(virtual i2s_if)::            set(uvm_root::get(), "uvm_test_top.test_env.i2s_agent*",             "i2s_vif",    i2s_if0);
+    uvm_config_db#(virtual i2s_if            )::set(uvm_root::get(), "uvm_test_top.test_env.i2s_agent*",             "i2s_vif",    i2s_if0);
     uvm_config_db#(virtual clock_and_reset_if)::set(uvm_root::get(), "uvm_test_top.test_env.clock_and_reset_agent*", "virtual_if", clock_and_reset_if0);
+    uvm_config_db#(virtual axi4_lite_if      )::set(uvm_root::get(), "uvm_test_top.test_env.axi4_lite_agent.driver", "virtual_if", axi4_bfm_if0);
   end
 
 

@@ -19,6 +19,7 @@ set synthesis_file_list {
 
 ## Simulation files
 set uvm_simulation_file_list {
+    ${core_root}/verif/env/codec_unit_top_reg_model_pkg.sv
     ${core_root}/verif/codec_unit_top_tb.sv
     ${core_root}/verif/env/codec_unit_top_env.sv
 }
