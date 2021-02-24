@@ -6,7 +6,11 @@ class clock_and_reset_bfm_agent extends uvm_agent;
   clock_and_reset_bfm_cfg clock_and_reset_cfg;
 
   // Components
-  clock_and_reset_bfm_driver driver;
+  clock_bfm_driver clk_driver;
+  reset_bfm_driver rst_driver;
+
+  // Sequencers
+  reset_sequencer reset_seq;
 
   // Virtual interface
   virtual clock_and_reset_if virtual_if;
@@ -39,14 +43,20 @@ class clock_and_reset_bfm_agent extends uvm_agent;
         `uvm_fatal("NO_VIRTUAL_INTERFACE_CONFIGURED", $sformatf("The Virtual Interface wasn't configured for %s", get_full_name()));
       end
 
-      // Build the driver
-      driver    = clock_and_reset_bfm_driver::type_id::create("driver", this);
+      // Build the clk_driver
+      clk_driver = clock_bfm_driver::type_id::create("clk_driver", this);
+      rst_driver = reset_bfm_driver::type_id::create("rst_driver", this);
+
+      // Build the sequencer
+      reset_seq = reset_sequencer::type_id::create("reset_seq", this);
 
       // Configure
-      driver.bfm_cfg = clock_and_reset_cfg;
+      clk_driver.bfm_cfg = clock_and_reset_cfg;
+      rst_driver.bfm_cfg = clock_and_reset_cfg;
 
       // Configure the virtual interface
-      uvm_config_db#(virtual clock_and_reset_if)::set(this, "driver*", "virtual_if", virtual_if);
+      uvm_config_db#(virtual clock_and_reset_if)::set(this, "clk_driver*", "virtual_if", virtual_if);
+      uvm_config_db#(virtual clock_and_reset_if)::set(this, "rst_driver*", "virtual_if", virtual_if);
     end
     `uvm_info(get_full_name(), "Building clock_and_reset Verification IP UVM Agent Done!", UVM_LOW)
   endfunction
@@ -55,7 +65,7 @@ class clock_and_reset_bfm_agent extends uvm_agent;
   function void connect_phase(uvm_phase phase);
     // Check if the agent is active
     if (get_is_active() == UVM_ACTIVE) begin
-      // Connect the driver with the sequencer
+      rst_driver.seq_item_port.connect(reset_seq.seq_item_export);
     end
   endfunction
 
