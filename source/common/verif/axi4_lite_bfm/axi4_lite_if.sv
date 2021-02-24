@@ -2,7 +2,7 @@
 // AXI-4 Interface
 /////////////////////////////////////
 
-interface axi4_lite_if #(int ADDR_WIDTH, int DATA_WIDTH) (input clock, input reset_n);
+interface axi4_lite_if #(int ADDR_WIDTH=32, int DATA_WIDTH=32) (input clock, input reset_n);
    // Write
    bit [ADDR_WIDTH-1 : 0]     awaddr;
    bit [2 : 0]                awprot;

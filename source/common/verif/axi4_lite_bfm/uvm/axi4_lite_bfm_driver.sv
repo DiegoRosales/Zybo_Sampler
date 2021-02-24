@@ -5,7 +5,7 @@
 class axi4_lite_bfm_driver extends uvm_driver #(axi4_lite_bfm_transfer);
 
   // I2S Virtual Interface
-  virtual axi4_lite_if virtual_if;
+  virtual axi4_lite_if     virtual_if;
   int                      configured_if;
   axi4_lite_bfm_transfer   transfer;
 
@@ -21,7 +21,7 @@ class axi4_lite_bfm_driver extends uvm_driver #(axi4_lite_bfm_transfer);
     `uvm_info(get_full_name(), "Building the AXI4 Lite BFM Driver...", UVM_LOW)
 
     // The virtual interface must be configured
-    configured_if = uvm_config_db#(virtual axi4_lite_if)::get(this, "", "axi4_lite_vif", virtual_if);
+    configured_if = uvm_config_db#(virtual axi4_lite_if)::get(this, "", "virtual_if", virtual_if);
     if(!configured_if) begin
       `uvm_fatal("NO_VIRTUAL_INTERFACE_CONFIGURED", $sformatf("The Virtual Interface wasn't configured for %s", get_full_name()));
     end
@@ -30,13 +30,16 @@ class axi4_lite_bfm_driver extends uvm_driver #(axi4_lite_bfm_transfer);
   endfunction
 
   virtual task run_phase(uvm_phase phase);
-    fork
-      drive_clock();
-    join
+    forever begin
+      // Get and drive
+      seq_item_port.get_next_item(transfer);
+      drive_transaction();
+    end
   endtask
 
-  protected task drive_clock();
-    `uvm_info(get_full_name(), "Driving ac_bclk", UVM_LOW)
+  protected task drive_transaction();
+    `uvm_info(get_full_name(), "Driving transaction", UVM_LOW)
+    @(posedge virtual_if.clock);
   endtask
 
 endclass : axi4_lite_bfm_driver

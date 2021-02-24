@@ -12,6 +12,7 @@ package axi4_lite_bfm_pkg;
     `include "uvm/axi4_lite_bfm_driver.sv"
     `include "uvm/axi4_lite_bfm_sequencer.sv"
     `include "uvm/axi4_lite_bfm_transfer.sv"
+    `include "uvm/axi4_lite_bfm_reg_adapter.sv"
     `include "uvm/axi4_lite_bfm_agent.sv"
 
 endpackage
