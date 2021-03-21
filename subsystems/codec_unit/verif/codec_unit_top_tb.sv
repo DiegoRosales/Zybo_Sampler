@@ -29,13 +29,21 @@ module codec_unit_top_tb ();
   logic [C_S00_AXI_ADDR_WIDTH-1 : 0]     s00_axi_awaddr;
   logic [2 : 0]                          s00_axi_awprot;
   logic                                  s00_axi_awvalid;
+	logic                                  s00_axi_awready;
   logic [C_S00_AXI_DATA_WIDTH-1 : 0]     s00_axi_wdata;
   logic [(C_S00_AXI_DATA_WIDTH/8)-1 : 0] s00_axi_wstrb;
   logic                                  s00_axi_wvalid;
+	logic                                  s00_axi_wready;
+	logic [1 : 0]                          s00_axi_bresp;
+	logic                                  s00_axi_bvalid;
   logic                                  s00_axi_bready;
   logic [C_S00_AXI_ADDR_WIDTH-1 : 0]     s00_axi_araddr;
   logic [2 : 0]                          s00_axi_arprot;
   logic                                  s00_axi_arvalid;
+	logic                                  s00_axi_arready;
+	logic [C_S00_AXI_DATA_WIDTH-1 : 0]     s00_axi_rdata;
+	logic [1 : 0]                          s00_axi_rresp;
+	logic                                  s00_axi_rvalid;
   logic                                  s00_axi_rready;
   logic                                  axis_aresetn;
   logic                                  s_axis_tvalid;
@@ -44,15 +52,42 @@ module codec_unit_top_tb ();
   logic                                  i2c_scl;
   logic                                  i2c_sda;
 
-  assign board_clk = clock_and_reset_if0.clock;
-  assign reset     = clock_and_reset_if0.reset;
+  assign board_clk       = clock_and_reset_if0.clock;
+  assign reset           = clock_and_reset_if0.reset;
+  assign axi_clk         = board_clk;
+  assign s00_axi_aresetn = reset;
+
+  //////////////////////////////////////////////
+  ///////////// AXI4-Lite Signals //////////////
+  // Ports of Axi Slave Bus Interface S00_AXI
+  // Write
+	assign s00_axi_awaddr       = axi4_bfm_if0.awaddr;
+	assign s00_axi_awprot       = axi4_bfm_if0.awprot;
+	assign s00_axi_awvalid      = axi4_bfm_if0.awvalid;
+	assign axi4_bfm_if0.awready = s00_axi_awready;
+	assign s00_axi_wdata        = axi4_bfm_if0.wdata;
+	assign s00_axi_wstrb        = axi4_bfm_if0.wstrb;
+	assign s00_axi_wvalid       = axi4_bfm_if0.wvalid;
+	assign axi4_bfm_if0.wready  = s00_axi_wready;
+	assign axi4_bfm_if0.bresp   = s00_axi_bresp;
+	assign axi4_bfm_if0.bvalid  = s00_axi_bvalid;
+	assign s00_axi_bready       = axi4_bfm_if0.bready;
+  // Read
+	assign s00_axi_araddr       = axi4_bfm_if0.araddr;
+	assign s00_axi_arprot       = axi4_bfm_if0.arprot;
+	assign s00_axi_arvalid      = axi4_bfm_if0.arvalid;
+	assign axi4_bfm_if0.arready = s00_axi_arready;
+	assign axi4_bfm_if0.rdata   = s00_axi_rdata;
+	assign axi4_bfm_if0.rresp   = s00_axi_rresp;
+	assign axi4_bfm_if0.rvalid  = s00_axi_rvalid;
+	assign s00_axi_rready       = axi4_bfm_if0.rready;
 
   // Connect the interfaces with the driver
   // uvm_test_top is the base test
   initial begin
     uvm_config_db#(virtual i2s_if            )::set(uvm_root::get(), "uvm_test_top.test_env.i2s_agent*",             "i2s_vif",    i2s_if0);
     uvm_config_db#(virtual clock_and_reset_if)::set(uvm_root::get(), "uvm_test_top.test_env.clock_and_reset_agent*", "virtual_if", clock_and_reset_if0);
-    uvm_config_db#(virtual axi4_lite_if      )::set(uvm_root::get(), "uvm_test_top.test_env.axi4_lite_agent.driver", "virtual_if", axi4_bfm_if0);
+    uvm_config_db#(virtual axi4_lite_if      )::set(uvm_root::get(), "uvm_test_top.test_env.axi4_lite_agent.driver", "vif",        axi4_bfm_if0);
   end
 
 
@@ -103,21 +138,21 @@ module codec_unit_top_tb ();
     .s00_axi_awaddr   ( s00_axi_awaddr  ),
     .s00_axi_awprot   ( s00_axi_awprot  ),
     .s00_axi_awvalid  ( s00_axi_awvalid ),
-    .s00_axi_awready  (                 ),
+    .s00_axi_awready  ( s00_axi_awready ),
     .s00_axi_wdata    ( s00_axi_wdata   ),
     .s00_axi_wstrb    ( s00_axi_wstrb   ),
     .s00_axi_wvalid   ( s00_axi_wvalid  ),
-    .s00_axi_wready   (                 ),
-    .s00_axi_bresp    (                 ),
-    .s00_axi_bvalid   (                 ),
+    .s00_axi_wready   ( s00_axi_wready  ),
+    .s00_axi_bresp    ( s00_axi_bresp   ),
+    .s00_axi_bvalid   ( s00_axi_bvalid  ),
     .s00_axi_bready   ( s00_axi_bready  ),
     .s00_axi_araddr   ( s00_axi_araddr  ),
     .s00_axi_arprot   ( s00_axi_arprot  ),
     .s00_axi_arvalid  ( s00_axi_arvalid ),
-    .s00_axi_arready  (                 ),
-    .s00_axi_rdata    (                 ),
-    .s00_axi_rresp    (                 ),
-    .s00_axi_rvalid   (                 ),
+    .s00_axi_arready  ( s00_axi_arready ),
+    .s00_axi_rdata    ( s00_axi_rdata   ),
+    .s00_axi_rresp    ( s00_axi_rresp   ),
+    .s00_axi_rvalid   ( s00_axi_rvalid  ),
     .s00_axi_rready   ( s00_axi_rready  ),
 
 
