@@ -129,7 +129,7 @@ proc generate_register_block {module_name register_blocks} {
   foreach {reg addr} $register_blocks {
     set reg_name  [dict get $reg name]
     set reg_class [subst $uvm_reg_class_name_template]
-    set reg_addr  $addr
+    set reg_addr  [expr $addr * 2 * 2]
     append output_str [subst $register_block_config_template]
   }
 
