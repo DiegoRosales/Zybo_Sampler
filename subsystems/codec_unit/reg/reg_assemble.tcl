@@ -18,10 +18,11 @@ set codec_register_block [list \
   $misc_data_0_reg                   4 \
   $misc_data_1_reg                   5 \
   $misc_data_2_reg                   6 \
-  $downstream_axis_wr_data_count_reg 7 \
-  $upstream_axis_rd_data_count_reg   8 \
-  $downstream_axis_rd_data_count_reg 9 \
-  $upstream_axis_wr_data_count_reg   10 \
+  $downstream_axis_wr_data_count     7 \
+  $UPSTREAM_axis_rd_data_count       8 \
+  $downstream_axis_rd_data_count     9 \
+  $upstream_axis_wr_data_count       10 \
+  $DUMMY_REG                         11 \
 ]
 
 set reg_blocks [list \
