@@ -1,4 +1,6 @@
-## Register structures for synthesizable RTL
+##################################################
+## Script to synthesizable RTL register blocks
+##################################################
 
 set generic_register_template {
   always @(posedge $CLK or negedge $RST)

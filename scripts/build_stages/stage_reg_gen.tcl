@@ -1,5 +1,5 @@
-source scripts/reg_gen/reg_rtl_structures.tcl     
-source scripts/reg_gen/reg_uvm_structures.tcl     
+source scripts/reg_gen/rtl_reg_gen_utils.tcl     
+source scripts/reg_gen/uvm_reg_gen_utils.tcl     
 
 puts "Running Register Generation"
 
