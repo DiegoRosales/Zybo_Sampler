@@ -5,7 +5,7 @@
 set script_dir [file normalize [file dirname [info script]]]
 
 ## Initialize
-source ${script_dir}/utils.tcl
+source ${script_dir}/utils/utils.tcl
 source ${script_dir}/pack/pack_utils.tcl
 source ${script_dir}/pack/pack_utils_if_templates.tcl
 source ${script_dir}/integ/integ_utils.tcl
@@ -82,6 +82,11 @@ if {$stage_error == 1} {
     ########## VIVADO FLOWS ############
 
     if {$tool == "vivado"} {
+        ## Register Generation
+        if {$STAGE_REG_GEN} {
+            source $build_stages_path/stage_reg_gen.tcl
+        }
+
         # Package
         if {$STAGE_PACK} {
             source $build_stages_path/stage_pack.tcl
@@ -105,11 +110,6 @@ if {$stage_error == 1} {
         ## Lint
         if {$STAGE_LINT} {
             source $build_stages_path/stage_lint.tcl
-        }
-
-        ## Register Generation
-        if {$STAGE_REG_GEN} {
-            source $build_stages_path/stage_reg_gen.tcl
         }
 
         ## Simulation
