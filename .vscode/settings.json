@@ -9,6 +9,7 @@
     "*.cfg": "tcl",
     "*.svh": "systemverilog",
     ".jou":  "tcl",
+    ".json": "jsonc",
     "atomic": "c",
     "cstdint": "c"
   }
