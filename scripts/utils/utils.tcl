@@ -1,8 +1,7 @@
 ##############################
 ## TCL utilities
 ##############################
-source "json_parser.tcl"
-source "xil_ip_utils.tcl"
+set utils_script_dir [file normalize [file dirname [info script]]]
 
 proc lshift {inputlist} {
   upvar $inputlist argv
@@ -11,7 +10,22 @@ proc lshift {inputlist} {
   return $arg
 }
 
+## Get the git root
+proc get_git_root {} {
+    set git_root [exec git rev-parse --show-toplevel]
+    if {$git_root == ""} {
+        puts "ERROR: Failed getting git root"
+    }
+
+    return $git_root
+}
+
 ## Parse arguments
+## Argument list
+##    array set my_arglist {
+##        "arg_name1" {"action" "default_value" "required/optional" <positional=POS#|non-positional=0>}
+##        "arg_name2" {"action" "default_value" "required/optional" <positional=POS#|non-positional=0>}
+##    }
 proc arg_parser { arg_list parsed_args args } {
     upvar $parsed_args  parsed_args_int
     upvar $arg_list     arg_list_int
@@ -19,7 +33,6 @@ proc arg_parser { arg_list parsed_args args } {
 
     set   required_list {}
     set   exit_status   0
-    #puts $args_int
     
     ## Fill defaults
     foreach arg_name [array names arg_list_int] {
@@ -331,3 +344,42 @@ proc extract_core_file_info {args} {
 
     return 0
 }
+
+## Read a file and store its contents in a variable
+proc read_file {args} {
+    array set my_arglist {
+        "file"   {"store"  "" "required"   0}
+        "output" {"store"  "" "required"   0}
+    }
+
+    set status [arg_parser my_arglist parsed_args args]
+
+    if {$status != 0} {
+        puts "ERROR: There was an error processing the arguments"
+        return 1
+    }
+
+    #############################
+    upvar $parsed_args(output) output
+
+    if {[info exists output]} {
+        puts "ERROR: Output variable already exists $parsed_args(output)"
+        return 1
+    }
+
+    if {![file exists $parsed_args(file)]} {
+        puts "ERROR: File $parsed_args(file) doesn't exist"
+        return 1
+    }
+
+    puts "Reading $parsed_args(file)"
+    set fd [open $parsed_args(file) r]
+    set output [read $fd]
+    close $fd
+
+    return 0
+}
+
+source "${utils_script_dir}/json_parser.tcl"
+source "${utils_script_dir}/xil_ip_utils.tcl"
+source "${utils_script_dir}/proj_filelist_utils.tcl"
