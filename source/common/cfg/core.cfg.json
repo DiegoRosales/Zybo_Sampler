@@ -1,0 +1,18 @@
+////////////////////////
+// Common RTL Blocks
+////////////////////////
+{
+    "core_name": "common",
+    "synthesis_file_list": [
+        "${core_root}/rtl/pulse_synchronizer.sv",
+        "${core_root}/rtl/synchronizer.sv",
+        "${core_root}/rtl/axi_slave_controller.sv"
+    ],
+
+    "uvm_simulation_env_incdir_list": [
+        "${core_root}/gen",
+        "${core_root}/verif/clock_and_reset_bfm/",
+        "${core_root}/verif/i2s_bfm/",
+        "${core_root}/verif/axi4_lite_bfm/"
+    ]
+}
