@@ -1,10 +1,19 @@
 ###############################
 ## Run
 ###############################
-
-set script_dir [file normalize [file dirname [info script]]]
-
 ## Initialize
+set script_dir [file normalize [file dirname [info script]]]
+set ver        [version]
+
+if {[regexp "Vivado" $ver]} {
+    set tool "vivado"
+} elseif {[regexp "xsct" $ver]} {
+    set tool "xsct"
+}
+
+puts "Tool = $tool"
+
+################################################################################
 source ${script_dir}/utils/utils.tcl
 source ${script_dir}/pack/pack_utils.tcl
 source ${script_dir}/pack/pack_utils_if_templates.tcl
@@ -29,18 +38,10 @@ if {[file exists $parsed_args(cfg)] == 0} {
 }
 
 ################################################################################
-## Source the project config file
-source $parsed_args(cfg)
+## Parse the project config file
+#source $parsed_args(cfg)
+parse_project_cfg -cfg_file $parsed_args(cfg) -output project_cfg
 source ${script_dir}/common_variables.tcl
-
-set ver [version]
-
-if {[regexp "Vivado" $ver]} {
-    set tool "vivado"
-} elseif {[regexp "xsct" $ver]} {
-    set tool "xsct"
-}
-puts "Tool = $tool"
 
 ################################################################################
 ## Get the stages to run
