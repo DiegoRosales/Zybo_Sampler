@@ -122,11 +122,12 @@ proc parse_project_cfg {args} {
 ## Extract a variable from all cores and combine them in a list
 proc extract_from_all_cores {args} {
     array set my_arglist {
-        "core_info" {"store"       ""  "required"   0}
-        "output"    {"store"       ""  "required"   0}
-        "variable"  {"store"       ""  "required"   0}
-        "override"  {"store_true"  0   "optional"   0}
-        "debug"     {"store_true"  0   "optional"   0}
+        "core_info"  {"store"       ""  "required"   0}
+        "output"     {"store"       ""  "optional"   0}
+        "variable"   {"store"       ""  "required"   0}
+        "write_file" {"store"       ""  "optional"   0}
+        "override"   {"store_true"  0   "optional"   0}
+        "debug"      {"store_true"  0   "optional"   0}
     }
 
     set status [arg_parser my_arglist parsed_args args]
@@ -137,11 +138,18 @@ proc extract_from_all_cores {args} {
     }
 
     #############################
-    upvar 1 $parsed_args(output) output
-
-    if {[info exists output] && $parsed_args(override) == 0} {
-        puts "ERROR: Output variable already exists $parsed_args(output). Use -override to override it"
+    if {$parsed_args(output) == "" && $parsed_args(write_file) == ""} {
+        puts "ERROR: Specify either an output variable name or a filename"
         return 1
+    }
+
+    if {$parsed_args(output) != ""} {
+        upvar 1 $parsed_args(output) output
+
+        if {[info exists output] && $parsed_args(override) == 0} {
+            puts "ERROR: Output variable already exists $parsed_args(output). Use -override to override it"
+            return 1
+        }
     }
 
     set output {}
@@ -164,5 +172,65 @@ proc extract_from_all_cores {args} {
             }
         }
     }
+
+    if {$parsed_args(write_file) != ""} {
+        append file_output "////////////////////////////////////////////////////////////////////////////////////////\n"
+        append file_output "// THIS FILE WAS GENERATED FROM   : [file normalize [info script]]\n"
+        append file_output "// USING PROC                     : [lindex [info level 1] 0]\n"
+        append file_output "// AT TIME                        : [clock format [clock seconds] -format %Y/%m/%d-%H:%M:%S]\n"
+        append file_output "////////////////////////////////////////////////////////////////////////////////////////\n"
+        append file_output "// Writing compiled list of $parsed_args(variable)\n"
+        append file_output "////////////////////////////////////////////////////////////////////////////////////////\n"
+        append file_output "\{\n"
+        append file_output "    \"$parsed_args(variable)\": \[\n"
+        foreach core [lrange $output 0 [expr [llength $output] - 2]] {
+            append file_output "        \"$core\",\n"
+        }
+        append file_output "        \"[lindex $output [expr [llength $output] - 1]]\"\n"
+        append file_output "    \]\n"
+        append file_output "\}"
+        if {[file exists $parsed_args(write_file)] == 0 || $parsed_args(override)} {
+            if {$parsed_args(debug)} {
+                puts $file_output
+            }
+            puts "Writing filelist for $parsed_args(variable) to $parsed_args(write_file)"
+            set handle   [open $parsed_args(write_file) w+]
+            puts $handle $file_output
+            close $handle
+        } else {
+            puts "ERROR: File output $parsed_args(write_file) already exists. Use -override to override it"
+            return 1
+        }
+    }
 }
 
+proc write_compiled_filelists {args} {
+    array set my_arglist {
+        "core_info"  {"store"       ""  "required"   0}
+        "output_dir" {"store"       ""  "required"   0}
+        "variables"  {"store"       ""  "required"   0}
+        "override"   {"store_true"  0   "optional"   0}
+        "debug"      {"store_true"  0   "optional"   0}
+    }
+
+    set status [arg_parser my_arglist parsed_args args]
+
+    if {$status != 0} {
+        puts "ERROR: There was an error processing the arguments"
+        return 1
+    }
+
+    #############################
+
+    if {$parsed_args(output_dir) == ""} {
+        puts "ERROR: Output dir is empty. Please specify an output directory"
+        return 1
+    }
+
+    file mkdir $parsed_args(output_dir)
+    foreach var $parsed_args(variables) {
+        puts "Writing filelist for $var"
+        extract_from_all_cores -core_info $parsed_args(core_info) -variable $var -write_file $parsed_args(output_dir)/${var}.f.json -override -debug
+    }
+
+}
