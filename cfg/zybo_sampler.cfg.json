@@ -4,7 +4,7 @@
 {
 
   "project_name": "zybo_sampler",
-  "project_root": "git_root",
+  "project_root": "${git_root}",
   /////////////////////
   // Ingredients
   /////////////////////

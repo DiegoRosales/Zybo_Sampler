@@ -82,27 +82,21 @@ proc parse_project_cfg {args} {
         return 1
     }
 
-    if {[parse_json_cfg -cfg_file $parsed_args(cfg_file) -output proj_cfg] != 0} {
+    if {[parse_json_cfg -cfg_file $parsed_args(cfg_file) -output output -debug] != 0} {
         puts "ERROR: There was a problem while parsing the project file $parsed_args(cfg_file)"
     }
 
     ## Create the dictionary
-    set output [dict create "cfg_file" $parsed_args(cfg_file)]
-
-    ## Get the project name
-    dict set output "project_name" [dict get $proj_cfg project_name]
+    dict set output "cfg_file" $parsed_args(cfg_file)
     
-    ## Get the project root
-    if {[dict get $proj_cfg project_root] == "git_root"} {
-        set project_root [get_git_root]
-    } else {
-        ## TODO
-    }
+    ## Resolve the project root
+    set git_root [get_git_root]
+    set project_root [subst [dict get $output project_root]]
     dict set output "project_root" $project_root
- 
+
     ## Get the project core configurations
     dict set output cores {}
-    foreach core_path [dict get $proj_cfg project_cores] {
+    foreach core_path [dict get $output project_cores] {
         set core_cfg_path "[subst $core_path]/cfg/core.cfg.json"
         if {[file exists $core_cfg_path]} {
             puts "Parsing $core_cfg_path"
