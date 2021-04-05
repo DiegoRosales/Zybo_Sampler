@@ -106,6 +106,7 @@ proc parse_project_cfg {args} {
                 set cores [dict get $output cores]
                 set core_root [subst $core_path]
                 set core_cfg [subst $core_cfg]
+                dict set core_cfg core_root $core_root
                 lappend cores $core_cfg
                 dict set output "cores" $cores
             }

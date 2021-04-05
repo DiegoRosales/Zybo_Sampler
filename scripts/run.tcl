@@ -65,10 +65,16 @@ if {$parsed_args(stages) != ""} {
 
 ################################################################################
 ## Run the stages
-
+set core_info [dict get $project_cfg cores]
 ## Extract information from the cores' config files
-extract_core_file_info -project_cores $project_cores -filelists_path $filelists_path
-
+#extract_core_file_info -project_cores $project_cores -filelists_path $filelists_path
+set variables {}
+lappend variables synthesis_file_list
+lappend variables xilinx_ip_list
+write_compiled_filelists -core_info [dict get $project_cfg cores] \
+                         -output_dir ${results_dir}/filelists     \
+                         -override                                \
+                         -variables $variables
 ## Run the stages
 if {$stage_error == 1} {
     puts "ERROR: There was an error processing the stages"
@@ -83,44 +89,44 @@ if {$stage_error == 1} {
     ########## VIVADO FLOWS ############
 
     if {$tool == "vivado"} {
-        ## Register Generation
-        if {$STAGE_REG_GEN} {
-            source $build_stages_path/stage_reg_gen.tcl
-        }
-
+## TODO ##        ## Register Generation
+## TODO ##        if {$STAGE_REG_GEN} {
+## TODO ##            source $build_stages_path/stage_reg_gen.tcl
+## TODO ##        }
+## TODO ##
         # Package
         if {$STAGE_PACK} {
             source $build_stages_path/stage_pack.tcl
         }
-
-        ## Integrate
-        if {$STAGE_INTEG} {
-            source $build_stages_path/stage_integ.tcl
-        }
-
-        ## Generate Xilinx IPs
-        if {$STAGE_GEN_XILINX_IP} {
-            source $build_stages_path/stage_gen_xilinx_ip.tcl
-        }
-
-        ## Run synthesis and place and route
-        if {$STAGE_IMPL} {
-            source $build_stages_path/stage_impl.tcl
-        } 
-        
-        ## Lint
-        if {$STAGE_LINT} {
-            source $build_stages_path/stage_lint.tcl
-        }
-
-        ## Simulation
-        if {$STAGE_SIM} {
-            source $build_stages_path/stage_run_simulation.tcl
-        }
-
-        ## If the BUILD_WS stage is passed, then execute this script using xsct
-        if {$STAGE_BUILD_WS} {
-            source $build_stages_path/stage_build_ws_vivado.tcl
-        }
+## TODO ##
+## TODO ##        ## Integrate
+## TODO ##        if {$STAGE_INTEG} {
+## TODO ##            source $build_stages_path/stage_integ.tcl
+## TODO ##        }
+## TODO ##
+## TODO ##        ## Generate Xilinx IPs
+## TODO ##        if {$STAGE_GEN_XILINX_IP} {
+## TODO ##            source $build_stages_path/stage_gen_xilinx_ip.tcl
+## TODO ##        }
+## TODO ##
+## TODO ##        ## Run synthesis and place and route
+## TODO ##        if {$STAGE_IMPL} {
+## TODO ##            source $build_stages_path/stage_impl.tcl
+## TODO ##        } 
+## TODO ##        
+## TODO ##        ## Lint
+## TODO ##        if {$STAGE_LINT} {
+## TODO ##            source $build_stages_path/stage_lint.tcl
+## TODO ##        }
+## TODO ##
+## TODO ##        ## Simulation
+## TODO ##        if {$STAGE_SIM} {
+## TODO ##            source $build_stages_path/stage_run_simulation.tcl
+## TODO ##        }
+## TODO ##
+## TODO ##        ## If the BUILD_WS stage is passed, then execute this script using xsct
+## TODO ##        if {$STAGE_BUILD_WS} {
+## TODO ##            source $build_stages_path/stage_build_ws_vivado.tcl
+## TODO ##        }
     }
 } 

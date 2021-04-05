@@ -24,6 +24,7 @@ set filelists_path             "${results_dir}/filelists"
 
 ## Packaged cores variables
 set packaged_cores_dirname "${results_dir}/packaged_cores"
+set user_interfaces_dir    [subst [dict get $project_cfg user_interfaces_dir]]
 
 ## Project integration variables
 set integ_project_dir    ${results_dir}/${integ_project_name}
