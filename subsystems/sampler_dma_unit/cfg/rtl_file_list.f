@@ -2,7 +2,7 @@
 ## codec_unit RTL filelist
 ####################
 
-set synthesis_file_list {
+set synthesis_rtl_file_list {
     ${core_root}/rtl/sampler_dma_top.sv
     ${core_root}/rtl/sampler_dma_registers.sv
     ${core_root}/rtl/sample_info_fetcher.sv

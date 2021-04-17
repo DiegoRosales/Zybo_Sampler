@@ -13,7 +13,7 @@ set_property board_part digilentinc.com:zybo:part0:1.0 [current_project]
 source $filelists_path/core_file_lists.f
 set all_include_dirs ""
 foreach core_info $core_file_lists {
-    set synthesis_file_list            ""
+    set synthesis_rtl_file_list            ""
     set uvm_simulation_file_list       ""
     set uvm_simulation_env_file_list   ""
     set uvm_simulation_tc_file_list    ""
@@ -26,8 +26,8 @@ foreach core_info $core_file_lists {
     source $core_filelist
 
     ## Add synthesis file lists
-    if {$synthesis_file_list != ""} {
-      foreach synth_file ${synthesis_file_list} {
+    if {$synthesis_rtl_file_list != ""} {
+      foreach synth_file ${synthesis_rtl_file_list} {
           read_verilog -library $libname -sv [subst $synth_file]
       }
     }

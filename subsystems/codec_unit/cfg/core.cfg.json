@@ -5,7 +5,7 @@
     "core_registers"   : "${core_root}/reg/reg_assemble.tcl",
     "core_fw_incdirs"  : "${core_root}/cfg/fw_incdirs.f",
 
-    "synthesis_file_list": [
+    "synthesis_rtl_file_list": [
         "${core_root}/rtl/codec_unit_top.sv",
         "${core_root}/rtl/controller_unit/codec_init_unit.sv",
         "${core_root}/rtl/controller_unit/controller_unit_top.sv",
@@ -20,7 +20,7 @@
         "${core_root}/rtl/controller_unit/i2c_core/verilog-i2c/rtl/axis_fifo.v"
     ],
 
-    "xilinx_ip_list": [
+    "xilinx_ip_tcl_list": [
         "${core_root}/rtl/xilinx_ip/audio_pll.tcl",
         "${core_root}/rtl/xilinx_ip/audio_data_fifo.tcl"
     ],

@@ -4,6 +4,8 @@ proc generate_xilinx_ips_tcl {args} {
         "ip_list"           {"store"         ""       "required"   0}
         "part_number"       {"store"         ""       "required"   0}
         "dest_dir"          {"store"         ""       "required"   0}
+        "output_list"       {"store"         ""       "optional"   0}
+        "override"          {"store_true"    0        "optional"   0}
         "force"             {"store_true"    0        "optional"   0}
     }
 
@@ -11,18 +13,47 @@ proc generate_xilinx_ips_tcl {args} {
 
     if {$status != 0} {
         puts "ERROR: There was an error processing the arguments"
-        return ""
+        return 1
     }
 
     ######################
+
+    if {$parsed_args(output_list) == ""} {
+        puts "ERROR: Please provide an output list"
+        return 1
+    }
+
+    upvar 1 $parsed_args(output_list) output_list
+
+    if {[info exists output] && $parsed_args(override) == 0} {
+        puts "ERROR: Output variable already exists $parsed_args(output_list). Use -override to override it"
+        return 1
+    }
+
+    if {![file exists $parsed_args(ip_list)]} {
+        puts "ERROR: IP Filelist doesn't exist: $parsed_args(ip_list)"
+        return 1
+    }
 
     ## Override the destination directory
     if {$parsed_args(dest_dir) != ""} {
         set generated_ip_path $parsed_args(dest_dir)
     } else {
         puts "ERROR: Please specify the destination directory"
-        return ""
+        return 1
     }
+
+    ######################
+    ## Parse json file
+    parse_json_cfg -cfg_file $parsed_args(ip_list) -output tcl_filelist -override -debug
+    
+    if {![dict exists $tcl_filelist xilinx_ip_tcl_list]} {
+        puts "ERROR: No XCI files inside $parsed_args(ip_list)"
+        return 1
+    }
+
+    set tcl_list [dict get $tcl_filelist xilinx_ip_tcl_list]
+
 
     ######################
     ## Variables to be set by the TCL scripts
@@ -43,7 +74,7 @@ proc generate_xilinx_ips_tcl {args} {
 
 
     ## Step 1 - Source the TCL scripts to generate 
-    foreach ip $parsed_args(ip_list) {
+    foreach ip $tcl_list {
         set ip_path [subst ${ip}]
         puts "sourcing ${ip_path} ..."
         source ${ip_path}
@@ -66,10 +97,16 @@ proc generate_xilinx_ips_tcl {args} {
         }
     }
 
+    ## Write the filelist
+    write_filelist -filelist    $xilinx_ip_file_list \
+                   -description "Synthesis XCI from TCL filelist" \
+                   -list_name   "syn_tcl_xci_filelist" \
+                   -output      "${generated_ip_path}/syn_tcl_xci_filelist.f.json"
+
+    set output_list ${generated_ip_path}/syn_tcl_xci_filelist.f.json
+
     ## Step 4 - Close the project
     close_project
-
-    return $xilinx_ip_file_list
 }
 
 ## Generate Xilinx IPs from XCI files
@@ -79,6 +116,8 @@ proc generate_xilinx_ips_xci {args} {
         "part_number"       {"store"         ""       "required"   0}
         "dest_dir"          {"store"         ""       "required"   0}
         "board_part"        {"store"         ""       "optional"   0}
+        "output_list"       {"store"         ""       "optional"   0}
+        "override"          {"store_true"    0        "optional"   0}
         "force"             {"store_true"    0        "optional"   0}
     }
 
@@ -86,18 +125,46 @@ proc generate_xilinx_ips_xci {args} {
 
     if {$status != 0} {
         puts "ERROR: There was an error processing the arguments"
-        return ""
+        return 1
     }
 
     ######################
+
+    if {$parsed_args(output_list) == ""} {
+        puts "ERROR: Please provide an output list"
+        return 1
+    }
+
+    upvar 1 $parsed_args(output_list) output_list
+
+    if {[info exists output] && $parsed_args(override) == 0} {
+        puts "ERROR: Output variable already exists $parsed_args(output_list). Use -override to override it"
+        return 1
+    }
+
+    if {![file exists $parsed_args(ip_list)]} {
+        puts "ERROR: IP Filelist doesn't exist: $parsed_args(ip_list)"
+        return 1
+    }
 
     ## Override the destination directory
     if {$parsed_args(dest_dir) != ""} {
         set generated_ip_path $parsed_args(dest_dir)
     } else {
         puts "ERROR: Please specify the destination directory"
-        return ""
+        return 1
     }
+
+    ######################
+    ## Parse json file
+    parse_json_cfg -cfg_file $parsed_args(ip_list) -output xci_filelist -override -debug
+    
+    if {![dict exists $xci_filelist integ_gen_xci_filelist]} {
+        puts "ERROR: No XCI files inside $parsed_args(ip_list)"
+        return 1
+    }
+
+    set xci_list [dict get $xci_filelist integ_gen_xci_filelist]
 
     ######################
     ## Variables to be set by the TCL scripts
@@ -122,7 +189,7 @@ proc generate_xilinx_ips_xci {args} {
     }
 
     ## Step 1 - Source the TCL scripts to generate 
-    foreach ip $parsed_args(ip_list) {
+    foreach ip $xci_list {
         set new_ip [add_files -force -norecurse ${ip}]
         generate_target all [get_files ${new_ip}]
         lappend xilinx_ip_file_list ${new_ip}
@@ -150,10 +217,15 @@ proc generate_xilinx_ips_xci {args} {
         }
     }
 
+    ## Write the filelist
+    write_filelist -filelist    $xilinx_ip_file_list \
+                   -description "Synthesis XCI filelist" \
+                   -list_name   "syn_xci_filelist" \
+                   -output      "${generated_ip_path}/syn_xci_filelist.f.json"
+
+    set output_list ${generated_ip_path}/syn_xci_filelist.f.json
     ## Step 4 - Close the project
     close_project
-
-    return $xilinx_ip_file_list
 }
 
 ####################################

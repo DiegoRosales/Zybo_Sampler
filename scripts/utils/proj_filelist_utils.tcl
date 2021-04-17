@@ -54,7 +54,14 @@ proc parse_json_cfg {args} {
     if {$parsed_args(debug)} {
         foreach item [dict keys $output] {
             set value [dict get $output $item]
-            puts "$item: $value"
+            if {[llength $value] > 1} {
+                puts "$item:"
+                foreach elem $value {
+                    puts "  $elem"
+                }
+            } else {
+                puts "$item: $value"
+            }
         }
     }
     return 0
@@ -116,8 +123,8 @@ proc parse_project_cfg {args} {
         }
     }
 
-    extract_from_all_cores -core_info [dict get $output cores] -variable synthesis_file_list -output synth_filelist
-    extract_from_all_cores -core_info [dict get $output cores] -variable xilinx_ip_list      -output ip_tcl_scripts
+    extract_from_all_cores -core_info [dict get $output cores] -variable synthesis_rtl_file_list -output synth_filelist
+    extract_from_all_cores -core_info [dict get $output cores] -variable xilinx_ip_tcl_list      -output ip_tcl_scripts
 
 }
 

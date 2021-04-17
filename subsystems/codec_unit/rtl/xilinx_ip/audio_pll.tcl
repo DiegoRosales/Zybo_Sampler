@@ -64,10 +64,3 @@ lappend audio_pll_run [generate_new_ip ${generated_ip_path} \
                                        ${audio_pll_component_name} \
                                        ${audio_pll_configuration_parameters} \
                                        ]
-
-
-### Append the .xci to the filelist
-#set generated_ip_file_list [lappend generated_ip_file_list ${audio_pll_xci_path}]
-#
-### Append the IP Run
-#set ip_runs [ lappend ip_runs ${audio_pll_run}]

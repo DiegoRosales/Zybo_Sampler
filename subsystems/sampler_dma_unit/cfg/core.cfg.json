@@ -7,7 +7,7 @@
 
     // TODO "core_registers"   : "${core_root}/reg/reg_assemble.tcl",
 
-    "synthesis_file_list": [
+    "synthesis_rtl_file_list": [
         "${core_root}/rtl/sampler_dma_top.sv",
         "${core_root}/rtl/sampler_dma_registers.sv",
         "${core_root}/rtl/sample_info_fetcher.sv",
@@ -16,7 +16,7 @@
         "${core_root}/rtl/axi_dma_bridge.sv"
     ],
 
-    "xilinx_ip_list": [
+    "xilinx_ip_tcl_list": [
         "${core_root}/rtl/xilinx_ip/bram_dualport.tcl",
         "${core_root}/rtl/xilinx_ip/sampler_dma_fifo.tcl",
         "${core_root}/rtl/xilinx_ip/divider_16bit.tcl",

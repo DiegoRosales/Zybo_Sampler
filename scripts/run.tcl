@@ -69,8 +69,8 @@ set core_info [dict get $project_cfg cores]
 ## Extract information from the cores' config files
 #extract_core_file_info -project_cores $project_cores -filelists_path $filelists_path
 set variables {}
-lappend variables synthesis_file_list
-lappend variables xilinx_ip_list
+lappend variables synthesis_rtl_file_list
+lappend variables xilinx_ip_tcl_list
 write_compiled_filelists -core_info [dict get $project_cfg cores] \
                          -output_dir ${results_dir}/filelists     \
                          -override                                \
@@ -103,12 +103,12 @@ if {$stage_error == 1} {
         if {$STAGE_INTEG} {
             source $build_stages_path/stage_integ.tcl
         }
-## TODO ##
-## TODO ##        ## Generate Xilinx IPs
-## TODO ##        if {$STAGE_GEN_XILINX_IP} {
-## TODO ##            source $build_stages_path/stage_gen_xilinx_ip.tcl
-## TODO ##        }
-## TODO ##
+
+        ## Generate Xilinx IPs
+        if {$STAGE_GEN_XILINX_IP} {
+            source $build_stages_path/stage_gen_xilinx_ip.tcl
+        }
+
 ## TODO ##        ## Run synthesis and place and route
 ## TODO ##        if {$STAGE_IMPL} {
 ## TODO ##            source $build_stages_path/stage_impl.tcl

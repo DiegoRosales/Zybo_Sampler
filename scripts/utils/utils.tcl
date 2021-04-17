@@ -275,7 +275,7 @@ proc extract_core_file_info {args} {
 
     set status [arg_parser my_arglist parsed_args args]
 
-    set xilinx_ip_list_all ""
+    set xilinx_ip_tcl_list_all ""
     set fw_incdirs         ""
     set fw_softlinks       ""
     ## Get all the files necessary for building
@@ -305,7 +305,7 @@ proc extract_core_file_info {args} {
         ## Get the Xilinx IP TCL filelist
         if {$core_xilinx_ip_tcl_filelist != ""} {
             source $core_xilinx_ip_tcl_filelist
-            lappend xilinx_ip_list_all [subst $xilinx_ip_list]
+            lappend xilinx_ip_tcl_list_all [subst $xilinx_ip_tcl_list]
         }
 
         ## Get the register maps
@@ -338,7 +338,7 @@ proc extract_core_file_info {args} {
     }
 
     # Write all the Xilinx IPs that are going to be generated from TCL scripts
-    write_filelist -filelist [join $xilinx_ip_list_all] -list_name "xilinx_ip_tcl"      -description "Xilinx IPs to be generated from TCL scripts" -output $parsed_args(filelists_path)/xilinx_ip_tcl.f
+    write_filelist -filelist [join $xilinx_ip_tcl_list_all] -list_name "xilinx_ip_tcl"      -description "Xilinx IPs to be generated from TCL scripts" -output $parsed_args(filelists_path)/xilinx_ip_tcl.f
     # Write all the core filelist files
     write_filelist -filelist $core_file_lists           -list_name "core_file_lists"    -description "Core Filelists"                              -output $parsed_args(filelists_path)/core_file_lists.f
     # Write all the core pack scripts

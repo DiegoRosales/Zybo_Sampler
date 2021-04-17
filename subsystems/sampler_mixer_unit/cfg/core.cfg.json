@@ -2,11 +2,11 @@
     "core_name"        : "sample_mixer",
     "core_pack_script" : "${core_root}/cfg/pack/pack_core.tcl",
 
-    "synthesis_file_list": [
+    "synthesis_rtl_file_list": [
         "${core_root}/rtl/sampler_mixer.sv"
     ],
 
-    "xilinx_ip_list": [
+    "xilinx_ip_tcl_list": [
         "${core_root}/rtl/xilinx_ip/axis_fifo_32x64_u8_npm.tcl",
         "${core_root}/rtl/xilinx_ip/ila_probes/sampler_mixer_ILA.tcl"
     ]    

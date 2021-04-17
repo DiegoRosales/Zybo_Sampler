@@ -29,9 +29,3 @@ lappend audio_data_fifo_run [generate_new_ip ${generated_ip_path} \
                                              ${audio_data_fifo_component_name} \
                                              ${audio_data_fifo_configuration_parameters} \
                                              ]
-
-### Append the .xci to the filelist
-#set generated_ip_file_list [lappend generated_ip_file_list ${audio_data_fifo_xci_path}]
-#
-### Append the IP Run
-#set ip_runs [ lappend ip_runs ${audio_data_fifo_run}]
