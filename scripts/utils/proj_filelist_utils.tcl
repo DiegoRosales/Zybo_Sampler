@@ -101,6 +101,8 @@ proc parse_project_cfg {args} {
     set project_root [subst [dict get $output project_root]]
     dict set output "project_root"         $project_root
     dict set output "project_integ_script" [subst [dict get $output project_integ_script]]
+    dict set output "constraints_synth"    [subst [dict get $output constraints_synth]]
+    dict set output "constraints_par"      [subst [dict get $output constraints_par]]
 
     ## Get the project core configurations
     dict set output cores {}

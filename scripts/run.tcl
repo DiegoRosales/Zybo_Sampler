@@ -114,11 +114,11 @@ if {$stage_error == 1} {
 ## TODO ##            source $build_stages_path/stage_impl.tcl
 ## TODO ##        } 
 ## TODO ##        
-## TODO ##        ## Lint
-## TODO ##        if {$STAGE_LINT} {
-## TODO ##            source $build_stages_path/stage_lint.tcl
-## TODO ##        }
-## TODO ##
+        ## Lint
+        if {$STAGE_LINT} {
+            source $build_stages_path/stage_lint.tcl
+        }
+
 ## TODO ##        ## Simulation
 ## TODO ##        if {$STAGE_SIM} {
 ## TODO ##            source $build_stages_path/stage_run_simulation.tcl
