@@ -12,5 +12,7 @@
     ".json": "jsonc",
     "atomic": "c",
     "cstdint": "c"
-  }
+  },
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true
 }
