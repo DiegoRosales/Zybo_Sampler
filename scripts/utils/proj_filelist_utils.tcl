@@ -30,7 +30,7 @@ proc parse_json_cfg {args} {
     }
 
     set decoded_cfg [::json::decode $core_cfg]
-    if {$core_cfg == {}} {
+    if {$decoded_cfg == {}} {
         puts "ERROR: There was a problem while decoding the JSON config file $parsed_args(cfg_file)"
         return 0
     }
@@ -92,7 +92,8 @@ proc parse_project_cfg {args} {
     ## Resolve the project root
     set git_root [get_git_root]
     set project_root [subst [dict get $output project_root]]
-    dict set output "project_root" $project_root
+    dict set output "project_root"         $project_root
+    dict set output "project_integ_script" [subst [dict get $output project_integ_script]]
 
     ## Get the project core configurations
     dict set output cores {}

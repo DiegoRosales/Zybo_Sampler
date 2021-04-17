@@ -326,4 +326,4 @@ integ_utils::connect -from_instance ${zynq_cpu_hier}/zynq          -from_interfa
 # Add memory maps
 # Verify design
 # Generate RTL and other files
-integ_utils::finalize
+integ_utils::finalize -output integ_output

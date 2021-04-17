@@ -233,28 +233,35 @@ proc write_filelist {args} {
         puts "ERROR: There was an error processing the arguments"
         return 1
     }
-
+    append file_output "////////////////////////////////////////////////////////////////////////////////////////\n"
+    append file_output "// THIS FILE WAS GENERATED FROM   : [file normalize [info script]]\n"
+    append file_output "// USING PROC                     : [lindex [info level 1] 0]\n"
+    append file_output "// AT TIME                        : [clock format [clock seconds] -format %Y/%m/%d-%H:%M:%S]\n"
+    append file_output "////////////////////////////////////////////////////////////////////////////////////////\n"
+    append file_output "\n"
+    ###################################
+    # {
+    #   list_name: [
+    #     <ELEM1>,
+    #     <ELEM2>,
+    #     <ELEM3>
+    #   ]
+    # }
     ####################################
-    set handle   [open $parsed_args(output) w+]
-    puts $handle "########################################################################################"
-    puts $handle "## THIS FILE WAS GENERATED FROM   : [file normalize [info script]]"
-    puts $handle "## USING PROC                     : [lindex [info level 1] 0]"
-    puts $handle "## AT TIME                        : [clock format [clock seconds] -format %Y/%m/%d-%H:%M:%S]"
-    puts $handle "########################################################################################"
-    puts $handle ""
-    puts $handle "## $parsed_args(description)"
-    puts $handle "set $parsed_args(list_name) \{"
-    foreach elem $parsed_args(filelist) {
-        if {$elem == {}} {
-            continue
-        } elseif {[llength $elem] == 1} {
-            puts $handle "  $elem"
-        } else {
-            puts $handle "  {$elem}"
+    append file_output "// $parsed_args(description)\n"
+    append file_output "\{\n"
+    append file_output "  \"$parsed_args(list_name)\": \[\n"
+    if {[llength $parsed_args(filelist)] == 1} {
+        append file_output "    [lindex $parsed_args(filelist) 0]\n"
+    } else {
+        foreach elem [lrange $parsed_args(filelist) 0 [expr [llength $parsed_args(filelist)] - 2]] {
+            append file_output "    \"${elem}\",\n"
         }
+        append file_output "    \"[lindex $parsed_args(filelist) [expr [llength $parsed_args(filelist)] - 1]]\"\n"
     }
-    puts $handle "\}"
-    close $handle
+    append file_output "  \]\n"
+    append file_output "\}\n"
+    write_file -file $parsed_args(output) -output file_output -force
 
     return 0
 }
@@ -343,6 +350,40 @@ proc extract_core_file_info {args} {
     write_filelist -filelist $fw_softlinks              -list_name "fw_softlinks"       -description "Firmware softlink directories"               -output $parsed_args(filelists_path)/fw_softlinks.f
 
     return 0
+}
+
+## Write a file
+proc write_file {args} {
+    array set my_arglist {
+        "file"   {"store"       "" "required"   0}
+        "output" {"store"       "" "required"   0}
+        "force"  {"store_true"  0  "optional"   0}
+    }
+
+    set status [arg_parser my_arglist parsed_args args]
+
+    if {$status != 0} {
+        puts "ERROR: There was an error processing the arguments"
+        return 1
+    }
+
+    #############################
+    upvar $parsed_args(output) output
+
+    if {![info exists output]} {
+        puts "ERROR: Output variable doesn't exist: $parsed_args(output)"
+        return 1
+    }
+
+    if {[file exists $parsed_args(file)] && $parsed_args(force) == 0} {
+        puts "ERROR: File $parsed_args(file) already exists. Use -force to overwrite it"
+        return 1
+    }
+
+    puts "Writing $parsed_args(file)"
+    set fd [open $parsed_args(file) w+]
+    puts $fd $output
+    close $fd
 }
 
 ## Read a file and store its contents in a variable

@@ -98,11 +98,11 @@ if {$stage_error == 1} {
         if {$STAGE_PACK} {
             source $build_stages_path/stage_pack.tcl
         }
-## TODO ##
-## TODO ##        ## Integrate
-## TODO ##        if {$STAGE_INTEG} {
-## TODO ##            source $build_stages_path/stage_integ.tcl
-## TODO ##        }
+
+        ## Integrate
+        if {$STAGE_INTEG} {
+            source $build_stages_path/stage_integ.tcl
+        }
 ## TODO ##
 ## TODO ##        ## Generate Xilinx IPs
 ## TODO ##        if {$STAGE_GEN_XILINX_IP} {

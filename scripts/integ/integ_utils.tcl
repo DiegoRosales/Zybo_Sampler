@@ -92,7 +92,7 @@ proc integ_utils::load_bus_def {args} {
 
   foreach xml_file $parsed_args(xml) {
     set busdef_xml $xml_file
-    set busabs_xml [regsub -all ".xml$" $xml_file "_rtl.xml"] 
+    set busabs_xml [regsub -all ".xml$" $xml_file {_rtl.xml}] 
 
     puts "busdef_xml = $busdef_xml"
     puts "busabs_xml = $busabs_xml"
@@ -355,6 +355,29 @@ proc integ_utils::export {args} {
 ## Finalize the design
 proc integ_utils::finalize {args} {
 
+  array set my_arglist {
+    "output"     {"store"       ""  "required"   0}
+    "override"   {"store_true"  0   "optional"   0}
+  }
+
+  set status [arg_parser my_arglist parsed_args args]
+
+  if {$status != 0} {
+      puts "ERROR: There was an error processing the arguments"
+      return 1
+  }
+
+  #######################################
+
+  if {$parsed_args(output) != ""} {
+    upvar 1 $parsed_args(output) output
+
+    if {[info exists output] && $parsed_args(override) == 0} {
+      puts "ERROR: Output variable already exists $parsed_args(output). Use -override to override it"
+      return 1
+    }
+  }
+
   ## Assign all addressess to the memory maps
   assign_bd_address
 
@@ -368,8 +391,8 @@ proc integ_utils::finalize {args} {
 
   ## Generate RTL Filelist
   set wrapper_rtl_file  $integ_utils::bd_dir/$integ_utils::bd_name/synth/$integ_utils::bd_name.v
-  set rtl_filelist_name $integ_utils::project_dir/integ_gen_rtl_filelist.f
-  set xci_filelist_name $integ_utils::project_dir/integ_gen_xci_filelist.f
+  set rtl_filelist_name $integ_utils::project_dir/integ_gen_rtl_filelist.f.json
+  set xci_filelist_name $integ_utils::project_dir/integ_gen_xci_filelist.f.json
 
   set rtl_filelist     {}
   set xci_filelist     {}
@@ -398,6 +421,9 @@ proc integ_utils::finalize {args} {
 
   write_filelist -filelist $rtl_filelist -list_name "integ_gen_rtl_filelist" -description "Generated RTL Files from the Integration Script" -output $rtl_filelist_name
   write_filelist -filelist $xci_filelist -list_name "integ_gen_xci_filelist" -description "Generated XCI Files from the Integration Script" -output $xci_filelist_name
+
+  dict set output "integ_gen_rtl_filelist" [file normalize $rtl_filelist_name]
+  dict set output "integ_gen_xci_filelist" [file normalize $xci_filelist_name]
 
   puts "keep_open = $integ_utils::keep_open"
   if {$integ_utils::keep_open} {
