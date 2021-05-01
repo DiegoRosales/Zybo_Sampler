@@ -1,9 +1,54 @@
 namespace eval proj_utils {
-  variable cfg_file
-  variable cfg
-  variable project_root
-  variable project_name
-  variable cores
+    ## Configuration
+    variable cfg_file
+    variable cfg
+    variable project_root
+    variable project_name
+    variable cores
+
+    ## FPGA Part Variables
+    variable FPGA_PART_NUMBER
+    variable BOARD_PART_NUMBER
+
+    ## Xilinx variables
+    variable vivado_install_path
+    variable vivado_interface_path
+
+    ## Project Path Variables
+    variable project_name
+    variable project_root
+    variable results_dirname
+    variable gen_xilinx_ip_tcl_dirname
+    variable gen_xilinx_ip_xci_dirname
+    variable workspace_project_name
+    variable integ_project_name
+    variable integ_project_top
+    variable results_dir
+    variable xilinx_ip_tcl_path
+    variable xilinx_ip_xci_path
+    variable project_impl_path
+    variable workspace_project_path
+    variable filelists_path
+
+    ## Packaged cores variables
+    variable packaged_cores_dirname
+    variable user_interfaces_dir
+
+    ## Project integration variables
+    variable integ_project_dir
+
+    ## Block Design Variables
+    variable block_design_name
+    variable block_design_hdf
+
+    ## Vitis SDK Design Variables
+    variable processor
+    variable platform_project_name
+    variable app_project_name
+    variable fw_source_path
+
+    ## Build Stages
+    variable build_stages_path
 }
 
 ## Clean JSON decoder output
@@ -186,7 +231,7 @@ proc proj_utils::parse_project_cfg {args} {
     }
 
     set proj_utils::cfg $output
-
+    update_general_variables
     #extract_from_all_cores -core_info [dict get $output cores] -variable synthesis_rtl_file_list -output synth_filelist
     #extract_from_all_cores -core_info [dict get $output cores] -variable xilinx_ip_tcl_list      -output ip_tcl_scripts
 
@@ -225,7 +270,6 @@ proc proj_utils::extract_from_core {args} {
     }
 
     if {[dict exists $core $variable]} {
-        puts "Returning for variable $variable"
         set core_contents [dict get $core $variable]
     } else {
         if {$parsed_args(debug)} {
@@ -358,6 +402,53 @@ proc proj_utils::extract_from_all_cores {args} {
     } elseif {$return_string} {
         return $output
     }
+}
+
+## Populate all variables
+proc proj_utils::update_general_variables {} {
+    ## FPGA Part Variables
+    set proj_utils::FPGA_PART_NUMBER          [dict get $proj_utils::cfg fpga_part]
+    set proj_utils::BOARD_PART_NUMBER         [dict get $proj_utils::cfg board_part]
+
+    ## Xilinx variables
+    set proj_utils::vivado_install_path        $::env(XILINX_VIVADO)
+    set proj_utils::vivado_interface_path      ${proj_utils::vivado_install_path}/data/ip/interfaces
+
+    ## Project Path Variables
+    set proj_utils::project_name               [dict get $proj_utils::cfg project_name]
+    set proj_utils::project_root               [dict get $proj_utils::cfg project_root]
+    set proj_utils::results_dirname            [dict get $proj_utils::cfg results_dirname]
+    set proj_utils::gen_xilinx_ip_tcl_dirname  [dict get $proj_utils::cfg gen_xilinx_ip_tcl_dirname]
+    set proj_utils::gen_xilinx_ip_xci_dirname  [dict get $proj_utils::cfg gen_xilinx_ip_xci_dirname]
+    set proj_utils::workspace_project_name     [dict get $proj_utils::cfg workspace_project_name]
+    set proj_utils::integ_project_name         [dict get $proj_utils::cfg integ_project_name]
+    set proj_utils::integ_project_top          [dict get $proj_utils::cfg integ_project_top]
+    set proj_utils::results_dir                "${proj_utils::project_root}/${proj_utils::results_dirname}"
+    set proj_utils::xilinx_ip_tcl_path         "${proj_utils::results_dir}/${proj_utils::gen_xilinx_ip_tcl_dirname}"
+    set proj_utils::xilinx_ip_xci_path         "${proj_utils::results_dir}/${proj_utils::gen_xilinx_ip_xci_dirname}"
+    set proj_utils::project_impl_path          "${proj_utils::results_dir}/${proj_utils::project_name}"
+    set proj_utils::workspace_project_path     "${proj_utils::results_dir}/${proj_utils::workspace_project_name}"
+    set proj_utils::filelists_path             "${proj_utils::results_dir}/filelists"
+
+    ## Packaged cores variables
+    set proj_utils::packaged_cores_dirname     "${proj_utils::results_dir}/packaged_cores"
+    set proj_utils::user_interfaces_dir        [subst [dict get $proj_utils::cfg user_interfaces_dir]]
+
+    ## Project integration variables
+    set proj_utils::integ_project_dir          ${proj_utils::results_dir}/${proj_utils::integ_project_name}
+
+    ## Block Design Variables
+    set proj_utils::block_design_name          "audio_sampler_block_design"
+    set proj_utils::block_design_hdf           ${proj_utils::block_design_name}_wrapper.hdf
+
+    ## Vitis SDK Design Variables
+    set proj_utils::processor                  "ps7_cortexa9_0"
+    set proj_utils::platform_project_name      "${proj_utils::project_name}_platform"
+    set proj_utils::app_project_name           "${proj_utils::project_name}_app"
+    set proj_utils::fw_source_path              ${proj_utils::project_root}/source/common/fw/
+
+    ## Build Stages
+    set proj_utils::build_stages_path ${proj_utils::project_root}/scripts/build_stages
 }
 
 ## Format a list in JSON form

@@ -24,7 +24,7 @@ set bus_definition_list  [list ${vivado_interface_path}/gpio_v1_0/gpio.xml      
 ## Load bus definitions
 pack_utils::init -project_name $package_project_name  \
                  -project_dir  $package_project_dir   \
-                 -part_number  $ZYBO_FPGA_PART_NUMBER \
+                 -part_number  $FPGA_PART_NUMBER      \
                  -revision     $revision              \
                  -vendor       $vendor                \
                  -library      $library               \

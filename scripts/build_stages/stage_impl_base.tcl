@@ -8,7 +8,7 @@ parse_json_cfg -cfg_file ${filelists_path}/integ_gen_rtl_filelist.f.json  -outpu
 set_param general.maxThreads 8
 
 ## Create the project
-create_project ${project_name} ${project_impl_path} -part ${ZYBO_FPGA_PART_NUMBER} -force
+create_project ${project_name} ${project_impl_path} -part ${FPGA_PART_NUMBER} -force
 
 ## Set the project properties
 set_property board_part digilentinc.com:zybo:part0:1.0 [current_project]
