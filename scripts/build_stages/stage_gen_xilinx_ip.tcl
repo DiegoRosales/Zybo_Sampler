@@ -5,7 +5,7 @@ generate_xilinx_ips_xci -ip_list ${filelists_path}/integ_gen_xci_filelist.f.json
 ###################################
 ## Generate all XCI IPs from TCL scripts
 ###################################
-generate_xilinx_ips_tcl -ip_list ${filelists_path}/xilinx_ip_tcl_list.f.json  -part_number $ZYBO_FPGA_PART_NUMBER -dest_dir $xilinx_ip_tcl_path -output_list gen_xci_tcl_list -override
+generate_xilinx_ips_tcl -core_info $proj_utils::cores -part_number $ZYBO_FPGA_PART_NUMBER -dest_dir $xilinx_ip_tcl_path -output_list gen_xci_tcl_list -override
 
 ###################################
 ## Generate a filelist with all xci files

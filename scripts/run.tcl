@@ -40,7 +40,7 @@ if {[file exists $parsed_args(cfg)] == 0} {
 ################################################################################
 ## Parse the project config file
 #source $parsed_args(cfg)
-parse_project_cfg -cfg_file $parsed_args(cfg) -output project_cfg
+proj_utils::parse_project_cfg -cfg_file $parsed_args(cfg) -output project_cfg
 source ${script_dir}/common_variables.tcl
 
 ################################################################################

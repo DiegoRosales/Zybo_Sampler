@@ -218,53 +218,6 @@ proc process_stages {args} {
     }
 }
 
-## Writes filelists
-proc write_filelist {args} {
-    array set my_arglist {
-        "filelist"    {"store"         ""       "required"   0}
-        "list_name"   {"store"         ""       "required"   0}
-        "description" {"store"         ""       "required"   0}
-        "output"      {"store"         ""       "required"   0}
-    }
-
-    set status [arg_parser my_arglist parsed_args args]
-
-    if {$status != 0} {
-        puts "ERROR: There was an error processing the arguments"
-        return 1
-    }
-    append file_output "////////////////////////////////////////////////////////////////////////////////////////\n"
-    append file_output "// THIS FILE WAS GENERATED FROM   : [file normalize [info script]]\n"
-    append file_output "// USING PROC                     : [lindex [info level 1] 0]\n"
-    append file_output "// AT TIME                        : [clock format [clock seconds] -format %Y/%m/%d-%H:%M:%S]\n"
-    append file_output "////////////////////////////////////////////////////////////////////////////////////////\n"
-    append file_output "\n"
-    ###################################
-    # {
-    #   list_name: [
-    #     <ELEM1>,
-    #     <ELEM2>,
-    #     <ELEM3>
-    #   ]
-    # }
-    ####################################
-    append file_output "// $parsed_args(description)\n"
-    append file_output "\{\n"
-    append file_output "  \"$parsed_args(list_name)\": \[\n"
-    if {[llength $parsed_args(filelist)] == 1} {
-        append file_output "    [lindex $parsed_args(filelist) 0]\n"
-    } else {
-        foreach elem [lrange $parsed_args(filelist) 0 [expr [llength $parsed_args(filelist)] - 2]] {
-            append file_output "    \"${elem}\",\n"
-        }
-        append file_output "    \"[lindex $parsed_args(filelist) [expr [llength $parsed_args(filelist)] - 1]]\"\n"
-    }
-    append file_output "  \]\n"
-    append file_output "\}\n"
-    write_file -file $parsed_args(output) -output file_output -force
-
-    return 0
-}
 
 ## Extracts the core file information
 proc extract_core_file_info {args} {
@@ -423,4 +376,4 @@ proc read_file {args} {
 
 source "${utils_script_dir}/json_parser.tcl"
 source "${utils_script_dir}/xil_ip_utils.tcl"
-source "${utils_script_dir}/proj_filelist_utils.tcl"
+source "${utils_script_dir}/proj_utils.tcl"

@@ -1,3 +1,5 @@
+// Global variables
+//  ${core_root} : The path to the root of this core
 
 {
     "core_name"        : "codec_unit",
@@ -20,31 +22,47 @@
         "${core_root}/rtl/controller_unit/i2c_core/verilog-i2c/rtl/axis_fifo.v"
     ],
 
-    "xilinx_ip_tcl_list": [
-        "${core_root}/rtl/xilinx_ip/audio_pll.tcl",
-        "${core_root}/rtl/xilinx_ip/audio_data_fifo.tcl"
-    ],
+    "xilinx_ip": {
+        "audio_pll": {
+            "type"            : "tcl",
+            "src"             : "${core_root}/rtl/xilinx_ip/audio_pll.tcl",
+            "results_dirname" : "audio_pll",
+            "component_name"  : "audio_pll"
+        },
+        "audio_data_fifo": {
+            "type"            : "tcl",
+            "src"             : "${core_root}/rtl/xilinx_ip/audio_data_fifo.tcl",
+            "results_dirname" : "audio_data_fifo",
+            "component_name"  : "audio_data_fifo"
+        }
+    },
+
+    "simulation": {
+        "library"       : "codec_unit_lib",
+        "top"           : "codec_unit_top",
+        "required_libs" : [
+            "clock_and_reset_bfm_lib",
+            "axi4_lite_bfm_lib",
+            "i2s_bfm_lib"
+        ],
+        
+        // Simulation filelists
+        "uvm_simulation_file_list": [
+            "${core_root}/verif/env/codec_unit_top_reg_model_pkg.sv",
+            "${core_root}/verif/codec_unit_top_tb.sv",
+            "${core_root}/verif/env/codec_unit_top_env.sv",
+            "${core_root}/verif/env/codec_unit_top_pkg.svh",
+            "${core_root}/verif/env/codec_unit_top_base_test_env.svh"
+        ],
     
-    // Simulation filelists
-    "uvm_simulation_file_list": [
-        "${core_root}/verif/env/codec_unit_top_reg_model_pkg.sv",
-        "${core_root}/verif/codec_unit_top_tb.sv",
-        "${core_root}/verif/env/codec_unit_top_env.sv"
-    ],
-
-    "uvm_simulation_env_file_list": [
-        "${core_root}/verif/env/codec_unit_top_pkg.svh",
-        "${core_root}/verif/env/codec_unit_top_base_test_env.svh"
-    ],
-
-    "uvm_simulation_tc_file_list": [
-        "${core_root}/verif/tc/codec_unit_top_testlib.svh",
-        "${core_root}/verif/tc/codec_unit_top_base_test.sv",
-        "${core_root}/verif/tc/codec_unit_top_testcase_1.sv"
-    ],
-
-    "uvm_simulation_env_incdir_list": [
-        "${core_root}/gen"
-    ]
+        "uvm_simulation_incdir": [
+            "${core_root}/gen"
+        ],
     
+        "uvm_simulation_testcases": [
+            "${core_root}/verif/tc/codec_unit_top_testlib.svh",
+            "${core_root}/verif/tc/codec_unit_top_base_test.sv",
+            "${core_root}/verif/tc/codec_unit_top_testcase_1.sv"
+        ]
+    }    
 }

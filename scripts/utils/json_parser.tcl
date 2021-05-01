@@ -21,14 +21,14 @@ proc ::json::encode {data} {
         } else {
             set subtype [lrange $type 1 end]
         }
-        if {$toptype ni {array object}} {
+        if {$toptype ni {__array__ __object__}} {
             set toptype {}
         }
     }
 
     # Perform type-specific JSON encoding.
     switch $toptype {
-    array {
+    __array__ {
         # Recursively encode each array element.  If a subtype was specified, it
         # is shared between all elements.  Otherwise, each element is itself a
         # two-element list consisting of type and value.
@@ -45,8 +45,8 @@ proc ::json::encode {data} {
         }
         append result \]
         return $result
-    } object {
-        # Recursively encode each object key and element.  Keys are always
+    } __object__ {
+        # Recursively encode each __object__ key and element.  Keys are always
         # strings.  If a subtype was specified, it is shared between all
         # elements.  Otherwise, each element is itself a two-element list
         # consisting of type and underlying data value.
@@ -55,7 +55,7 @@ proc ::json::encode {data} {
         foreach {key element} $value {
             append result $comma
             set comma ,
-            append result [encode [list string $key]] :
+            append result [encode [list __string__ $key]] :
             if {[info exists subtype]} {
                 append result [encode [list $subtype $element]]
             } else {
@@ -64,7 +64,7 @@ proc ::json::encode {data} {
         }
         append result \}
         return $result
-    } string {
+    } __string__ {
         # Encode the minimal set of required escape sequences.
         return \"[string map {
             \x00 \\u0000    \x01 \\u0001    \x02 \\u0002    \x03 \\u0003
@@ -77,7 +77,7 @@ proc ::json::encode {data} {
             \x1c \\u001c    \x1d \\u001d    \x1e \\u001e    \x1f \\u001f
             \\   \\\\       \"   \\\"
         } $value]\"
-    } number {
+    } __number__ {
         # Attempt to normalize the number to comply with the JSON standard.
         regsub {^[\f\n\r\t\v ]+} $value {} result     ;# Strip leading space.
         regsub {[\f\n\r\t\v ]+$} $result {} result    ;# Strip trailing space.
@@ -95,23 +95,23 @@ proc ::json::encode {data} {
                     see https://tools.ietf.org/html/rfc7159#section-6"
         }
         return $result
-    } literal {
+    } __literal__ {
         # The only valid literals are false, null, and true.
         if {$value ni {false null true}} {
             error "invalid JSON literal \"$value\":\
                     must be false, null, or true"
         }
         return $value
-    } encoded {
+    } __encoded__ {
         # Raw data.  The caller must supply correctly formatted JSON.
         return $value
-    } decoded {
+    } __decoded__ {
         # Nested decoded data.
         encode $value
     } default {
         # Invalid type.
-        error "invalid JSON type \"$type\": must be array, object, string,\
-                number, literal, encoded, decoded, or {array|object ?...?\
+        error "invalid JSON type \"$type\": must be __array__, __object__, __string__,\
+                __number__, __literal__, __encoded__, __decoded__, or {__array__|__object__ ?...?\
                 subtype}, where subtype is recursively any valid JSON type"
     }}
 }
@@ -147,7 +147,7 @@ proc ::json::decode {json {indexVar {}}} {
     switch [string index $json $index] {
     \" {
         # JSON strings start with double quote.
-        set type string
+        set type __string__
 
         # The value is the text between matching double quotes.
         if {![regexp -indices -start $index {\A\"((?:[^"\\]|\\.)*)\"}\
@@ -173,11 +173,11 @@ proc ::json::decode {json {indexVar {}}} {
     } \{ - \[ {
         # JSON objects/arrays start with open brace/bracket.
         if {[string index $json $index] eq "\{"} {
-            set type object
+            set type __object__
             set endRe {\A[\t\n\r ]*\}}
             set charName brace
         } else {
-            set type array
+            set type __array__
             set endRe {\A[\t\n\r ]*\]}
             set charName bracket
         }
@@ -197,12 +197,12 @@ proc ::json::decode {json {indexVar {}}} {
             }
 
             # For objects, get key and confirm it is followed by colon.
-            if {$type eq "object"} {
+            if {$type eq "__object__"} {
                 set key [decode $json index]
                 if {![llength $key]} {
                     return -code error "invalid JSON object at index $index:\
                             must end with close brace"
-                } elseif {[lindex $key 0] ne "string"} {
+                } elseif {[lindex $key 0] ne "__string__"} {
                     return -code error "invalid JSON object at index $index:\
                             key type is \"[lindex $key 0]\", must be string"
                 } elseif {![regexp -indices -start $index {\A[\t\n\r ]*:}\
@@ -219,7 +219,7 @@ proc ::json::decode {json {indexVar {}}} {
         }
     } t - f - n {
         # JSON literals are true, false, or null.
-        set type literal
+        set type __literal__
         if {![regexp -indices -start $index {(?:true|false|null)\M}\
                 $json range]} {
             return -code error "invalid JSON literal at index $index"
@@ -227,7 +227,7 @@ proc ::json::decode {json {indexVar {}}} {
         set value [string range $json {*}$range]
     } - - + - 0 - 1 - 2 - 3 - 4 - 5 - 6 - 7 - 8 - 9 - . {
         # JSON numbers are integers or real numbers.
-        set type number
+        set type __number__
         if {![regexp -indices -start $index --\
                {\A-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][-+]?\d+)?\M} $json range]} {
             return -code error "invalid JSON number at index $index"
@@ -268,14 +268,14 @@ proc ::json::schema {data} {
         } else {
             set subtype [lrange $type 1 end]
         }
-        if {$toptype ni {array object}} {
+        if {$toptype ni {__array__ __object__}} {
             set toptype {}
         }
     }
 
     # Perform type-specific JSON processing.
     switch $toptype {
-    array {
+    __array__ {
         list $toptype [lmap element $value {
             if {[info exists subtype]} {
                 schema [list $subtype $element]
@@ -283,7 +283,7 @@ proc ::json::schema {data} {
                 schema $element
             }
         }]
-    } object {
+    } __object__ {
         list $toptype [dict map {key element} $value {
             if {[info exists subtype]} {
                 schema [list $subtype $element]
@@ -291,15 +291,15 @@ proc ::json::schema {data} {
                 schema $element
             }
         }]
-    } string - number - literal {
+    } __string__ - __number__ - __literal__ {
         return $toptype
-    } encoded {
+    } __encoded__ {
         schema [decode $value]
-    } decoded {
+    } __decoded__ {
         schema $value
     } default {
-        error "invalid JSON type \"$type\": must be array, object, string,\
-                number, literal, encoded, decoded, or {array|object ?...?\
+        error "invalid JSON type \"$type\": must be __array__, __object__, __string__,\
+                __number__, __literal__, __encoded__, __decoded__, or {__array__|__object__ ?...?\
                 subtype}, where subtype is recursively any valid JSON type"
     }}
 }
@@ -322,14 +322,14 @@ proc ::json::values {data} {
         } else {
             set subtype [lrange $type 1 end]
         }
-        if {$toptype ni {array object}} {
+        if {$toptype ni {__array__ __object__}} {
             set toptype {}
         }
     }
 
     # Perform type-specific JSON processing.
     switch $toptype {
-    array {
+    __array__ {
         lmap element $value {
             if {[info exists subtype]} {
                 values [list $subtype $element]
@@ -337,7 +337,7 @@ proc ::json::values {data} {
                 values $element
             }
         }
-    } object {
+    } __object__ {
         dict map {key element} $value {
             if {[info exists subtype]} {
                 values [list $subtype $element]
@@ -345,15 +345,15 @@ proc ::json::values {data} {
                 values $element
             }
         }
-    } string - number - literal {
+    } __string__ - __number__ - __literal__ {
         return $value
-    } encoded {
+    } __encoded__ {
         values [decode $value]
-    } decoded {
+    } __decoded__ {
         values $value
     } default {
-        error "invalid JSON type \"$type\": must be array, object, string,\
-                number, literal, encoded, decoded, or {array|object ?...?\
+        error "invalid JSON type \"$type\": must be __array__, __object__, __string__,\
+                __number__, __literal__, __encoded__, __decoded__, or {__array__|__object__ ?...?\
                 subtype}, where subtype is recursively any valid JSON type"
     }}
 }
@@ -368,7 +368,7 @@ proc ::json::values {data} {
 # value is a raw JSON string or a decoded JSON document.
 proc ::json::unite {schema values} {
     switch [lindex $schema 0] {
-    array {
+    __array__ {
         if {[llength $schema] != 2} {
             error "invalid JSON data: must be a two-element list with second\
                     element being list of array element types"
@@ -390,7 +390,7 @@ proc ::json::unite {schema values} {
         list array [lmap subtype $subtypes value $values {
             unite $subtype $value
         }]
-    } object {
+    } __object__ {
         if {[llength $schema] != 2} {
             error "invalid JSON object: must be a two-element list with second\
                     element being dict of object element types"
@@ -404,23 +404,23 @@ proc ::json::unite {schema values} {
                 error "key not defined in schema: $key"
             }
         }]
-    } string - number - literal {
+    } __string__ - __number__ - __literal__ {
         if {[llength $schema] != 1} {
             error "invalid JSON [lindex $schema 0]: must be a one-element list"
         }
         list [lindex $schema 0] $values
-    } encoded {
+    } __encoded__ {
         if {[llength $schema] != 1} {
             error "invalid encoded JSON: must be a one-element list"
         }
         decode [lindex $values 0]
-    } decoded {
+    } __decoded__ {
         if {[llength $schema] != 2} {
             error "invalid decoded JSON: must be a two-element list"
         }
         return $values
     } default {
-        error "invalid JSON type \"[lindex $schema 0]\": must be array, object,\
-                string, number, literal, encoded, or decoded"
+        error "invalid JSON type \"[lindex $schema 0]\": must be __array__, __object__,\
+                __string__, __number__, __literal__, __encoded__, or __decoded__"
     }}
 }

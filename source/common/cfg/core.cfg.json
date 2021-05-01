@@ -9,7 +9,13 @@
         "${core_root}/rtl/axi_slave_controller.sv"
     ],
 
-    "uvm_simulation_env_incdir_list": [
+    "uvm_simulation_file_list": [
+        "${core_root}/verif/axi4_lite_bfm/axi4_lite_bfm_env.sv",
+        "${core_root}/verif/clock_and_reset_bfm/clock_and_reset_bfm_env.sv",
+        "${core_root}/verif/i2s_bfm/i2s_bfm_env.sv"
+    ],
+
+    "uvm_simulation_incdir": [
         "${core_root}/gen",
         "${core_root}/verif/clock_and_reset_bfm/",
         "${core_root}/verif/i2s_bfm/",
