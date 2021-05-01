@@ -1,0 +1,17 @@
+///////////////////////////////////////////////
+// AXI4 BFM
+///////////////////////////////////////////////
+
+{
+  "core_name": "axi4_lite_bfm",
+
+  "simulation": {
+    "testbench_file_list": [
+      "${core_root}/axi4_lite_bfm_env.sv"
+    ],
+
+    "simulation_incdir": [
+      "${core_root}/"
+    ]
+  }
+}

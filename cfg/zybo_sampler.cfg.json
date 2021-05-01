@@ -14,7 +14,10 @@
     "${project_root}/source/common",
     "${project_root}/subsystems/codec_unit",
     "${project_root}/subsystems/sampler_dma_unit",
-    "${project_root}/subsystems/sampler_mixer_unit"
+    "${project_root}/subsystems/sampler_mixer_unit",
+    "${project_root}/subsystems/verification_components/axi4_lite_bfm",
+    "${project_root}/subsystems/verification_components/clock_and_reset_bfm",
+    "${project_root}/subsystems/verification_components/i2s_bfm"
   ],
 
   // Project integration script
@@ -38,6 +41,10 @@
   /////////////////////
   // Build Variables
   /////////////////////
+  // Part numbers
+  "fpga_part" : "xc7z010clg400-1",
+  "board_part": "digilentinc.com:zybo:part0:1.0",
+
   // Target directory
   "results_dirname": "results",
 
