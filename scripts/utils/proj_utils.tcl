@@ -111,7 +111,7 @@ proc parse_json_cfg {args} {
 
     array set my_arglist {
         "cfg_file" {"store"       ""  "required"   0}
-        "output"   {"store"       ""  "required"   0}
+        "output"   {"store"       ""  "optional"   0}
         "override" {"store_true"  0   "optional"   0}
         "debug"    {"store_true"  0   "optional"   0}
     }
@@ -124,22 +124,27 @@ proc parse_json_cfg {args} {
     }
 
     #############################
-    upvar 1 $parsed_args(output) output
+    if {$parsed_args(output) != ""} {
+        upvar 1 $parsed_args(output) output
+        set return_err_code 1
 
-    if {[info exists output] && $parsed_args(override) == 0} {
-        puts "ERROR: Output variable already exists $parsed_args(output). Use -override to override it"
-        return 1
+        if {[info exists output] && $parsed_args(override) == 0} {
+            puts "ERROR: Output variable already exists $parsed_args(output). Use -override to override it"
+            return $return_err_code
+        }
+    } else {
+        set return_err_code ""
     }
 
     if {[read_file -file $parsed_args(cfg_file) -output core_cfg] != 0} {
         puts "ERROR: There was a problem while reading the file $parsed_args(cfg_file)"
-        return 1
+        return $return_err_code
     }
 
     set decoded_cfg [::json::decode $core_cfg]
     if {$decoded_cfg == {}} {
         puts "ERROR: There was a problem while decoding the JSON config file $parsed_args(cfg_file)"
-        return 0
+        return $return_err_code
     }
 
     ## Create the dictionary
@@ -159,7 +164,11 @@ proc parse_json_cfg {args} {
             }
         }
     }
-    return 0
+    if {$parsed_args(output) != ""} {
+        return 0
+    } else {
+        return $output
+    }
 }
 
 ## Parse the main project.cfg.json file
@@ -411,8 +420,10 @@ proc proj_utils::update_general_variables {} {
     set proj_utils::BOARD_PART_NUMBER         [dict get $proj_utils::cfg board_part]
 
     ## Xilinx variables
-    set proj_utils::vivado_install_path        $::env(XILINX_VIVADO)
-    set proj_utils::vivado_interface_path      ${proj_utils::vivado_install_path}/data/ip/interfaces
+    if {[info exists ::env(XILINX_VIVADO)]} {
+        set proj_utils::vivado_install_path        $::env(XILINX_VIVADO)
+        set proj_utils::vivado_interface_path      ${proj_utils::vivado_install_path}/data/ip/interfaces
+    }
 
     ## Project Path Variables
     set proj_utils::project_name               [dict get $proj_utils::cfg project_name]
