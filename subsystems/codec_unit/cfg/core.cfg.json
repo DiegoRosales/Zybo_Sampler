@@ -26,43 +26,39 @@
         "audio_pll": {
             "type"            : "tcl",
             "src"             : "${core_root}/rtl/xilinx_ip/audio_pll.tcl",
-            "results_dirname" : "audio_pll",
-            "component_name"  : "audio_pll"
+            "component_name"  : "codec_audio_clock_generator"
         },
         "audio_data_fifo": {
             "type"            : "tcl",
             "src"             : "${core_root}/rtl/xilinx_ip/audio_data_fifo.tcl",
-            "results_dirname" : "audio_data_fifo",
             "component_name"  : "audio_data_fifo"
         }
     },
 
     "simulation": {
-        "library"       : "codec_unit_lib",
-        "top"           : "codec_unit_top",
+        "top"           : "codec_unit_top_tb",
         "required_libs" : [
+            "codec_unit_lib",
             "clock_and_reset_bfm_lib",
             "axi4_lite_bfm_lib",
             "i2s_bfm_lib"
         ],
         
         // Simulation filelists
-        "uvm_simulation_file_list": [
+        "simulation_compile": [
             "${core_root}/verif/env/codec_unit_top_reg_model_pkg.sv",
-            "${core_root}/verif/codec_unit_top_tb.sv",
-            "${core_root}/verif/env/codec_unit_top_env.sv",
-            "${core_root}/verif/env/codec_unit_top_pkg.svh",
-            "${core_root}/verif/env/codec_unit_top_base_test_env.svh"
+            "${core_root}/verif/env/codec_unit_top_pkg.sv",
+            "${core_root}/verif/codec_unit_top_tb.sv"
         ],
     
-        "uvm_simulation_incdir": [
-            "${core_root}/gen"
+        "simulation_incdir": [
+            "${core_root}/gen",
+            "${core_root}/verif/tc"
         ],
     
-        "uvm_simulation_testcases": [
-            "${core_root}/verif/tc/codec_unit_top_testlib.svh",
-            "${core_root}/verif/tc/codec_unit_top_base_test.sv",
-            "${core_root}/verif/tc/codec_unit_top_testcase_1.sv"
+        "testcases": [
+            "base_test",
+            "testcase_1"
         ]
     }    
 }
