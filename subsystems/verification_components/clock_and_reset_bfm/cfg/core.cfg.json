@@ -6,8 +6,9 @@
   "core_name": "clock_and_reset_bfm",
 
   "simulation": {
-    "testbench_file_list": [
-      "${core_root}/clock_and_reset_bfm_env.sv"
+    "simulation_compile": [
+      "${core_root}/clock_and_reset_bfm_pkg.sv",
+      "${core_root}/clock_and_reset_if.sv"
     ],
 
     "simulation_incdir": [
