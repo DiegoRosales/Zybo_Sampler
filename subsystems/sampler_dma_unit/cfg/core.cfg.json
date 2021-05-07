@@ -18,7 +18,7 @@
 
     "xilinx_ip": {
         "bram_dualport": {
-            "component_name"  : "bram_dualport",
+            "component_name"  : "bram_dualport_i32x256_o128x64",
             "type"            : "tcl",
             "src"             : "${core_root}/rtl/xilinx_ip/bram_dualport.tcl",
             "vars"            : {
@@ -30,7 +30,6 @@
         "sampler_dma_fifo": {
             "type"            : "tcl",
             "src"             : "${core_root}/rtl/xilinx_ip/sampler_dma_fifo.tcl",
-            "results_dirname" : "sampler_dma_fifo",
             "component_name"  : "sampler_dma_fifo"
         },
         "divider_16bit": {
