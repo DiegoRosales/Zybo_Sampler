@@ -98,11 +98,11 @@ if {$stage_error == 1} {
             source $build_stages_path/stage_gen_xilinx_ip.tcl
         }
 
-## TODO ##        ## Run synthesis and place and route
-## TODO ##        if {$STAGE_IMPL} {
-## TODO ##            source $build_stages_path/stage_impl.tcl
-## TODO ##        } 
-## TODO ##        
+        ## Run synthesis and place and route
+        if {$STAGE_IMPL} {
+            source $build_stages_path/stage_impl.tcl
+        } 
+        
 
         ## Simulation
         if {$STAGE_SETUP_PROJ} {

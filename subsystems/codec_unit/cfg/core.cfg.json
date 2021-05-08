@@ -60,5 +60,17 @@
             "base_test",
             "testcase_1"
         ]
-    }    
+    },
+
+    "firmware": {
+        "softlinks": {
+            "codec_controller": "${core_root}/fw"
+        },
+        "incdirs": {
+            // Include directories from the "codec_controller" softlink
+            "codec_controller": [
+                "include"
+            ]
+        }
+    }
 }

@@ -125,5 +125,18 @@
                 }
             }
         }
+    },
+
+    "firmware": {
+        "softlinks": {
+            "sampler_dma": "${core_root}/fw"
+        },
+        "incdirs": {
+            // Include directories from the "sampler_dma" softlink
+            "sampler_dma": [
+                "include",
+                "include2"
+            ]
+        }
     }
 }
