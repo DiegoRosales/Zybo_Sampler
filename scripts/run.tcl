@@ -54,7 +54,7 @@ source ${script_dir}/common_variables.tcl
 ## 4) Synthesis
 ## 5) Place and Route
 #########################################
-set stages { PACK INTEG GEN_XILINX_IP IMPL LINT EXPORT_WS BUILD_WS SIM REG_GEN }
+set stages { PACK INTEG GEN_XILINX_IP IMPL LINT EXPORT_WS BUILD_WS SIM REG_GEN SETUP_PROJ }
 set default_stages "PACK+INTEG+GEN_XILINX_IP+IMPL+EXPORT_WS"
 
 if {$parsed_args(stages) != ""} {
@@ -64,17 +64,6 @@ if {$parsed_args(stages) != ""} {
 }
 
 ################################################################################
-## Run the stages
-set core_info [dict get $project_cfg cores]
-## Extract information from the cores' config files
-#extract_core_file_info -project_cores $project_cores -filelists_path $filelists_path
-set variables {}
-lappend variables synthesis_rtl_file_list
-lappend variables xilinx_ip_tcl_list
-write_compiled_filelists -core_info [dict get $project_cfg cores] \
-                         -output_dir ${results_dir}/filelists     \
-                         -override                                \
-                         -variables $variables
 ## Run the stages
 if {$stage_error == 1} {
     puts "ERROR: There was an error processing the stages"
@@ -114,16 +103,22 @@ if {$stage_error == 1} {
 ## TODO ##            source $build_stages_path/stage_impl.tcl
 ## TODO ##        } 
 ## TODO ##        
+
+        ## Simulation
+        if {$STAGE_SETUP_PROJ} {
+            source $build_stages_path/stage_impl_base.tcl
+        }
+
         ## Lint
         if {$STAGE_LINT} {
             source $build_stages_path/stage_lint.tcl
         }
 
-## TODO ##        ## Simulation
-## TODO ##        if {$STAGE_SIM} {
-## TODO ##            source $build_stages_path/stage_run_simulation.tcl
-## TODO ##        }
-## TODO ##
+        ## Simulation
+        if {$STAGE_SIM} {
+            source $build_stages_path/stage_run_vivado_simulation.tcl
+        }
+
 ## TODO ##        ## If the BUILD_WS stage is passed, then execute this script using xsct
 ## TODO ##        if {$STAGE_BUILD_WS} {
 ## TODO ##            source $build_stages_path/stage_build_ws_vivado.tcl
