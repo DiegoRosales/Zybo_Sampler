@@ -6,6 +6,17 @@ set no_tb           0
 set no_tc           0
 set testbench       ""
 
+append help_message "--- To relaunch the simulation ---\n"
+append help_message "\% relaunch_sim\n"
+append help_message "\n"
+append help_message "--- To relaunch the simulation from scratch ---\n"
+append help_message "\% close_sim\n"
+append help_message "\% launch_simulation -absolute_path -simset \[get_filesets $testbench\]\n"
+append help_message "\n"
+append help_message "--- To compile & elaborate the simulation ---\n"
+append help_message "\% launch_simulation -absolute_path -step Compile   \[get_filesets $testbench\]\n"
+append help_message "\% launch_simulation -absolute_path -step Elaborate \[get_filesets $testbench\]\n"
+
 ## Get the arguments from the command line
 if {[info exists STAGE_SIM_ARGS(SIM_INCREMENTAL)]} {
   set incremental_sim $STAGE_SIM_ARGS(SIM_INCREMENTAL)
@@ -141,10 +152,11 @@ if {$error != ""} {
     run 1ms
   } elseif {$no_tb == 0 && $no_tc == 1} {
     puts "Running only Compile and Elaboration"
-    launch_simulation -absolute_path -step Compile
-    launch_simulation -absolute_path -step Elaborate
+    launch_simulation -absolute_path -step Compile   [get_filesets $testbench]
+    launch_simulation -absolute_path -step Elaborate [get_filesets $testbench]
   } else {
     puts "ERROR: No testbench specified"
   }
 }
 
+puts $help_message
