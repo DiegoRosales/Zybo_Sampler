@@ -6,9 +6,9 @@ Before you build, you need to setup the environment. To do that, you need to run
 ```bash
 ## From the Windows CMD shell
 # Vivado
-[CMD]>> call D:\Xilinx\Vivado\2020.1\settings64.bat
+[CMD]>> call S:\Xilinx\Vivado\2021.1\settings64.bat
 # Xilinx Vitis (previously Xilinx SDK)
-[CMD]>> call D:\Xilinx\Vitis\2020.1\settings64.bat
+[CMD]>> call S:\Xilinx\Vitis\2021.1\settings64.bat
 ## From the Linux Bash shell (TODO)
 ...
 ```

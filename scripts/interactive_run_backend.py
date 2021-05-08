@@ -5,7 +5,7 @@ import signal
 class interactive_run:
 
   VIVADO_PATH = ""
-  base_cmd = "vivado -log ./results/vivado.log -jou ./results/vivado.jou -mode batch -source scripts/run.tcl -tclargs -cfg cfg/zybo_sampler.cfg.json"
+  base_cmd = "vivado -log ./target/vivado.log -jou ./target/vivado.jou -mode batch -source scripts/run.tcl -tclargs -cfg cfg/zybo_sampler.cfg.json"
   setup_cmd = "source {}/settings64.sh"
 
   ## Stages
