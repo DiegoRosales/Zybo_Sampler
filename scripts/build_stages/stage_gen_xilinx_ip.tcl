@@ -1,12 +1,16 @@
-## Generate all the Xilinx IPs
-set generated_xilinx_ips ""
-source $filelists_path/xilinx_ip_tcl.f
-# IPs from the integration phase
-if {[file exists ${filelists_path}/integ_gen_xci_filelist.f]} {
-    source ${filelists_path}/integ_gen_xci_filelist.f
-    lappend generated_xilinx_ips [generate_xilinx_ips_xci -ip_list $integ_gen_xci_filelist -part_number $ZYBO_FPGA_PART_NUMBER -board_part ${ZYBO_BOARD_PART_NUMBER} -dest_dir ${xilinx_ip_xci_path}]
-}
+###################################
+## Generate all XCI IPs from the integration phase
+###################################
+generate_xilinx_ips_xci -ip_list ${filelists_path}/integ_gen_xci_filelist.f.json -part_number $FPGA_PART_NUMBER -board_part  ${BOARD_PART_NUMBER} -dest_dir ${xilinx_ip_xci_path} -output_list gen_xci_list
+###################################
+## Generate all XCI IPs from TCL scripts
+###################################
+generate_xilinx_ips_tcl -core_info $proj_utils::cores -part_number $FPGA_PART_NUMBER -dest_dir $xilinx_ip_tcl_path -output_list gen_xci_tcl_list -override
 
-# IPs from TCL scripts
-lappend generated_xilinx_ips [generate_xilinx_ips_tcl -ip_list [join $xilinx_ip_tcl]  -part_number $ZYBO_FPGA_PART_NUMBER -dest_dir $xilinx_ip_tcl_path]
-write_filelist -filelist [join $generated_xilinx_ips] -list_name "all_gen_xci_filelist" -description "Generated XCI Files" -output $filelists_path/all_gen_xci_filelist.f
+###################################
+## Generate a filelist with all xci files
+###################################
+parse_json_cfg -cfg_file $gen_xci_list     -output gen_xci_filelist -override -debug
+parse_json_cfg -cfg_file $gen_xci_tcl_list -output xci_tcl_filelist -override -debug
+set xci_filelist [list {*}[dict get $gen_xci_filelist syn_xci_filelist] {*}[dict get $xci_tcl_filelist syn_tcl_xci_filelist]]
+write_filelist -filelist $xci_filelist -description "Synthesis XCI Filelist" -list_name "synthesis_xci_file_list" -output "${filelists_path}/synthesis_xci_file_list.f.json"

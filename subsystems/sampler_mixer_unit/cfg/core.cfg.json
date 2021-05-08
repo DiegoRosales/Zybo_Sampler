@@ -1,0 +1,44 @@
+{
+    "core_name"        : "sample_mixer",
+    "core_pack_script" : "${core_root}/cfg/pack/pack_core.tcl",
+
+    "synthesis_rtl_file_list": [
+        "${core_root}/rtl/sampler_mixer.sv"
+    ],
+
+    "xilinx_ip": {
+        "axis_fifo_32x64_u8_npm": {
+            "component_name": "axis_fifo_32x64_u8_npm",
+            "type"          : "tcl",
+            "src"           : "${core_root}/rtl/xilinx_ip/axis_fifo_32x64_u8_npm.tcl"
+        },
+        "sampler_mixer_ILA": {
+            "component_name"  : "sampler_mixer_ILA",
+            "type"            : "tcl",
+            "src"             : "${core_root}/rtl/xilinx_ip/xilinx_ila_gen.tcl",
+            "vars"            : {
+                "number_of_probes"            : 16,
+                "number_of_comparators"       : 2,
+                "number_of_input_pipe_stages" : 2,
+                "probe_widths": {
+                    "PROBE0"  : 16,
+                    "PROBE1"  : 16,
+                    "PROBE2"  : 1,
+                    "PROBE3"  : 1,
+                    "PROBE4"  : 8,
+                    "PROBE5"  : 1,
+                    "PROBE6"  : 16,
+                    "PROBE7"  : 16,
+                    "PROBE8"  : 1,
+                    "PROBE9"  : 1,
+                    "PROBE10" : 8,
+                    "PROBE11" : 1,
+                    "PROBE12" : 2,
+                    "PROBE13" : 1,
+                    "PROBE14" : 16,
+                    "PROBE15" : 16
+                }
+            }
+        }
+    }
+}

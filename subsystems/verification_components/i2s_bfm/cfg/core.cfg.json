@@ -1,0 +1,18 @@
+///////////////////////////////////////////////
+// I2S BFM
+///////////////////////////////////////////////
+
+{
+  "core_name": "i2s_bfm",
+
+  "simulation": {
+    "simulation_compile": [
+      "${core_root}/i2s_bfm_pkg.sv",
+      "${core_root}/i2s_if.sv"
+    ],
+
+    "simulation_incdir": [
+      "${core_root}/i2s_bfm/"
+    ]
+  }
+}

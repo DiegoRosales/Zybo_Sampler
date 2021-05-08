@@ -1,0 +1,76 @@
+// Global variables
+//  ${core_root} : The path to the root of this core
+
+{
+    "core_name"        : "codec_unit",
+    "core_pack_script" : "${core_root}/cfg/pack/pack_core.tcl",
+    "core_registers"   : "${core_root}/reg/reg_assemble.tcl",
+    "core_fw_incdirs"  : "${core_root}/cfg/fw_incdirs.f",
+
+    "synthesis_rtl_file_list": [
+        "${core_root}/rtl/codec_unit_top.sv",
+        "${core_root}/rtl/controller_unit/codec_init_unit.sv",
+        "${core_root}/rtl/controller_unit/controller_unit_top.sv",
+        "${core_root}/rtl/controller_unit/i2c_seq_sm.sv",
+        "${core_root}/rtl/controller_unit/wb_master_controller.sv",
+        "${core_root}/rtl/register_unit/codec_registers.sv",
+        "${core_root}/rtl/register_unit/register_unit.sv",
+        "${core_root}/rtl/audio_unit/audio_unit_top.sv",
+        "${core_root}/rtl/audio_unit/audio_data_serializer.sv",
+        "${core_root}/rtl/controller_unit/i2c_core/verilog-i2c/rtl/i2c_master.v",
+        "${core_root}/rtl/controller_unit/i2c_core/verilog-i2c/rtl/i2c_master_wbs_8.v",
+        "${core_root}/rtl/controller_unit/i2c_core/verilog-i2c/rtl/axis_fifo.v"
+    ],
+
+    "xilinx_ip": {
+        "audio_pll": {
+            "type"            : "tcl",
+            "src"             : "${core_root}/rtl/xilinx_ip/audio_pll.tcl",
+            "component_name"  : "codec_audio_clock_generator"
+        },
+        "audio_data_fifo": {
+            "type"            : "tcl",
+            "src"             : "${core_root}/rtl/xilinx_ip/audio_data_fifo.tcl",
+            "component_name"  : "audio_data_fifo"
+        }
+    },
+
+    "simulation": {
+        "top"           : "codec_unit_top_tb",
+        "required_libs" : [
+            "codec_unit_lib",
+            "clock_and_reset_bfm_lib",
+            "axi4_lite_bfm_lib",
+            "i2s_bfm_lib"
+        ],
+        
+        // Simulation filelists
+        "simulation_compile": [
+            "${core_root}/verif/env/codec_unit_top_reg_model_pkg.sv",
+            "${core_root}/verif/env/codec_unit_top_pkg.sv",
+            "${core_root}/verif/codec_unit_top_tb.sv"
+        ],
+    
+        "simulation_incdir": [
+            "${core_root}/gen",
+            "${core_root}/verif/tc"
+        ],
+    
+        "testcases": [
+            "base_test",
+            "testcase_1"
+        ]
+    },
+
+    "firmware": {
+        "softlinks": {
+            "codec_controller": "${core_root}/fw"
+        },
+        "incdirs": {
+            // Include directories from the "codec_controller" softlink
+            "codec_controller": [
+                "include"
+            ]
+        }
+    }
+}

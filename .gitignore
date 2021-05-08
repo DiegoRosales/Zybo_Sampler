@@ -63,3 +63,5 @@ congestion.txt
 hs_err_pid*.dmp
 NA*
 gen
+xvlog.pb
+vitis_pid*.str

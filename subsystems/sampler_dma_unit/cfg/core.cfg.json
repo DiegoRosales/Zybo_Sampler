@@ -1,0 +1,142 @@
+// Information about the core
+// Hello
+{
+    "core_name"        : "sampler_dma",
+    "core_pack_script" : "${core_root}/cfg/pack/pack_core.tcl",
+    "core_fw_incdirs"  : "${core_root}/cfg/fw_incdirs.f",
+
+    // TODO "core_registers"   : "${core_root}/reg/reg_assemble.tcl",
+
+    "synthesis_rtl_file_list": [
+        "${core_root}/rtl/sampler_dma_top.sv",
+        "${core_root}/rtl/sampler_dma_registers.sv",
+        "${core_root}/rtl/sample_info_fetcher.sv",
+        "${core_root}/rtl/sample_dma_requester.sv",
+        "${core_root}/rtl/sample_dma_receiver.sv",
+        "${core_root}/rtl/axi_dma_bridge.sv"
+    ],
+
+    "xilinx_ip": {
+        "bram_dualport": {
+            "component_name"  : "bram_dualport_i32x256_o128x64",
+            "type"            : "tcl",
+            "src"             : "${core_root}/rtl/xilinx_ip/bram_dualport.tcl",
+            "vars"            : {
+                "A_rd_wr_width" : 32,
+                "A_rd_wr_depth" : 256,
+                "B_rd_wr_width" : 128
+            }
+        },
+        "sampler_dma_fifo": {
+            "type"            : "tcl",
+            "src"             : "${core_root}/rtl/xilinx_ip/sampler_dma_fifo.tcl",
+            "component_name"  : "sampler_dma_fifo"
+        },
+        "divider_16bit": {
+            "component_name"  : "divider_16bit",
+            "type"            : "tcl",
+            "src"             : "${core_root}/rtl/xilinx_ip/divider_16bit.tcl"
+        },
+        "axis_fifo_32x64_u8_pm": {
+            "component_name"  : "axis_fifo_32x64_u8_pm",
+            "type"            : "tcl",
+            "src"             : "${core_root}/rtl/xilinx_ip/axis_fifo_32x64_u8_pm.tcl"
+        },
+        "sample_info_fetcher_ILA": {
+            "component_name"  : "sample_info_fetcher_ILA",
+            "type"            : "tcl",
+            "src"             : "${core_root}/rtl/xilinx_ip/xilinx_ila_gen.tcl",
+            "vars"            : {
+                "number_of_probes"            : 14,
+                "number_of_comparators"       : 2,
+                "number_of_input_pipe_stages" : 2,
+                "probe_widths": {
+                    "PROBE0"  : 1,
+                    "PROBE1"  : 1,
+                    "PROBE2"  : 6,
+                    "PROBE3"  : 32,
+                    "PROBE4"  : 6,
+                    "PROBE5"  : 1,
+                    "PROBE6"  : 1,
+                    "PROBE7"  : 1,
+                    "PROBE8"  : 3,
+                    "PROBE9"  : 32,
+                    "PROBE10" : 32,
+                    "PROBE11" : 32,
+                    "PROBE12" : 32,
+                    "PROBE13" : 1
+                }
+            }
+        },
+        "sample_dma_requester_ILA": {
+            "component_name"  : "sample_dma_requester_ILA",
+            "type"            : "tcl",
+            "src"             : "${core_root}/rtl/xilinx_ip/xilinx_ila_gen.tcl",
+            "vars"            : {
+                "number_of_probes"            : 17,
+                "number_of_comparators"       : 2,
+                "number_of_input_pipe_stages" : 2,
+                "probe_widths": {
+                    "PROBE0"  : 32,
+                    "PROBE1"  : 6,
+                    "PROBE2"  : 8,
+                    "PROBE3"  : 1,
+                    "PROBE4"  : 1,
+                    "PROBE5"  : 1,
+                    "PROBE6"  : 1,
+                    "PROBE7"  : 6,
+                    "PROBE8"  : 32,
+                    "PROBE9"  : 6,
+                    "PROBE10" : 1,
+                    "PROBE11" : 1,
+                    "PROBE12" : 1,
+                    "PROBE13" : 3,
+                    "PROBE14" : 1,
+                    "PROBE15" : 1,
+                    "PROBE16" : 1
+                }
+            }
+        },
+        "sample_dma_receiver_ILA": {
+            "component_name"  : "sample_dma_receiver_ILA",
+            "type"            : "tcl",
+            "src"             : "${core_root}/rtl/xilinx_ip/xilinx_ila_gen.tcl",
+            "vars"            : {
+                "number_of_probes"            : 16,
+                "number_of_comparators"       : 2,
+                "number_of_input_pipe_stages" : 2,
+                "probe_widths": {
+                    "PROBE0"  : 16,
+                    "PROBE1"  : 16,
+                    "PROBE2"  : 1,
+                    "PROBE3"  : 1,
+                    "PROBE4"  : 8,
+                    "PROBE5"  : 1,
+                    "PROBE6"  : 16,
+                    "PROBE7"  : 16,
+                    "PROBE8"  : 1,
+                    "PROBE9"  : 1,
+                    "PROBE10" : 8,
+                    "PROBE11" : 1,
+                    "PROBE12" : 3,
+                    "PROBE13" : 1,
+                    "PROBE14" : 6,
+                    "PROBE15" : 6 
+                }
+            }
+        }
+    },
+
+    "firmware": {
+        "softlinks": {
+            "sampler_dma": "${core_root}/fw"
+        },
+        "incdirs": {
+            // Include directories from the "sampler_dma" softlink
+            "sampler_dma": [
+                "include",
+                "include2"
+            ]
+        }
+    }
+}

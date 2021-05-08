@@ -10,20 +10,24 @@ bsp config num_thread_local_storage_pointers 4
 bsp config max_task_name_len                 50        ;# Task names can be 50 haracters long
 bsp config total_heap_size                   268435456 ;# 256Mib
 
-source $filelists_path/fw_incdirs.f
-source $filelists_path/fw_softlinks.f
+#source $filelists_path/fw_incdirs.f
+#source $filelists_path/fw_softlinks.f
+set fw_softlinks [proj_utils::extract_from_all_cores -variable firmware.softlinks]
+set fw_incdirs   [proj_utils::extract_from_all_cores -variable firmware.incdirs]
 
 ## Create the softlinks
-foreach softlink $fw_softlinks {
-    lassign $softlink softlink_target softlink_source
+foreach {softlink_target softlink_source} $fw_softlinks {
+    puts "${workspace_project_path}/${app_project_name}/src/${softlink_target} -> $softlink_source"
     file link -symbolic ${workspace_project_path}/${app_project_name}/src/${softlink_target} ${softlink_source}
 }
 
 ## Add the include directories
-foreach incdir $fw_incdirs {
-    set base_dir {${workspace_loc:/${ProjName}/src}}
-    set full_incdir ${base_dir}/${incdir}
-    app config -name ${app_project_name} -add include-path $full_incdir
+set base_dir {${workspace_loc:/${ProjName}/src}}
+foreach {incdir_base incdirs} $fw_incdirs {
+    foreach dir $incdirs {
+        set full_incdir ${base_dir}/${incdir_base}/${dir}
+        app config -name ${app_project_name} -add include-path $full_incdir
+    }
 }
 
 platform generate

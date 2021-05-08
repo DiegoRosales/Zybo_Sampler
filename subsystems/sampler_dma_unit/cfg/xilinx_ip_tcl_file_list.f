@@ -1,7 +1,7 @@
 ########################
 ## List of Xilinx IPs
 
-set xilinx_ip_list {
+set xilinx_ip_tcl_list {
     ${core_root}/rtl/xilinx_ip/bram_dualport.tcl
     ${core_root}/rtl/xilinx_ip/sampler_dma_fifo.tcl
     ${core_root}/rtl/xilinx_ip/divider_16bit.tcl

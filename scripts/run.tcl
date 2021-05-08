@@ -1,11 +1,20 @@
 ###############################
 ## Run
 ###############################
-
-set script_dir [file normalize [file dirname [info script]]]
-
 ## Initialize
-source ${script_dir}/utils.tcl
+set script_dir [file normalize [file dirname [info script]]]
+set ver        [version]
+
+if {[regexp "Vivado" $ver]} {
+    set tool "vivado"
+} elseif {[regexp "xsct" $ver]} {
+    set tool "xsct"
+}
+
+puts "Tool = $tool"
+
+################################################################################
+source ${script_dir}/utils/utils.tcl
 source ${script_dir}/pack/pack_utils.tcl
 source ${script_dir}/pack/pack_utils_if_templates.tcl
 source ${script_dir}/integ/integ_utils.tcl
@@ -29,18 +38,10 @@ if {[file exists $parsed_args(cfg)] == 0} {
 }
 
 ################################################################################
-## Source the project config file
-source $parsed_args(cfg)
+## Parse the project config file
+#source $parsed_args(cfg)
+proj_utils::parse_project_cfg -cfg_file $parsed_args(cfg) -output project_cfg
 source ${script_dir}/common_variables.tcl
-
-set ver [version]
-
-if {[regexp "Vivado" $ver]} {
-    set tool "vivado"
-} elseif {[regexp "xsct" $ver]} {
-    set tool "xsct"
-}
-puts "Tool = $tool"
 
 ################################################################################
 ## Get the stages to run
@@ -53,7 +54,7 @@ puts "Tool = $tool"
 ## 4) Synthesis
 ## 5) Place and Route
 #########################################
-set stages { PACK INTEG GEN_XILINX_IP IMPL LINT EXPORT_WS BUILD_WS SIM REG_GEN }
+set stages { PACK INTEG GEN_XILINX_IP IMPL LINT EXPORT_WS BUILD_WS SIM REG_GEN SETUP_PROJ }
 set default_stages "PACK+INTEG+GEN_XILINX_IP+IMPL+EXPORT_WS"
 
 if {$parsed_args(stages) != ""} {
@@ -63,11 +64,6 @@ if {$parsed_args(stages) != ""} {
 }
 
 ################################################################################
-## Run the stages
-
-## Extract information from the cores' config files
-extract_core_file_info -project_cores $project_cores -filelists_path $filelists_path
-
 ## Run the stages
 if {$stage_error == 1} {
     puts "ERROR: There was an error processing the stages"
@@ -82,6 +78,11 @@ if {$stage_error == 1} {
     ########## VIVADO FLOWS ############
 
     if {$tool == "vivado"} {
+## TODO ##        ## Register Generation
+## TODO ##        if {$STAGE_REG_GEN} {
+## TODO ##            source $build_stages_path/stage_reg_gen.tcl
+## TODO ##        }
+## TODO ##
         # Package
         if {$STAGE_PACK} {
             source $build_stages_path/stage_pack.tcl
@@ -102,24 +103,25 @@ if {$stage_error == 1} {
             source $build_stages_path/stage_impl.tcl
         } 
         
+
+        ## Simulation
+        if {$STAGE_SETUP_PROJ} {
+            source $build_stages_path/stage_impl_base.tcl
+        }
+
         ## Lint
         if {$STAGE_LINT} {
             source $build_stages_path/stage_lint.tcl
         }
 
-        ## Register Generation
-        if {$STAGE_REG_GEN} {
-            source $build_stages_path/stage_reg_gen.tcl
-        }
-
         ## Simulation
         if {$STAGE_SIM} {
-            source $build_stages_path/stage_run_simulation.tcl
+            source $build_stages_path/stage_run_vivado_simulation.tcl
         }
 
-        ## If the BUILD_WS stage is passed, then execute this script using xsct
-        if {$STAGE_BUILD_WS} {
-            source $build_stages_path/stage_build_ws_vivado.tcl
-        }
+## TODO ##        ## If the BUILD_WS stage is passed, then execute this script using xsct
+## TODO ##        if {$STAGE_BUILD_WS} {
+## TODO ##            source $build_stages_path/stage_build_ws_vivado.tcl
+## TODO ##        }
     }
 } 

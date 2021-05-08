@@ -1,11 +1,17 @@
 ## Integrate the design
 
-set    integ_script [file normalize ${project_integ_script}]
-puts   "Integrating project using script $integ_script"
-source $integ_script
-if {[file exists ${integ_project_dir}/integ_gen_rtl_filelist.f]} {
-    file copy -force ${integ_project_dir}/integ_gen_rtl_filelist.f ${filelists_path}/integ_gen_rtl_filelist.f
-}
-if {[file exists ${integ_project_dir}/integ_gen_xci_filelist.f]} {
-    file copy -force ${integ_project_dir}/integ_gen_xci_filelist.f ${filelists_path}/integ_gen_xci_filelist.f
+if {[dict exists $project_cfg project_integ_script]} {
+  set    integ_script [file normalize [subst [dict get $project_cfg project_integ_script]]]
+  puts   "Integrating project using script $integ_script"
+  source $integ_script
+
+  if {[info exists integ_output]} {
+    foreach key [dict keys $integ_output] {
+      set filelist [dict get $integ_output $key]
+      if {[file exists $filelist]} {
+        puts "Copying $filelist to ${filelists_path}"
+        file copy -force $filelist ${filelists_path}
+      }
+    }
+  }
 }

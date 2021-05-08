@@ -9,7 +9,10 @@
     "*.cfg": "tcl",
     "*.svh": "systemverilog",
     ".jou":  "tcl",
+    ".json": "jsonc",
     "atomic": "c",
     "cstdint": "c"
-  }
+  },
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true
 }

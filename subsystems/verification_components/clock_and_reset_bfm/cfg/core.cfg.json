@@ -1,0 +1,18 @@
+///////////////////////////////////////////////
+// Clock and Reset BFM
+///////////////////////////////////////////////
+
+{
+  "core_name": "clock_and_reset_bfm",
+
+  "simulation": {
+    "simulation_compile": [
+      "${core_root}/clock_and_reset_bfm_pkg.sv",
+      "${core_root}/clock_and_reset_if.sv"
+    ],
+
+    "simulation_incdir": [
+      "${core_root}/"
+    ]
+  }
+}

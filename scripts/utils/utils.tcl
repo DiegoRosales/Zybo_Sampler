@@ -1,18 +1,31 @@
 ##############################
 ## TCL utilities
 ##############################
+set utils_script_dir [file normalize [file dirname [info script]]]
 
 proc lshift {inputlist} {
-  # Summary :
-  # Argument Usage:
-  # Return Value:
-
   upvar $inputlist argv
   set arg  [lindex $argv 0]
   set argv [lrange $argv 1 end]
   return $arg
 }
 
+## Get the git root
+proc get_git_root {} {
+    set git_root [exec git rev-parse --show-toplevel]
+    if {$git_root == ""} {
+        puts "ERROR: Failed getting git root"
+    }
+
+    return $git_root
+}
+
+## Parse arguments
+## Argument list
+##    array set my_arglist {
+##        "arg_name1" {"action" "default_value" "required/optional" <positional=POS#|non-positional=0>}
+##        "arg_name2" {"action" "default_value" "required/optional" <positional=POS#|non-positional=0>}
+##    }
 proc arg_parser { arg_list parsed_args args } {
     upvar $parsed_args  parsed_args_int
     upvar $arg_list     arg_list_int
@@ -20,7 +33,6 @@ proc arg_parser { arg_list parsed_args args } {
 
     set   required_list {}
     set   exit_status   0
-    #puts $args_int
     
     ## Fill defaults
     foreach arg_name [array names arg_list_int] {
@@ -148,211 +160,7 @@ proc arg_parser { arg_list parsed_args args } {
     return $exit_status
 }
 
-## Generate all xilinx IPs of a given list of TCL scripts
-proc generate_xilinx_ips_tcl {args} {
-    array set my_arglist {
-        "ip_list"           {"store"         ""       "required"   0}
-        "part_number"       {"store"         ""       "required"   0}
-        "dest_dir"          {"store"         ""       "required"   0}
-        "force"             {"store_true"    0        "optional"   0}
-    }
-
-    set status [arg_parser my_arglist parsed_args args]
-
-    if {$status != 0} {
-        puts "ERROR: There was an error processing the arguments"
-        return ""
-    }
-
-    ######################
-
-    ## Override the destination directory
-    if {$parsed_args(dest_dir) != ""} {
-        set generated_ip_path $parsed_args(dest_dir)
-    } else {
-        puts "ERROR: Please specify the destination directory"
-        return ""
-    }
-
-    ######################
-    ## Variables to be set by the TCL scripts
-    set xilinx_ip_file_list    ""
-    set xilinx_ip_runs         ""
-    set xilinx_ip_project_name "xilinx_ip_gen"
-
-    ## Step 0 - Create a dummy project
-    ## Check if project exists
-    if {[file exist ${generated_ip_path}] == 0} {
-        file mkdir ${generated_ip_path}
-    }
-
-    create_project  "xilinx_ip_gen" \
-                    ${generated_ip_path} \
-                    -part $parsed_args(part_number) \
-                    -force
-
-
-    ## Step 1 - Source the TCL scripts to generate 
-    foreach ip $parsed_args(ip_list) {
-        set ip_path [subst ${ip}]
-        puts "sourcing ${ip_path} ..."
-        source ${ip_path}
-    }
-
-    ## Step 2 - Launch all IP runs
-    foreach ip_run ${xilinx_ip_runs} {
-       if { ${ip_run} != "none" } {
-            puts "launching ${ip_run} ..."
-            launch_runs ${ip_run}
-        }
-    }
-
-    ## Step 3 - Wait for the runs to finish
-    foreach ip_run ${xilinx_ip_runs} {
-        if { ${ip_run} != "none" } {
-            puts "Waiting on ${ip_run}"
-            wait_on_run ${ip_run}
-            puts "IP Run ${ip_run} is done!"
-        }
-    }
-
-    ## Step 4 - Close the project
-    close_project
-
-    return $xilinx_ip_file_list
-}
-
-## Generate Xilinx IPs from XCI files
-proc generate_xilinx_ips_xci {args} {
-    array set my_arglist {
-        "ip_list"           {"store"         ""       "required"   0}
-        "part_number"       {"store"         ""       "required"   0}
-        "dest_dir"          {"store"         ""       "required"   0}
-        "board_part"        {"store"         ""       "optional"   0}
-        "force"             {"store_true"    0        "optional"   0}
-    }
-
-    set status [arg_parser my_arglist parsed_args args]
-
-    if {$status != 0} {
-        puts "ERROR: There was an error processing the arguments"
-        return ""
-    }
-
-    ######################
-
-    ## Override the destination directory
-    if {$parsed_args(dest_dir) != ""} {
-        set generated_ip_path $parsed_args(dest_dir)
-    } else {
-        puts "ERROR: Please specify the destination directory"
-        return ""
-    }
-
-    ######################
-    ## Variables to be set by the TCL scripts
-    set xilinx_ip_file_list    ""
-    set xilinx_ip_runs         ""
-    set xilinx_ip_project_name "xilinx_ip_gen"
-
-    ## Step 0 - Create a dummy project
-    ## Check if project exists
-    if {[file exist ${generated_ip_path}] == 0} {
-        file mkdir ${generated_ip_path}
-    }
-
-    create_project  "xilinx_ip_gen" \
-                    ${generated_ip_path} \
-                    -part $parsed_args(part_number) \
-                    -force
-
-    if {$parsed_args(board_part) != ""} {
-        puts "Setting board part as $parsed_args(board_part)"
-        set_property board_part $parsed_args(board_part) [current_project]
-    }
-
-    ## Step 1 - Source the TCL scripts to generate 
-    foreach ip $parsed_args(ip_list) {
-        set new_ip [add_files -force -norecurse ${ip}]
-        generate_target all [get_files ${new_ip}]
-        lappend xilinx_ip_file_list ${new_ip}
-    }
-
-    foreach ip [get_files -filter {FILE_TYPE == IP && GENERATE_SYNTH_CHECKPOINT == True}] {
-        puts "Generating synth checkpoint for $ip"
-        lappend xilinx_ip_runs [create_ip_run $ip]
-    }
-
-    ## Step 2 - Launch all IP runs
-    foreach ip_run ${xilinx_ip_runs} {
-       if { ${ip_run} != "" } {
-            puts "launching ${ip_run} ..."
-            launch_runs ${ip_run}
-        }
-    }
-
-    ## Step 3 - Wait for the runs to finish
-    foreach ip_run ${xilinx_ip_runs} {
-        if { ${ip_run} != "" } {
-            puts "Waiting on ${ip_run}"
-            wait_on_run ${ip_run}
-            puts "IP Run ${ip_run} is done!"
-        }
-    }
-
-    ## Step 4 - Close the project
-    close_project
-
-    return $xilinx_ip_file_list
-}
-
-####################################
-## PROCEDURE TO GENERATE A NEW IP ##
-## AND RETURN THE IP RUN FOR      ##
-## SYNTHESIS                      ##
-####################################
-proc generate_new_ip {path ip_name ip_version ip_vendor ip_library component_name ip_parameters} {
-    ## Upper Variables
-    upvar xilinx_ip_file_list generated_ip_file_list
-    upvar xilinx_ip_runs      ip_runs
-    ## IP Variables
-    set ip_xci_path ${path}/${component_name}/${component_name}.xci
-    set ip_dcp_path ${path}/${component_name}/${component_name}.dcp
-    set ip_run "none"
-
-    ## If it doesn't exist, create it
-    if { [file exists ${ip_dcp_path}] == 0 } {
-        ## Step 1 - Create the IP if it doesn't exist
-        if { [file exists ${ip_xci_path}] == 0 } {
-            ## Step 1.1 - Create the IP
-            create_ip -name ${ip_name} -vendor ${ip_vendor} -library ${ip_library} -version ${ip_version} -module_name ${component_name} -dir ${path}
-
-            ## Step 1.2 - Configure the IP
-            set_property -dict ${ip_parameters} [get_ips ${component_name}]
-
-            ## Step 1.3 - Generate the collateral files
-            generate_target all  [get_files ${ip_xci_path}]
-        } else {
-            ## Import the IP if it already exists
-            add_files ${ip_xci_path}
-        }
-
-        ## Step 2 - Create the IP run for synthesis
-        set ip_run [create_ip_run [get_files ${ip_xci_path}]]
-        puts ${ip_run}
-    } else {
-        ## Import the IP if it already exists
-        add_files ${ip_xci_path}
-    }
-
-    ## Append the .xci to the filelist
-    set generated_ip_file_list [lappend generated_ip_file_list [file normalize ${ip_xci_path}]]
-    ## Append the IP Run
-    set ip_runs [ lappend ip_runs ${ip_run}]
-
-    return ${ip_run}
-}
-
+## Generate a variable for every stage
 proc process_stages {args} {
     array set my_arglist {
         "stage_list"        {"store"         ""       "required"   0}
@@ -410,46 +218,6 @@ proc process_stages {args} {
     }
 }
 
-## Writes filelists
-proc write_filelist {args} {
-    array set my_arglist {
-        "filelist"    {"store"         ""       "required"   0}
-        "list_name"   {"store"         ""       "required"   0}
-        "description" {"store"         ""       "required"   0}
-        "output"      {"store"         ""       "required"   0}
-    }
-
-    set status [arg_parser my_arglist parsed_args args]
-
-    if {$status != 0} {
-        puts "ERROR: There was an error processing the arguments"
-        return 1
-    }
-
-    ####################################
-    set handle   [open $parsed_args(output) w+]
-    puts $handle "########################################################################################"
-    puts $handle "## THIS FILE WAS GENERATED FROM   : [file normalize [info script]]"
-    puts $handle "## USING PROC                     : [lindex [info level 1] 0]"
-    puts $handle "## AT TIME                        : [clock format [clock seconds] -format %Y/%m/%d-%H:%M:%S]"
-    puts $handle "########################################################################################"
-    puts $handle ""
-    puts $handle "## $parsed_args(description)"
-    puts $handle "set $parsed_args(list_name) \{"
-    foreach elem $parsed_args(filelist) {
-        if {$elem == {}} {
-            continue
-        } elseif {[llength $elem] == 1} {
-            puts $handle "  $elem"
-        } else {
-            puts $handle "  {$elem}"
-        }
-    }
-    puts $handle "\}"
-    close $handle
-
-    return 0
-}
 
 ## Extracts the core file information
 proc extract_core_file_info {args} {
@@ -460,7 +228,7 @@ proc extract_core_file_info {args} {
 
     set status [arg_parser my_arglist parsed_args args]
 
-    set xilinx_ip_list_all ""
+    set xilinx_ip_tcl_list_all ""
     set fw_incdirs         ""
     set fw_softlinks       ""
     ## Get all the files necessary for building
@@ -490,7 +258,7 @@ proc extract_core_file_info {args} {
         ## Get the Xilinx IP TCL filelist
         if {$core_xilinx_ip_tcl_filelist != ""} {
             source $core_xilinx_ip_tcl_filelist
-            lappend xilinx_ip_list_all [subst $xilinx_ip_list]
+            lappend xilinx_ip_tcl_list_all [subst $xilinx_ip_tcl_list]
         }
 
         ## Get the register maps
@@ -523,7 +291,7 @@ proc extract_core_file_info {args} {
     }
 
     # Write all the Xilinx IPs that are going to be generated from TCL scripts
-    write_filelist -filelist [join $xilinx_ip_list_all] -list_name "xilinx_ip_tcl"      -description "Xilinx IPs to be generated from TCL scripts" -output $parsed_args(filelists_path)/xilinx_ip_tcl.f
+    write_filelist -filelist [join $xilinx_ip_tcl_list_all] -list_name "xilinx_ip_tcl"      -description "Xilinx IPs to be generated from TCL scripts" -output $parsed_args(filelists_path)/xilinx_ip_tcl.f
     # Write all the core filelist files
     write_filelist -filelist $core_file_lists           -list_name "core_file_lists"    -description "Core Filelists"                              -output $parsed_args(filelists_path)/core_file_lists.f
     # Write all the core pack scripts
@@ -536,3 +304,76 @@ proc extract_core_file_info {args} {
 
     return 0
 }
+
+## Write a file
+proc write_file {args} {
+    array set my_arglist {
+        "file"   {"store"       "" "required"   0}
+        "output" {"store"       "" "required"   0}
+        "force"  {"store_true"  0  "optional"   0}
+    }
+
+    set status [arg_parser my_arglist parsed_args args]
+
+    if {$status != 0} {
+        puts "ERROR: There was an error processing the arguments"
+        return 1
+    }
+
+    #############################
+    upvar $parsed_args(output) output
+
+    if {![info exists output]} {
+        puts "ERROR: Output variable doesn't exist: $parsed_args(output)"
+        return 1
+    }
+
+    if {[file exists $parsed_args(file)] && $parsed_args(force) == 0} {
+        puts "ERROR: File $parsed_args(file) already exists. Use -force to overwrite it"
+        return 1
+    }
+
+    puts "Writing $parsed_args(file)"
+    set fd [open $parsed_args(file) w+]
+    puts $fd $output
+    close $fd
+}
+
+## Read a file and store its contents in a variable
+proc read_file {args} {
+    array set my_arglist {
+        "file"   {"store"  "" "required"   0}
+        "output" {"store"  "" "required"   0}
+    }
+
+    set status [arg_parser my_arglist parsed_args args]
+
+    if {$status != 0} {
+        puts "ERROR: There was an error processing the arguments"
+        return 1
+    }
+
+    #############################
+    upvar $parsed_args(output) output
+
+    if {[info exists output]} {
+        puts "ERROR: Output variable already exists $parsed_args(output)"
+        return 1
+    }
+
+    if {![file exists $parsed_args(file)]} {
+        puts "ERROR: File $parsed_args(file) doesn't exist"
+        return 1
+    }
+
+    puts "Reading $parsed_args(file)"
+    set fd [open $parsed_args(file) r]
+    set output [read $fd]
+    close $fd
+
+    return 0
+}
+
+source "${utils_script_dir}/json_parser.tcl"
+source "${utils_script_dir}/xil_ip_utils.tcl"
+source "${utils_script_dir}/proj_utils.tcl"
