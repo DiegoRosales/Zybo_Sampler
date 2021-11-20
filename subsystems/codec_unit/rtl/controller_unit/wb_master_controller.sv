@@ -12,7 +12,7 @@
 
 module wb_master_controller (
   input wire clk,
-  input wire reset,
+  input wire reset_n,
 
   // WB Interface
   output wire [2:0] wbs_adr_o,   // ADR_I() address
@@ -79,8 +79,8 @@ assign data_out       = wb_data_in;
 ////////////////// WB State Machines /////////////////
 //// These state machines control the WB Interface ///
 //// And translate WR/RD instructions to WB //////////
-always @ ( posedge clk or posedge reset ) begin
-  if (reset == 1'b1) begin
+always @ ( posedge clk or negedge reset_n ) begin
+  if (reset_n == 1'b0) begin
     // Output to the SM
     wb_state_next    <= WB_IDLE;
     wb_done          <= 1'b0;
@@ -158,7 +158,7 @@ always @ ( posedge clk or posedge reset ) begin
       	end // if (wbs_ack_i)
       end // WB_WAIT_FOR_ACK:
     endcase // case(wb_state_curr)
-  end //if (reset == 1'b1) begin
+  end //if (reset_n == 1'b0) begin
 end
 
 /////////////////////////////////////////////////

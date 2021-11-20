@@ -26,7 +26,7 @@ module codec_unit_top #(
   ///////////////////////////////////////////////
   /////////////// CLOCK AND RESET /////////////// 
   input wire board_clk, // 125MHz
-  input wire reset,
+  input wire reset_n,
 
   // Misc
   output wire [3:0] led_status,
@@ -148,7 +148,7 @@ wire [31:0] codec_i2c_addr;
 wire [31:0] codec_i2c_wr_data;
 wire [31:0] codec_i2c_rd_data;
 wire        update_codec_i2c_rd_data;
-wire        controller_reset;
+wire        controller_reset_n;
 wire        sw_reset;
 
 ///////////////////////////
@@ -168,8 +168,8 @@ wire [63:0] s_axis_tdata_int;
 wire init_done;
 wire init_error;
 
-assign codec_init_done  = init_done | init_error;
-assign controller_reset = sw_reset | reset;
+assign codec_init_done    = init_done | init_error;
+assign controller_reset_n = ~sw_reset && reset_n;
 
 assign s_axis_tdata_int = {16'h0000, s_axis_tdata[31:16], 16'h0000, s_axis_tdata[15:0]};
 
@@ -199,8 +199,8 @@ BUFGCE board_clk_bufg_inst (
 );
 
 controller_unit_top controller_unit(
-  .clk                     ( axi_clk          ),
-  .reset                   ( controller_reset ),
+  .clk                     ( axi_clk            ),
+  .reset_n                 ( controller_reset_n ),
 
   // CODEC RW signals
   .codec_rd_en             ( codec_i2c_data_rd         ), // Input
@@ -226,8 +226,8 @@ controller_unit_top controller_unit(
 
 
 audio_unit_top audio_unit_top (
-  .clock ( board_clk_bufg ),
-  .reset ( reset          ),
+  .clock   ( board_clk_bufg ),
+  .reset_n ( reset_n        ),
 
   /////////////////////////////////////////////////
   ///////////// CODEC SIGNALS (Audio) ///////////// 

@@ -205,7 +205,7 @@ end
 
 // Register that checks if there were no requests sent which means that
 // all the samples have overflowed.
-always_ff @(posedge clk, posedge reset_n) begin
+always_ff @(posedge clk, negedge reset_n) begin
     if ( ~reset_n ) begin
         no_requests_sent <= 1'b1;
     end

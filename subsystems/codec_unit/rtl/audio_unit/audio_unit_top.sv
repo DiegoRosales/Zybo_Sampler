@@ -17,7 +17,7 @@
 module audio_unit_top(
   // Clock and Reset
   input clock,
-  input reset,
+  input reset_n,
 
   /////////////////////////////////
   //// CODEC I2S Audio Signals ////
@@ -234,10 +234,10 @@ module audio_unit_top(
 
   // PLL To generate the 12MHz clock for the CODEC
   codec_audio_clock_generator codec_audio_clock_generator_inst (
-    .reset        ( reset   ), // input reset
-    .locked       ( locked  ), // output locked
-    .clock_in_125 ( clock   ), // Input Clock
-    .codec_mclk   ( ac_mclk )  // Output Clock (12MHz)
+    .reset        ( ~reset_n ), // input reset
+    .locked       ( locked   ), // output locked
+    .clock_in_125 ( clock    ), // Input Clock
+    .codec_mclk   ( ac_mclk  )  // Output Clock (12MHz)
   );
 
   audio_data_serializer audio_data_serializer_inst(

@@ -36,7 +36,7 @@ module axis_fifo #
 )
 (
     input  wire                   clk,
-    input  wire                   rst,
+    input  wire                   rst_n,
     
     /*
      * AXI input
@@ -106,7 +106,7 @@ always @* begin
 end
 
 always @(posedge clk) begin
-    if (rst) begin
+    if (!rst_n) begin
         wr_ptr_reg <= {ADDR_WIDTH+1{1'b0}};
     end else begin
         wr_ptr_reg <= wr_ptr_next;
@@ -142,7 +142,7 @@ always @* begin
 end
 
 always @(posedge clk) begin
-    if (rst) begin
+    if (!rst_n) begin
         rd_ptr_reg <= {ADDR_WIDTH+1{1'b0}};
         mem_read_data_valid_reg <= 1'b0;
     end else begin
@@ -170,7 +170,7 @@ always @* begin
 end
 
 always @(posedge clk) begin
-    if (rst) begin
+    if (!rst_n) begin
         output_axis_tvalid_reg <= 1'b0;
     end else begin
         output_axis_tvalid_reg <= output_axis_tvalid_next;

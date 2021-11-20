@@ -31,7 +31,7 @@ THE SOFTWARE.
  */
 module i2c_master (
     input  wire        clk,
-    input  wire        rst,
+    input  wire        rst_n,
 
     /*
      * Host interface
@@ -832,8 +832,8 @@ always @* begin
     end
 end
 
-always @(posedge clk or posedge rst) begin
-    if (rst) begin
+always @(posedge clk or negedge rst_n) begin
+    if (!rst_n) begin
         state_reg <= STATE_IDLE;
         phy_state_reg <= PHY_STATE_IDLE;
         delay_reg <= 16'd0;

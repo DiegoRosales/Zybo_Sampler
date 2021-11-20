@@ -193,7 +193,7 @@ end
 // AXI Data last register
 // Sample the data last to avoid a race condition if the requester takes longer to determine that the last sample
 // has been requested
-always_ff @(posedge clk, posedge reset_n) begin
+always_ff @(posedge clk, negedge reset_n) begin
     if ( ~reset_n ) begin
         axis_slave_last_sample_data_reg <= 1'b0;
     end

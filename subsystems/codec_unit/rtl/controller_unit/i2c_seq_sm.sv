@@ -9,7 +9,7 @@
 
 module i2c_seq_sm (
   input wire clk,
-  input wire reset,
+  input wire reset_n,
 
   // CODEC Register RD/WR Signals
   input  wire       codec_rd_en,
@@ -129,8 +129,8 @@ assign missed_ack = missed_ack_reg;
 
 assign i2c_state_curr = i2c_state_next;
 
-always @ ( posedge clk or negedge reset ) begin
-  if (reset) begin
+always @ ( posedge clk or negedge reset_n ) begin
+  if (!reset_n) begin
     i2c_state_next       <= I2C_IDLE;
     i2c_state_after_ack  <= I2C_IDLE;
     controller_busy_reg  <= 1'b0;
@@ -375,6 +375,6 @@ always @ ( posedge clk or negedge reset ) begin
       end // default:
     endcase // i2c_state_curr
   end
-end // always @ ( posedge clk or negedge reset )
+end // always @ ( posedge clk or negedge reset_n )
 
 endmodule

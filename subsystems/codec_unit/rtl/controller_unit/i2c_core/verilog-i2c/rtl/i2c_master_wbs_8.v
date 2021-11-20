@@ -41,7 +41,7 @@ module i2c_master_wbs_8 #
 )
 (
     input  wire        clk,
-    input  wire        rst,
+    input  wire        rst_n,
 
     /*
      * Host interface
@@ -238,7 +238,7 @@ if (CMD_FIFO) begin
     )
     cmd_fifo_inst (
         .clk(clk),
-        .rst(rst),
+        .rst_n(rst_n),
         // AXI input
         .input_axis_tdata({cmd_address_reg, cmd_start_reg, cmd_read_reg, cmd_write_reg, cmd_write_multiple_reg, cmd_stop_reg}),
         .input_axis_tvalid(cmd_valid_reg),
@@ -270,7 +270,7 @@ if (WRITE_FIFO) begin
     )
     write_fifo_inst (
         .clk(clk),
-        .rst(rst),
+        .rst_n(rst_n),
         // AXI input
         .input_axis_tdata(data_in_reg),
         .input_axis_tvalid(data_in_valid_reg),
@@ -298,7 +298,7 @@ if (READ_FIFO) begin
     )
     read_fifo_inst (
         .clk(clk),
-        .rst(rst),
+        .rst_n(rst_n),
         // AXI input
         .input_axis_tdata(data_out_int),
         .input_axis_tvalid(data_out_valid_int),
@@ -461,8 +461,8 @@ always @* begin
     end
 end
 
-always @(posedge clk or posedge rst) begin
-    if (rst) begin
+always @(posedge clk or negedge rst_n) begin
+    if (!rst_n) begin
         wbs_ack_o_reg           <= 1'b0;
         cmd_valid_reg           <= 1'b0;
         data_in_valid_reg       <= 1'b0;
@@ -512,7 +512,7 @@ end
 i2c_master
 i2c_master_inst (
     .clk(clk),
-    .rst(rst),
+    .rst_n(rst_n),
 
     // Host interface
     .cmd_address(cmd_address_int),

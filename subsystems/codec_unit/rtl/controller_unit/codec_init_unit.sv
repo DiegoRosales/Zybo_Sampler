@@ -12,7 +12,7 @@
 
 module codec_init_unit (
   input wire  clk,
-  input wire  reset,
+  input wire  reset_n,
 
   output wire       codec_rd_en,
   output wire       codec_wr_en,
@@ -64,10 +64,10 @@ localparam DEFAULT_VALUE  = 8'b010010111;
 reg [2:0] init_sm_cs;
 reg [2:0] init_sm_ns;
 
-always @(posedge clk or posedge reset) begin
-  if (reset) begin
+always @(posedge clk or negedge reset_n) begin
+  if (!reset_n) begin
     init_sm_ns <= START;
-  end // if (reset)
+  end // if (!reset_n)
   else begin
     init_sm_ns <= init_sm_ns;
     case(init_sm_cs)
@@ -84,10 +84,10 @@ always @(posedge clk or posedge reset) begin
     endcase // init_sm_cs
 
   end // else
-end // always @(posedge clk or posedge reset)
+end // always @(posedge clk or negedge reset_n)
 
-always @(posedge clk or posedge reset) begin
-  if (reset) begin
+always @(posedge clk or negedge reset_n) begin
+  if (!reset_n) begin
     init_sm_cs         <= START;
     codec_rd_en_reg    <= 1'b0;
     codec_wr_en_reg    <= 1'b0;
@@ -95,7 +95,7 @@ always @(posedge clk or posedge reset) begin
     codec_data_out_reg <= 'h0;
     init_done_reg      <= 1'b0;
     init_error_reg     <= 1'b0;
-  end // if (reset)
+  end // if (!reset_n)
   else begin
     init_sm_cs         <= init_sm_ns;
     codec_rd_en_reg    <= codec_rd_en_reg;
@@ -135,6 +135,6 @@ always @(posedge clk or posedge reset) begin
       end
     endcase // init_sm_cs
   end // else
-end // always @(posedge clk or posedge reset)
+end // always @(posedge clk or negedge reset_n)
 
 endmodule

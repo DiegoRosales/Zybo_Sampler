@@ -13,7 +13,7 @@
 module controller_unit_top (
   // 125MHz from the board
   input wire clk,
-  input wire reset,
+  input wire reset_n,
 
   // CODEC Register RD/WR Signals
   input  wire       codec_rd_en,
@@ -90,7 +90,7 @@ assign INIT_codec_data_in_valid  = ((init_done | init_error) == 1'b1) ? 1'b0    
 
 wb_master_controller wb_master_controller_inst (
   .clk       ( clk       ),
-  .reset     ( reset     ),
+  .reset_n   ( reset_n   ),
 
   // WB Interface
   .wbs_adr_o ( wbs_adr_o ), // ADR_I() address
@@ -116,8 +116,8 @@ wb_master_controller wb_master_controller_inst (
 );
 
 codec_init_unit codec_init_unit_inst (
-  .clk        ( clk   ),
-  .reset      ( reset ),
+  .clk        ( clk     ),
+  .reset_n    ( reset_n ),
 
   // Signals to the i2c_seq_sm
   .codec_rd_en         ( INIT_codec_rd_en          ),
@@ -134,7 +134,7 @@ codec_init_unit codec_init_unit_inst (
 );
 i2c_seq_sm i2c_seq_sm_inst (
   .clk                  ( clk                           ),
-  .reset                ( reset                         ),
+  .reset_n              ( reset_n                       ),
 
   // Control signals from the top
   .codec_rd_en          ( CONTROLLER_codec_rd_en          ),
@@ -162,8 +162,8 @@ i2c_seq_sm i2c_seq_sm_inst (
 i2c_master_wbs_8 #(
   .DEFAULT_PRESCALE(160)
 ) i2c_master_inst(
-  .clk  ( clk   ),
-  .rst  ( reset ),
+  .clk   ( clk     ),
+  .rst_n ( reset_n ),
 
   // Wishbone
   .wbs_adr_i (wbs_adr_o),

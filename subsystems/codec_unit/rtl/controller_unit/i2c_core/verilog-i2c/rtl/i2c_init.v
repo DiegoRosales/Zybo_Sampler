@@ -31,7 +31,7 @@ THE SOFTWARE.
  */
 module i2c_init (
     input  wire        clk,
-    input  wire        rst,
+    input  wire        rst_n,
 
     /*
      * I2C master interface
@@ -431,7 +431,7 @@ always @* begin
 end
 
 always @(posedge clk) begin
-    if (rst) begin
+    if (!rst_n) begin
         state_reg <= STATE_IDLE;
 
         init_data_reg <= 9'd0;
