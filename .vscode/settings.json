@@ -1,9 +1,4 @@
 {
-  "workbench.colorCustomizations": {
-    "activityBar.background": "#6b3737",
-    "titleBar.activeBackground": "#854848",
-    "titleBar.activeForeground": "#fcf7f7"
-  },
   "files.associations": {
     "*.xdc": "tcl",
     "*.cfg": "tcl",
