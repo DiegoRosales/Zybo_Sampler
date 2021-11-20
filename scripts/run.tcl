@@ -14,6 +14,7 @@ if {[regexp "Vivado" $ver]} {
 puts "Tool = $tool"
 
 ################################################################################
+source ${script_dir}/vivado_init.tcl
 source ${script_dir}/utils/utils.tcl
 source ${script_dir}/pack/pack_utils.tcl
 source ${script_dir}/pack/pack_utils_if_templates.tcl
