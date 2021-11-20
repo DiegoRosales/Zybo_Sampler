@@ -65,3 +65,4 @@ NA*
 gen
 xvlog.pb
 vitis_pid*.str
+__pycache__
