@@ -46,16 +46,16 @@
   "board_part": "digilentinc.com:zybo:part0:1.0",
 
   // Target directory
-  "results_dirname": "results",
+  "results_dirname": "target",
 
   // Project integration variables
-  "integ_project_name":   "zybo_sampler_integ",
-  "integ_project_top":    "zybo_sampler_top",
+  "integ_project_name":   "${project_name}_integ",
+  "integ_project_top":    "${project_name}_top",
 
   // Xilinx IPs generation variables
   "gen_xilinx_ip_tcl_dirname": "xilinx_ip_tcl",
   "gen_xilinx_ip_xci_dirname": "xilinx_ip_xci",
 
   // Vitis workspace
-  "workspace_project_name":    "${project_name}_vitis_ws"
+  "workspace_project_name":    "${project_name}_ws"
 }
