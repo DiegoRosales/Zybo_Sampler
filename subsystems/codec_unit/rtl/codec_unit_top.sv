@@ -99,7 +99,7 @@ module codec_unit_top #(
 
   ///////////////////////////
   //// Interrupt Signals ////  
-  output wire DOWNSTREAM_almost_empty
+  output wire DAC_almost_empty
 
 );
 
@@ -160,10 +160,10 @@ wire        justification;
 
 ///////////////////////////
 
-wire [31:0] DOWNSTREAM_axis_wr_data_count;
-wire [31:0] UPSTREAM_axis_rd_data_count;
-wire [31:0] DOWNSTREAM_axis_rd_data_count;
-wire [31:0] UPSTREAM_axis_wr_data_count;
+wire [31:0] DAC_axis_wr_data_count;
+wire [31:0] ADC_axis_rd_data_count;
+wire [31:0] DAC_axis_rd_data_count;
+wire [31:0] ADC_axis_wr_data_count;
 wire [63:0] s_axis_tdata_int;
 wire init_done;
 wire init_error;
@@ -271,16 +271,16 @@ audio_unit_top audio_unit_top (
   //// Counter Signals ////
   /////////////////////////
   // AXI CLK //
-  .DOWNSTREAM_axis_wr_data_count ( DOWNSTREAM_axis_wr_data_count ),
-  .UPSTREAM_axis_rd_data_count   ( UPSTREAM_axis_rd_data_count   ),
+  .DAC_axis_wr_data_count ( DAC_axis_wr_data_count ),
+  .ADC_axis_rd_data_count ( ADC_axis_rd_data_count ),
   // Audio CLK //
-  .DOWNSTREAM_axis_rd_data_count ( DOWNSTREAM_axis_rd_data_count ),
-  .UPSTREAM_axis_wr_data_count   ( UPSTREAM_axis_wr_data_count   ),
+  .DAC_axis_rd_data_count ( DAC_axis_rd_data_count ),
+  .ADC_axis_wr_data_count ( ADC_axis_wr_data_count ),
 
   ///////////////////////////
   //// Interrupt Signals ////
   ///////////////////////////
-  .DOWNSTREAM_almost_empty       ( DOWNSTREAM_almost_empty       )
+  .DAC_almost_empty       ( DAC_almost_empty       )
 );
 
 
@@ -297,9 +297,9 @@ register_unit #(
   // Register signals //
   //////////////////////
   //---- I2S Clock Domain ----//
-  .audio_data_out                ( audio_data_out                ),
-  .DOWNSTREAM_axis_wr_data_count ( DOWNSTREAM_axis_wr_data_count ),
-  .UPSTREAM_axis_wr_data_count   ( UPSTREAM_axis_wr_data_count   ),
+  .audio_data_out         ( audio_data_out           ),
+  .DAC_axis_wr_data_count ( DAC_axis_wr_data_count   ),
+  .ADC_axis_wr_data_count ( ADC_axis_wr_data_count   ),
 
   //---- AXI Clock Domain ----//
 
@@ -317,8 +317,8 @@ register_unit #(
   .codec_i2c_addr                ( codec_i2c_addr                ),
   .codec_i2c_wr_data             ( codec_i2c_wr_data             ),
   .controller_reset              ( sw_reset                      ),
-  .UPSTREAM_axis_rd_data_count   ( UPSTREAM_axis_rd_data_count   ),
-  .DOWNSTREAM_axis_rd_data_count ( DOWNSTREAM_axis_rd_data_count ),
+  .ADC_axis_rd_data_count        ( ADC_axis_rd_data_count        ),
+  .DAC_axis_rd_data_count        ( DAC_axis_rd_data_count        ),
 
   /////////////////////////
   //// AXI Interface   ////

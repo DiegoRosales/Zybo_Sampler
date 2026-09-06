@@ -53,11 +53,11 @@ pack_utils::create_xilinx_gpio_interface led_status \
                                         "led_status" -direction "out"
 
 ## Create the interrupt interface
-pack_utils::create_xilinx_interrupt_interface DOWNSTREAM_almost_empty_intr \
-                                              -rtl_port_name DOWNSTREAM_almost_empty \
+pack_utils::create_xilinx_interrupt_interface DAC_almost_empty_intr \
+                                              -rtl_port_name DAC_almost_empty \
                                               -mode master \
-                                              -description "Downstream interrupt signaling FIFO is almost empty" \
-                                              -display_name "DOWNSTREAM_almost_empty" \
+                                              -description "DAC interrupt signaling FIFO is almost empty" \
+                                              -display_name "DAC_almost_empty" \
                                               -sensitivity "LEVEL_HIGH" \
 
 ## Create the clocks

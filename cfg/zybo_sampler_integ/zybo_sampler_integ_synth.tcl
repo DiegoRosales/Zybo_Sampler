@@ -238,7 +238,7 @@ integ_utils::connect -from_instance ${zynq_cpu_hier}/intr_concat_zynq      -from
 
 # Codec Controller
 integ_utils::connect -from_instance ${zynq_cpu_hier}/intr_concat_zynq      -from_interface In1 \
-                     -to_instance   ${sampler_hier}/codec_controller       -to_interface   DOWNSTREAM_almost_empty
+                     -to_instance   ${sampler_hier}/codec_controller       -to_interface   DAC_almost_empty
 
 
 ### Internal AXI Sampler Connections ###

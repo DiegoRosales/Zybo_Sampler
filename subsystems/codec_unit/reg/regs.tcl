@@ -154,14 +154,14 @@ set misc_data_2_reg {
 }
 
 ####
-## Downstream AXIS Write Data Count
+## DAC AXIS Write Data Count
 ####
-set downstream_axis_wr_data_count_reg {
-  name "DOWNSTREAM_axis_wr_data_count"
+set dac_axis_wr_data_count_reg {
+  name "DAC_axis_wr_data_count"
   fields {
-    DOWNSTREAM_axis_wr_data_count {
-      rtl_name    "DOWNSTREAM_axis_wr_data_count_reg"
-      description "DOWNSTREAM_axis_wr_data_count_reg"
+    DAC_axis_wr_data_count {
+      rtl_name    "DAC_axis_wr_data_count_reg"
+      description "DAC_axis_wr_data_count_reg"
       type        "REG_HW_RW_SW_RO"
       msb         31
       lsb         0
@@ -169,14 +169,14 @@ set downstream_axis_wr_data_count_reg {
   }
 }
 ####
-## Upstream AXIS Write Data Count
+## ADC AXIS Write Data Count
 ####
-set upstream_axis_rd_data_count_reg {
-  name "UPSTREAM_axis_rd_data_count_reg"
+set adc_axis_rd_data_count_reg {
+  name "ADC_axis_rd_data_count_reg"
   fields {
-    UPSTREAM_axis_rd_data_count_reg {
-      rtl_name    "UPSTREAM_axis_rd_data_count_reg_reg"
-      description "UPSTREAM_axis_rd_data_count_reg_reg"
+    ADC_axis_rd_data_count_reg {
+      rtl_name    "ADC_axis_rd_data_count_reg_reg"
+      description "ADC_axis_rd_data_count_reg_reg"
       type        "REG_HW_RW_SW_RO"
       msb         31
       lsb         0
@@ -184,14 +184,14 @@ set upstream_axis_rd_data_count_reg {
   }
 }
 ####
-## Downstream AXIS Write Data Count
+## DAC AXIS Write Data Count
 ####
-set downstream_axis_rd_data_count_reg {
-  name "DOWNSTREAM_axis_rd_data_count_reg"
+set dac_axis_rd_data_count_reg {
+  name "DAC_axis_rd_data_count_reg"
   fields {
-    DOWNSTREAM_axis_rd_data_count_reg {
-      rtl_name    "DOWNSTREAM_axis_rd_data_count_reg_reg"
-      description "DOWNSTREAM_axis_rd_data_count_reg_reg"
+    DAC_axis_rd_data_count_reg {
+      rtl_name    "DAC_axis_rd_data_count_reg_reg"
+      description "DAC_axis_rd_data_count_reg_reg"
       type        "REG_HW_RW_SW_RO"
       msb         31
       lsb         0
@@ -199,14 +199,14 @@ set downstream_axis_rd_data_count_reg {
   }
 }
 ####
-## Downstream AXIS Write Data Count
+## DAC AXIS Write Data Count
 ####
-set upstream_axis_wr_data_count_reg {
-  name "UPSTREAM_axis_wr_data_count_reg"
+set adc_axis_wr_data_count_reg {
+  name "ADC_axis_wr_data_count_reg"
   fields {
-    UPSTREAM_axis_wr_data_count_reg {
-      rtl_name    "UPSTREAM_axis_wr_data_count_reg_reg"
-      description "UPSTREAM_axis_wr_data_count_reg_reg"
+    ADC_axis_wr_data_count_reg {
+      rtl_name    "ADC_axis_wr_data_count_reg_reg"
+      description "ADC_axis_wr_data_count_reg_reg"
       type        "REG_HW_RW_SW_RO"
       msb         31
       lsb         0

@@ -13,10 +13,10 @@
 #define MISC_DATA_0_REG_ADDR                   0x04
 #define MISC_DATA_1_REG_ADDR                   0x05
 #define MISC_DATA_2_REG_ADDR                   0x06
-#define DOWNSTREAM_AXIS_WR_DATA_COUNT_REG_ADDR 0x08
-#define UPSTREAM_AXIS_RD_DATA_COUNT_REG_ADDR   0x09
-#define DOWNSTREAM_AXIS_RD_DATA_COUNT_REG_ADDR 0x0a
-#define UPSTREAM_AXIS_WR_DATA_COUNT_REG_ADDR   0x0b
+#define DAC_AXIS_WR_DATA_COUNT_REG_ADDR        0x08
+#define ADC_AXIS_RD_DATA_COUNT_REG_ADDR        0x09
+#define DAC_AXIS_RD_DATA_COUNT_REG_ADDR        0x0a
+#define ADC_AXIS_WR_DATA_COUNT_REG_ADDR        0x0b
 
 #define CODEC_CONTROL_REGISTER_ACCESS ((volatile CONTROLLER_REGISTERS_t *)(CODEC_CONTROLLER_REGISTERS_BAR))
 
@@ -87,10 +87,10 @@ typedef struct {
     uint32_t                MISC_DATA_1_REG;                        // Address 5
     uint32_t                MISC_DATA_2_REG;                        // Address 6  
     uint32_t                RESERVED;                               // Address 7
-    uint32_t                DOWNSTREAM_AXIS_WR_DATA_COUNT_REG;      // Address 8
-    uint32_t                UPSTREAM_AXIS_RD_DATA_COUNT_REG;        // Address 9
-    uint32_t                DOWNSTREAM_AXIS_RD_DATA_COUNT_REG;      // Address a
-    uint32_t                UPSTREAM_AXIS_WR_DATA_COUNT_REG;        // Address b
+    uint32_t                DAC_AXIS_WR_DATA_COUNT_REG;             // Address 8
+    uint32_t                ADC_AXIS_RD_DATA_COUNT_REG;             // Address 9
+    uint32_t                DAC_AXIS_RD_DATA_COUNT_REG;             // Address a
+    uint32_t                ADC_AXIS_WR_DATA_COUNT_REG;             // Address b
 } CONTROLLER_REGISTERS_t;
 
 #endif

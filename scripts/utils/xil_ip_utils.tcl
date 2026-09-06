@@ -159,12 +159,6 @@ proc generate_xilinx_ips_tcl {args} {
        if { ${ip_run} != "none" } {
             puts "launching ${ip_run} ..."
             launch_runs ${ip_run}
-        }
-    }
-
-    ## Step 3 - Wait for the runs to finish
-    foreach ip_run ${xilinx_ip_runs} {
-        if { ${ip_run} != "none" } {
             puts "Waiting on ${ip_run}"
             wait_on_run ${ip_run}
             puts "IP Run ${ip_run} is done!"
@@ -279,12 +273,6 @@ proc generate_xilinx_ips_xci {args} {
        if { ${ip_run} != "" } {
             puts "launching ${ip_run} ..."
             launch_runs ${ip_run}
-        }
-    }
-
-    ## Step 3 - Wait for the runs to finish
-    foreach ip_run ${xilinx_ip_runs} {
-        if { ${ip_run} != "" } {
             puts "Waiting on ${ip_run}"
             wait_on_run ${ip_run}
             puts "IP Run ${ip_run} is done!"

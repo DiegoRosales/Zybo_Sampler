@@ -37,11 +37,11 @@ module codec_registers #(
   //// Counter Signals ////
   /////////////////////////
   // AXI CLK //
-  input wire [31:0] DOWNSTREAM_axis_wr_data_count,
-  input wire [31:0] UPSTREAM_axis_rd_data_count,
+  input wire [31:0] DAC_axis_wr_data_count,
+  input wire [31:0] ADC_axis_rd_data_count,
   // Audio CLK //
-  input wire [31:0] DOWNSTREAM_axis_rd_data_count,
-  input wire [31:0] UPSTREAM_axis_wr_data_count
+  input wire [31:0] DAC_axis_rd_data_count,
+  input wire [31:0] ADC_axis_wr_data_count
 
 );
 
@@ -54,10 +54,10 @@ module codec_registers #(
 `define MISC_DATA_0_REG_ADDR                   6'h04
 `define MISC_DATA_1_REG_ADDR                   6'h05
 `define MISC_DATA_2_REG_ADDR                   6'h06
-`define DOWNSTREAM_AXIS_WR_DATA_COUNT_REG_ADDR 6'h08
-`define UPSTREAM_AXIS_RD_DATA_COUNT_REG_ADDR   6'h09
-`define DOWNSTREAM_AXIS_RD_DATA_COUNT_REG_ADDR 6'h0a
-`define UPSTREAM_AXIS_WR_DATA_COUNT_REG_ADDR   6'h0b
+`define DAC_AXIS_WR_DATA_COUNT_REG_ADDR        6'h08
+`define ADC_AXIS_RD_DATA_COUNT_REG_ADDR        6'h09
+`define DAC_AXIS_RD_DATA_COUNT_REG_ADDR        6'h0a
+`define ADC_AXIS_WR_DATA_COUNT_REG_ADDR        6'h0b
 
 logic [31:0] reg_data_out;
 
@@ -262,47 +262,47 @@ reg   [31:0] misc_data_2;
 
 ///////////////////////////////////////
 // Address 7
-// DOWNSTREAM_axis_wr_data_count
+// DAC_axis_wr_data_count
 ///////////////////////////////////////
-reg [31:0] DOWNSTREAM_axis_wr_data_count_reg;
+reg [31:0] DAC_axis_wr_data_count_reg;
 `GEN_REG_SW_RO_HW_WO(axi_clk, axi_reset,                   // Clock and Reset
 						32'hcafecafe,                      // Reset Value
 						1'b1,                              // Write Enable
-						DOWNSTREAM_axis_wr_data_count,     // Data In
-						DOWNSTREAM_axis_wr_data_count_reg) // Register
+						DAC_axis_wr_data_count,     // Data In
+						DAC_axis_wr_data_count_reg) // Register
 
 ///////////////////////////////////////
 // Address 8
-// UPSTREAM_axis_rd_data_count
+// ADC_axis_rd_data_count
 ///////////////////////////////////////
-reg [31:0] UPSTREAM_axis_rd_data_count_reg;
+reg [31:0] ADC_axis_rd_data_count_reg;
 `GEN_REG_SW_RO_HW_WO(axi_clk, axi_reset,                  // Clock and Reset
 						32'hcafecafe,                     // Reset Value
 						1'b1,                             // Write Enable
-						UPSTREAM_axis_rd_data_count,      // Data In
-						UPSTREAM_axis_rd_data_count_reg)  // Register
+						ADC_axis_rd_data_count,      // Data In
+						ADC_axis_rd_data_count_reg)  // Register
 
 ///////////////////////////////////////
 // Address 9
-// DOWNSTREAM_axis_rd_data_count
+// DAC_axis_rd_data_count
 ///////////////////////////////////////
-reg [31:0] DOWNSTREAM_axis_rd_data_count_reg;
+reg [31:0] DAC_axis_rd_data_count_reg;
 `GEN_REG_SW_RO_HW_WO(axi_clk, axi_reset,                   // Clock and Reset
 						32'hcafecafe,                      // Reset Value
 						1'b1,                              // Write Enable
-						DOWNSTREAM_axis_rd_data_count,     // Data In
-						DOWNSTREAM_axis_rd_data_count_reg) // Register
+						DAC_axis_rd_data_count,     // Data In
+						DAC_axis_rd_data_count_reg) // Register
 
 ///////////////////////////////////////
 // Address 10
-// UPSTREAM_axis_wr_data_count
+// ADC_axis_wr_data_count
 ///////////////////////////////////////
-reg [31:0] UPSTREAM_axis_wr_data_count_reg;
+reg [31:0] ADC_axis_wr_data_count_reg;
 `GEN_REG_SW_RO_HW_WO(axi_clk, axi_reset,                  // Clock and Reset
 						32'hcafecafe,                     // Reset Value
 						1'b1,                             // Write Enable
-						UPSTREAM_axis_wr_data_count,      // Data In
-						UPSTREAM_axis_wr_data_count_reg)  // Register
+						ADC_axis_wr_data_count,      // Data In
+						ADC_axis_wr_data_count_reg)  // Register
 
 ////////////////////////////////////////
 // Data Read Logic
@@ -320,10 +320,10 @@ always_comb
 	        `MISC_DATA_0_REG_ADDR                   : reg_data_out = misc_data_0;
 	        `MISC_DATA_1_REG_ADDR                   : reg_data_out = misc_data_1;
 	        `MISC_DATA_2_REG_ADDR                   : reg_data_out = misc_data_2;
-			`DOWNSTREAM_AXIS_WR_DATA_COUNT_REG_ADDR : reg_data_out = DOWNSTREAM_axis_wr_data_count_reg;
-			`UPSTREAM_AXIS_RD_DATA_COUNT_REG_ADDR   : reg_data_out = UPSTREAM_axis_rd_data_count_reg;
-			`DOWNSTREAM_AXIS_RD_DATA_COUNT_REG_ADDR : reg_data_out = DOWNSTREAM_axis_rd_data_count_reg;
-			`UPSTREAM_AXIS_WR_DATA_COUNT_REG_ADDR   : reg_data_out = UPSTREAM_axis_wr_data_count_reg;
+          `DAC_AXIS_WR_DATA_COUNT_REG_ADDR        : reg_data_out = DAC_axis_wr_data_count_reg;
+          `ADC_AXIS_RD_DATA_COUNT_REG_ADDR        : reg_data_out = ADC_axis_rd_data_count_reg;
+          `DAC_AXIS_RD_DATA_COUNT_REG_ADDR        : reg_data_out = DAC_axis_rd_data_count_reg;
+          `ADC_AXIS_WR_DATA_COUNT_REG_ADDR        : reg_data_out = ADC_axis_wr_data_count_reg;
 	        default : reg_data_out = 32'hdeadbeef;
 	      endcase
 	end

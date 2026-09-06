@@ -68,16 +68,16 @@ module audio_unit_top(
   //// Counter Signals ////
   /////////////////////////
   // AXI CLK //
-  output wire [31:0] DOWNSTREAM_axis_wr_data_count,
-  output wire [31:0] UPSTREAM_axis_rd_data_count,
+  output wire [31:0] DAC_axis_wr_data_count,
+  output wire [31:0] ADC_axis_rd_data_count,
   // Audio CLK //
-  output wire [31:0] DOWNSTREAM_axis_rd_data_count,
-  output wire [31:0] UPSTREAM_axis_wr_data_count,
+  output wire [31:0] DAC_axis_rd_data_count,
+  output wire [31:0] ADC_axis_wr_data_count,
 
   ///////////////////////////
   //// Interrupt Signals ////
   ///////////////////////////
-  output wire DOWNSTREAM_almost_empty
+  output wire DAC_almost_empty
 
 );
 
@@ -111,15 +111,15 @@ module audio_unit_top(
   reg [63:0] serializer_fifo_wr_counter; // Write from the Serializer
   reg [63:0] axi_fifo_wr_counter;        // Write from the DMA
   reg [63:0] serializer_fifo_rd_counter; // Read from the Serializer
-  reg [63:0] DOWNSTREAM_missed_counter;  // Downstream missed packet counter
+  reg [63:0] DAC_missed_counter;  // DAC missed packet counter
   wire DMA_fifo_wr;                      // DMA Write to the FIFO
   wire DMA_fifo_rd;                      // DMA Read from the FIFO
 
-  wire DOWNSTREAM_missed;
+  wire DAC_missed;
 
-  //assign m_axis_tlast = (UPSTREAM_axis_rd_data_count <= 3) ? 1'b1 : 1'b0;
+  //assign m_axis_tlast = (ADC_axis_rd_data_count <= 3) ? 1'b1 : 1'b0;
   assign audio_data_IN_last      = serializer_fifo_wr_counter[7:0] == 8'h10;
-  assign DOWNSTREAM_almost_empty = DOWNSTREAM_axis_rd_data_count < 30;
+  assign DAC_almost_empty = DAC_axis_rd_data_count < 30;
   ////////////////////////////////////
   assign serializer_audio_in   = (test_mode) ? {test_signal_reg, test_signal_reg} : audio_data_OUT_data;
   assign ac_muten              = 1'b1;
@@ -137,8 +137,8 @@ module audio_unit_top(
 
   // Counter for a heartbeat signal to make sure that the clock from the CODEC is running
   assign heartbeat = {
-                      DOWNSTREAM_missed_counter[14], // Bit 3
-                      DOWNSTREAM_missed_counter[4],  // Bit 2
+                      DAC_missed_counter[14], // Bit 3
+                      DAC_missed_counter[4],  // Bit 2
                       axi_fifo_wr_counter[14],       // Bit 1
                       serializer_fifo_rd_counter[14] // Bit 0
                       };
@@ -172,8 +172,8 @@ module audio_unit_top(
 
   // Data Missed counter
   always @(posedge ac_bclk or negedge locked)
-    if (locked == 1'b0) DOWNSTREAM_missed_counter <= 'h0;
-    else DOWNSTREAM_missed_counter <= (DOWNSTREAM_missed) ? DOWNSTREAM_missed_counter + 1 : DOWNSTREAM_missed_counter;
+    if (locked == 1'b0) DAC_missed_counter <= 'h0;
+    else DAC_missed_counter <= (DAC_missed) ? DAC_missed_counter + 1 : DAC_missed_counter;
 
 ////////////////////////////////////////
 
@@ -275,8 +275,8 @@ module audio_unit_top(
     ////////////////////////////
     //// Misc Data Signals  ////
     ////////////////////////////
-    .DOWNSTREAM_missed ( DOWNSTREAM_missed ),
-    .justification     ( justification     )
+    .DAC_missed    ( DAC_missed        ),
+    .justification ( justification     )
 
   );
 
@@ -305,8 +305,8 @@ module audio_unit_top(
     .s_axis_tlast   (               ),
 
     /// MISC
-    .axis_wr_data_count ( DOWNSTREAM_axis_wr_data_count ), // output wire [31 : 0] axis_wr_data_count
-    .axis_rd_data_count ( DOWNSTREAM_axis_rd_data_count )  // output wire [31 : 0] axis_rd_data_count
+    .axis_wr_data_count ( DAC_axis_wr_data_count ), // output wire [31 : 0] axis_wr_data_count
+    .axis_rd_data_count ( DAC_axis_rd_data_count )  // output wire [31 : 0] axis_rd_data_count
   );
 
   //////////////////////////////////////////////
@@ -334,8 +334,8 @@ module audio_unit_top(
     .s_axis_tlast   ( audio_data_IN_last  ),
 
     /// MISC
-    .axis_wr_data_count ( UPSTREAM_axis_wr_data_count ), // output wire [31 : 0] axis_wr_data_count
-    .axis_rd_data_count ( UPSTREAM_axis_rd_data_count )  // output wire [31 : 0] axis_rd_data_count
+    .axis_wr_data_count ( ADC_axis_wr_data_count ), // output wire [31 : 0] axis_wr_data_count
+    .axis_rd_data_count ( ADC_axis_rd_data_count )  // output wire [31 : 0] axis_rd_data_count
   );
 
 endmodule

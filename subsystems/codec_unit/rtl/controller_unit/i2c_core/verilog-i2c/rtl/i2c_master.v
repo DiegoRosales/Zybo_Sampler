@@ -875,27 +875,27 @@ always @(posedge clk or negedge rst_n) begin
 
         bus_control_reg <= bus_control_next;
         missed_ack_reg <= missed_ack_next;
+        
+        phy_rx_data_reg <= phy_rx_data_next;
+    
+        addr_reg <= addr_next;
+        data_reg <= data_next;
+        last_reg <= last_next;
+    
+        mode_read_reg <= mode_read_next;
+        mode_write_multiple_reg <= mode_write_multiple_next;
+        mode_stop_reg <= mode_stop_next;
+    
+        bit_count_reg <= bit_count_next;
+    
+        data_out_reg <= data_out_next;
+        data_out_last_reg <= data_out_last_next;
+    
+        scl_i_reg <= scl_i;
+        sda_i_reg <= sda_i;
+        last_scl_i_reg <= scl_i_reg;
+        last_sda_i_reg <= sda_i_reg;
     end
-
-    phy_rx_data_reg <= phy_rx_data_next;
-
-    addr_reg <= addr_next;
-    data_reg <= data_next;
-    last_reg <= last_next;
-
-    mode_read_reg <= mode_read_next;
-    mode_write_multiple_reg <= mode_write_multiple_next;
-    mode_stop_reg <= mode_stop_next;
-
-    bit_count_reg <= bit_count_next;
-
-    data_out_reg <= data_out_next;
-    data_out_last_reg <= data_out_last_next;
-
-    scl_i_reg <= scl_i;
-    sda_i_reg <= sda_i;
-    last_scl_i_reg <= scl_i_reg;
-    last_sda_i_reg <= sda_i_reg;
 end
 
 endmodule

@@ -72,7 +72,7 @@ integ_utils::export -from_instance codec_controller -from_interface led_status  
 integ_utils::export -from_instance sampler_dma      -from_interface axi4_lite_interface       -port_name sampler_dma_axi4_lite_if
 integ_utils::export -from_instance codec_controller -from_interface axi4_lite_interface       -port_name codec_controller_axi4_lite_if
 integ_utils::export -from_instance sampler_dma      -from_interface axi_dma_interface         -port_name sampler_dma_axi4_if
-integ_utils::export -from_instance codec_controller -from_interface DOWNSTREAM_almost_empty   -port_name DOWNSTREAM_almost_empty
+integ_utils::export -from_instance codec_controller -from_interface DAC_almost_empty          -port_name DAC_almost_empty
 integ_utils::export -from_instance sampler_dma      -from_interface axi_clk                   -port_name axi_clk
 integ_utils::export -from_instance codec_controller -from_interface axi_clk                   -port_name axi_clk
 integ_utils::export -from_instance codec_controller -from_interface s00_axi_aresetn           -port_name s00_axi_aresetn

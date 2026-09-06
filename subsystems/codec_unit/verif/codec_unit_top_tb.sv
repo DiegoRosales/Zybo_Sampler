@@ -174,7 +174,7 @@ module codec_unit_top_tb ();
 
     ///////////////////////////
     //// Interrupt Signals ////  
-    .DOWNSTREAM_almost_empty ( )
+    .DAC_almost_empty ( )
   );
 
   initial begin

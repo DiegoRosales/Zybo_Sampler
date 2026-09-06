@@ -19,12 +19,12 @@ module register_unit #(
   // Register signals //
   //////////////////////
   //---- I2S Clock Domain ----//
-  input wire [31:0] DOWNSTREAM_axis_rd_data_count,
-  input wire [31:0] UPSTREAM_axis_wr_data_count,
+  input wire [31:0] DAC_axis_rd_data_count,
+  input wire [31:0] ADC_axis_wr_data_count,
 
   //---- AXI Clock Domain ----//
-  input wire [31:0] DOWNSTREAM_axis_wr_data_count,
-  input wire [31:0] UPSTREAM_axis_rd_data_count,
+  input wire [31:0] DAC_axis_wr_data_count,
+  input wire [31:0] ADC_axis_rd_data_count,
 
   // Interface to the controller_unit //
   input  wire        clear_codec_i2c_data_wr,
@@ -95,10 +95,10 @@ wire [31:0] codec_i2c_rd_data_sync;
 wire        update_codec_i2c_rd_data_sync;
 wire        controller_reset_sync;
 wire [63:0] audio_data_out_sync;
-wire [31:0] DOWNSTREAM_axis_wr_data_count_sync;
-wire [31:0] UPSTREAM_axis_rd_data_count_sync;
-wire [31:0] DOWNSTREAM_axis_rd_data_count_sync;
-wire [31:0] UPSTREAM_axis_wr_data_count_sync;
+wire [31:0] DAC_axis_wr_data_count_sync;
+wire [31:0] ADC_axis_rd_data_count_sync;
+wire [31:0] DAC_axis_rd_data_count_sync;
+wire [31:0] ADC_axis_wr_data_count_sync;
 
 // Output from the registers
 (* keep = "true" *) wire [ C_S_AXI_DATA_WIDTH - 1 : 0 ] reg_data_out;
@@ -177,11 +177,11 @@ wire [31:0] UPSTREAM_axis_wr_data_count_sync;
 
 		// Register inputs
 		// AXI CLK //
-    .DOWNSTREAM_axis_wr_data_count ( DOWNSTREAM_axis_wr_data_count ),
-    .UPSTREAM_axis_rd_data_count   ( UPSTREAM_axis_rd_data_count   ),
+    .DAC_axis_wr_data_count   ( DAC_axis_wr_data_count ),
+    .ADC_axis_rd_data_count   ( ADC_axis_rd_data_count   ),
     // Audio CLK //
-    .DOWNSTREAM_axis_rd_data_count ( DOWNSTREAM_axis_rd_data_count_sync ),
-    .UPSTREAM_axis_wr_data_count   ( UPSTREAM_axis_wr_data_count_sync   )
+    .DAC_axis_rd_data_count   ( DAC_axis_rd_data_count_sync ),
+    .ADC_axis_wr_data_count   ( ADC_axis_wr_data_count_sync   )
 	);
 
 ///////////////////
@@ -189,9 +189,9 @@ wire [31:0] UPSTREAM_axis_wr_data_count_sync;
 ///////////////////
 
 // CODEC Clock -> AXI
-synchronizer       #(.DATA_WIDTH(64)) CODEC_2_AXI_audio_data_out_sync                 (.clk_in(ac_bclk),  .clk_out(s00_axi_aclk), .data_in(audio_data_out                ),  .data_out(audio_data_out_sync                ));
-synchronizer       #(.DATA_WIDTH(32)) CODEC_2_AXI_DOWNSTREAM_axis_rd_data_count       (.clk_in(ac_bclk),  .clk_out(s00_axi_aclk), .data_in(DOWNSTREAM_axis_rd_data_count ),  .data_out(DOWNSTREAM_axis_rd_data_count_sync ));
-synchronizer       #(.DATA_WIDTH(32)) CODEC_2_AXI_UPSTREAM_axis_wr_data_count         (.clk_in(ac_bclk),  .clk_out(s00_axi_aclk), .data_in(UPSTREAM_axis_wr_data_count   ),  .data_out(UPSTREAM_axis_wr_data_count_sync   ));
+synchronizer #(.DATA_WIDTH(64)) CODEC_2_AXI_audio_data_out_sync     (.clk_in(ac_bclk),  .clk_out(s00_axi_aclk), .data_in(audio_data_out         ),  .data_out(audio_data_out_sync         ));
+synchronizer #(.DATA_WIDTH(32)) CODEC_2_AXI_DAC_axis_rd_data_count  (.clk_in(ac_bclk),  .clk_out(s00_axi_aclk), .data_in(DAC_axis_rd_data_count ),  .data_out(DAC_axis_rd_data_count_sync ));
+synchronizer #(.DATA_WIDTH(32)) CODEC_2_AXI_ADC_axis_wr_data_count  (.clk_in(ac_bclk),  .clk_out(s00_axi_aclk), .data_in(ADC_axis_wr_data_count ),  .data_out(ADC_axis_wr_data_count_sync ));
 
 
 endmodule

@@ -49,7 +49,7 @@ module audio_data_serializer(
   //// Misc Data Signals  ////
   ////////////////////////////
 
-  output wire DOWNSTREAM_missed,
+  output wire DAC_missed,
   input  wire justification
 );
 
@@ -64,7 +64,7 @@ reg data_rd_reg;
 // Write the data to the FIFO
 reg audio_data_in_wr;
 
-reg DOWNSTREAM_missed_reg;
+reg DAC_missed_reg;
 reg justification_sampled;
 
 // Data to be serialized
@@ -86,7 +86,7 @@ assign s_axis_tdata  = audio_data_in_to_fifo;
 
 assign audio_data_in = m_axis_tdata;
 
-assign DOWNSTREAM_missed = DOWNSTREAM_missed_reg;
+assign DAC_missed = DAC_missed_reg;
 
 // Select the data based on the word length
 // All modes shift out LSB first
@@ -137,12 +137,12 @@ end
 
 // Pulse whenever the CODEC is requesting data and there's no valid data
 always_ff @(posedge ac_bclk) begin
-  DOWNSTREAM_missed_reg <= 1'b0;
+  DAC_missed_reg <= 1'b0;
   if (ac_pblrc && ~m_axis_tvalid) begin
-    DOWNSTREAM_missed_reg <= 1'b1;
+    DAC_missed_reg <= 1'b1;
   end
   else if ( ac_pblrc && m_axis_tvalid ) begin
-    DOWNSTREAM_missed_reg <= 1'b0;
+    DAC_missed_reg <= 1'b0;
   end
 end
 
